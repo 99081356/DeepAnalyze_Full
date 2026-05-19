@@ -127,6 +127,7 @@ export function createMarketplaceRoutes(): Hono {
   // ─── Skills: submit ────────────────────────────────────────────────────
 
   app.post("/skills/submit", workerAuth, async (c) => {
+    try {
     const body = await c.req.json<SkillSubmitRequest>();
 
     if (!body.name || !body.prompt) {
@@ -149,13 +150,13 @@ export function createMarketplaceRoutes(): Hono {
     }
 
     const id = randomUUID();
-    const workerId = c.get("workerId") as string;
-
+    // Use 'system' as submitter since Workers don't have user accounts
+    // (the FK references users table)
     await query(
       `INSERT INTO marketplace_skills
         (id, slug, name, description, prompt, tools, model_role, anti_hallucination_level,
          tags, version, submitter_id, review_status, compatibility)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, '1.0.0', $10, 'pending', $11)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, '1.0.0', 'system', 'pending', $10)`,
       [
         id,
         slug,
@@ -166,7 +167,6 @@ export function createMarketplaceRoutes(): Hono {
         body.modelRole || "main",
         null,
         body.tags || [],
-        workerId,
         JSON.stringify({ minVersion: "0.1.0" }),
       ],
     );
@@ -178,6 +178,10 @@ export function createMarketplaceRoutes(): Hono {
     };
 
     return c.json(response);
+    } catch (err) {
+      console.error("[Hub] Skill submit error:", err);
+      return c.json({ error: "Failed to submit skill" }, 500);
+    }
   });
 
   // ─── Skills: versions (placeholder) ────────────────────────────────────
@@ -282,12 +286,11 @@ export function createMarketplaceRoutes(): Hono {
     }
 
     const id = randomUUID();
-    const workerId = c.get("workerId") as string;
 
     await query(
       `INSERT INTO marketplace_plugins (id, slug, name, description, manifest, version, author_id, review_status)
-       VALUES ($1, $2, $3, $4, $5, '1.0.0', $6, 'pending')`,
-      [id, slug, body.name, body.description || "", JSON.stringify(body.manifest), workerId],
+       VALUES ($1, $2, $3, $4, $5, '1.0.0', 'system', 'pending')`,
+      [id, slug, body.name, body.description || "", JSON.stringify(body.manifest)],
     );
 
     return c.json({
