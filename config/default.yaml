@@ -1,0 +1,22 @@
+# DeepAnalyze Hub default configuration
+server:
+  port: 22000
+  host: "0.0.0.0"
+
+database:
+  host: "localhost"
+  port: 5433
+  database: "deepanalyze_hub"
+  user: "deepanalyze_hub"
+  password: "deepanalyze_hub_dev"
+  poolSize: 10
+
+auth:
+  jwtSecret: "change-me-in-production"
+  jwtExpiry: "7d"
+  workerTokenExpiry: "30d"
+
+marketplace:
+  maxSkillSize: 102400  # 100KB max skill prompt size
+  defaultPageSize: 20
+  maxPageSize: 100
