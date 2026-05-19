@@ -92,33 +92,44 @@ export function createWorkerRoutes(): Hono {
   // ─── Heartbeat ─────────────────────────────────────────────────────────
 
   app.post("/heartbeat", workerAuth, async (c) => {
-    const workerId = c.get("workerId") as string;
-    const body = await c.req.json<HeartbeatRequest>();
+    try {
+      const workerId = c.get("workerId") as string;
+      if (!workerId) {
+        return c.json({ error: "Worker not authenticated" }, 401);
+      }
+      const body = await c.req.json<HeartbeatRequest>();
 
-    await query(
-      `UPDATE workers SET
-        status = $2,
-        last_heartbeat = now(),
-        active_sessions = $3,
-        active_tasks = $4,
-        resource_usage = $5
-      WHERE id = $1`,
-      [
-        workerId,
-        body.status || "online",
-        body.activeSessions ?? 0,
-        body.activeTasks ?? 0,
-        JSON.stringify(body.resourceUsage || {}),
-      ],
-    );
+      // Map Worker heartbeat status to DB status
+      const dbStatus = body.status === "busy" ? "online" : "online"; // Workers reporting heartbeat are always "online"
 
-    const response: HeartbeatResponse = {
-      acknowledged: true,
-      serverTime: new Date().toISOString(),
-      pendingNotifications: [],
-    };
+      await query(
+        `UPDATE workers SET
+          status = $2,
+          last_heartbeat = now(),
+          active_sessions = $3,
+          active_tasks = $4,
+          resource_usage = $5
+        WHERE id = $1`,
+        [
+          workerId,
+          dbStatus,
+          body.activeSessions ?? 0,
+          body.activeTasks ?? 0,
+          JSON.stringify(body.resourceUsage || {}),
+        ],
+      );
 
-    return c.json(response);
+      const response: HeartbeatResponse = {
+        acknowledged: true,
+        serverTime: new Date().toISOString(),
+        pendingNotifications: [],
+      };
+
+      return c.json(response);
+    } catch (err) {
+      console.error("[Hub] Heartbeat error:", err);
+      return c.json({ error: "Internal server error" }, 500);
+    }
   });
 
   // ─── List workers (admin, no auth yet) ─────────────────────────────────
