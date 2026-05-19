@@ -2,6 +2,7 @@
 // DeepAnalyze Hub - Server Entry Point
 // =============================================================================
 
+import "dotenv/config";
 import { HUB_CONFIG } from "./core/config.js";
 import { createApp } from "./server/app.js";
 import { runMigrations } from "./store/migrations/runner.js";
