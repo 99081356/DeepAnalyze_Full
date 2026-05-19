@@ -82,7 +82,8 @@ export function createMarketplaceRoutes(): Hono {
   // ─── Skills: detail ────────────────────────────────────────────────────
 
   app.get("/skills/:slug", async (c) => {
-    const { slug } = c.req.param();
+    const { slug: rawSlug } = c.req.param();
+    const slug = decodeURIComponent(rawSlug);
     const { rows } = await query(
       `SELECT id, slug, name, description, prompt, tools, model_role, anti_hallucination_level,
               tags, version, download_count, rating_avg, review_count, published_at, compatibility,
@@ -96,13 +97,14 @@ export function createMarketplaceRoutes(): Hono {
       return c.json({ error: "Skill not found" }, 404);
     }
 
-    return c.json(rows[0]);
+    return c.json(mapSkillDetail(rows[0]));
   });
 
   // ─── Skills: download ──────────────────────────────────────────────────
 
   app.get("/skills/:slug/download", workerAuth, async (c) => {
-    const { slug } = c.req.param();
+    const { slug: rawSlug } = c.req.param();
+    const slug = decodeURIComponent(rawSlug);
     const { rows } = await query(
       `SELECT id, slug, name, description, prompt, tools, model_role,
               anti_hallucination_level, tags, version, compatibility
@@ -221,7 +223,8 @@ export function createMarketplaceRoutes(): Hono {
   // ─── Plugins: detail ───────────────────────────────────────────────────
 
   app.get("/plugins/:slug", async (c) => {
-    const { slug } = c.req.param();
+    const { slug: rawSlug } = c.req.param();
+    const slug = decodeURIComponent(rawSlug);
     const { rows } = await query(
       `SELECT id, slug, name, description, manifest, version, download_count, published_at
        FROM marketplace_plugins
@@ -239,7 +242,8 @@ export function createMarketplaceRoutes(): Hono {
   // ─── Plugins: download ─────────────────────────────────────────────────
 
   app.get("/plugins/:slug/download", workerAuth, async (c) => {
-    const { slug } = c.req.param();
+    const { slug: rawSlug } = c.req.param();
+    const slug = decodeURIComponent(rawSlug);
     const { rows } = await query(
       `SELECT id, slug, name, description, manifest, version
        FROM marketplace_plugins
@@ -408,5 +412,27 @@ function mapSkillListItem(row: Record<string, unknown>) {
     reviewCount: row.review_count,
     publishedAt: row.published_at,
     compatibility: row.compatibility,
+  };
+}
+
+function mapSkillDetail(row: Record<string, unknown>) {
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    description: row.description,
+    prompt: row.prompt,
+    tools: row.tools,
+    modelRole: row.model_role,
+    antiHallucinationLevel: row.anti_hallucination_level,
+    tags: row.tags,
+    version: row.version,
+    downloadCount: row.download_count,
+    ratingAvg: row.rating_avg,
+    reviewCount: row.review_count,
+    publishedAt: row.published_at,
+    compatibility: row.compatibility,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
