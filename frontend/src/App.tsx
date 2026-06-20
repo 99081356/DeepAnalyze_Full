@@ -6,6 +6,7 @@ import { Dashboard } from "./pages/Dashboard.js";
 import { OrgTree } from "./pages/OrgTree.js";
 import { UserList } from "./pages/UserList.js";
 import { WorkerApproval } from "./pages/WorkerApproval.js";
+import { Skills } from "./pages/Skills.js";
 
 function Layout({ user, onLogout, children }: { user: MeResponse; onLogout: () => void; children: React.ReactNode }) {
   const location = useLocation();
@@ -14,6 +15,7 @@ function Layout({ user, onLogout, children }: { user: MeResponse; onLogout: () =
     { to: "/orgs", label: "组织树" },
     { to: "/users", label: "用户" },
     { to: "/workers", label: "Worker 审批" },
+    { to: "/skills", label: "Skills 市场" },
   ];
   return (
     <div style={{ display: "flex", minHeight: "100vh", fontFamily: "system-ui, -apple-system, sans-serif" }}>
@@ -109,6 +111,7 @@ export default function App() {
       <Route path="/orgs" element={<ProtectedRoute user={user} setUser={setUser}><OrgTree /></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute user={user} setUser={setUser}><UserList /></ProtectedRoute>} />
       <Route path="/workers" element={<ProtectedRoute user={user} setUser={setUser}><WorkerApproval /></ProtectedRoute>} />
+      <Route path="/skills" element={<ProtectedRoute user={user} setUser={setUser}><Skills user={user!} /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );

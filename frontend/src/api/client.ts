@@ -48,6 +48,11 @@ async function request<T>(
   return (await resp.json()) as T;
 }
 
+/** Lower-level GET without auto-redirect on 401 (used by Skills page). */
+async function getRaw<T>(method: string, path: string): Promise<T> {
+  return request<T>(method, path);
+}
+
 export interface MeResponse {
   id: string;
   username: string;
@@ -155,4 +160,37 @@ export const api = {
       `/workers/${id}/reject`,
       { reason },
     ),
+
+  // Skills marketplace (Phase 2)
+  getRaw,
+  createPackage: (data: { name: string; description?: string; scope: "system" | "org" | "user"; tags?: string[] }) =>
+    request<{ package: SkillPackageV2 }>("POST", "/skills", data),
+  createVersionRaw: (pkgId: string, data: { version: string; content: string; when_to_use?: string; allowed_tools?: string[] }) =>
+    request<{ version: SkillVersionV2 }>("POST", `/skills/${pkgId}/versions`, data),
+  subscribeSkill: (pkgId: string) =>
+    request<{ subscription: unknown }>("POST", `/skills/${pkgId}/subscribe`),
+  unsubscribeSkill: (pkgId: string) =>
+    request<{ success: boolean }>("DELETE", `/skills/${pkgId}/subscribe`),
+  killSwitchSkill: (pkgId: string, reason: string) =>
+    request<{ success: boolean }>("POST", `/skills/${pkgId}/kill`, { reason }),
 };
+
+export interface SkillPackageV2 {
+  id: string;
+  name: string;
+  slug: string;
+  scope: "system" | "org" | "user";
+  description: string | null;
+  tags: string[];
+  stats: { downloads: number; subscriptions: number; rating_avg: number };
+  is_kill_switched: boolean;
+  created_at: string;
+}
+
+export interface SkillVersionV2 {
+  id: string;
+  version: string;
+  content_hash: string;
+  status: string;
+  created_at: string;
+}

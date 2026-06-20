@@ -17,11 +17,14 @@ import { HUB_CONFIG } from "../../core/config.js";
 import { workerAuth } from "../middleware/worker-auth.js";
 import { jwtAuth } from "../middleware/jwt-auth.js";
 import { requirePermission } from "../middleware/require-permission.js";
+import { generateInstructions, recordSyncAck } from "../../domain/skill-sync-service.js";
 import type {
   WorkerRegisterRequest,
   WorkerRegisterResponse,
   HeartbeatRequest,
   HeartbeatResponse,
+  SkillSyncInstruction,
+  CachedSkill,
 } from "../../types/index.js";
 
 export function createWorkerRoutes(): Hono {
@@ -131,7 +134,7 @@ export function createWorkerRoutes(): Hono {
       if (!workerId) {
         return c.json({ error: "Worker not authenticated" }, 401);
       }
-      const body = await c.req.json<HeartbeatRequest & { cached_skills?: unknown[]; policy_version?: number; current_task?: string }>();
+      const body = await c.req.json<HeartbeatRequest & { cached_skills?: CachedSkill[]; policy_version?: number; current_task?: string }>();
 
       const dbStatus = "online";
 
@@ -154,19 +157,56 @@ export function createWorkerRoutes(): Hono {
         ],
       );
 
-      // v2 心跳响应——Phase 1 不下发 instructions（Phase 2 实现 SkillSync）
+      // v2 SkillSync: compute diff between expected and cached skills
+      let instructions: SkillSyncInstruction[] = [];
+      if (body.cached_skills && Array.isArray(body.cached_skills)) {
+        try {
+          instructions = await generateInstructions(workerId, body.cached_skills);
+        } catch (err) {
+          console.error("[Hub] SkillSync error:", err);
+        }
+      }
+
       const response = {
         acknowledged: true,
         message: "OK",
         serverTime: new Date().toISOString(),
-        instructions: [] as unknown[],
-        policy_version: 1,
+        instructions,
+        policy_version: body.policy_version ?? 1,
         pendingNotifications: [],
       };
 
       return c.json(response);
     } catch (err) {
       console.error("[Hub] Heartbeat error:", err);
+      return c.json({ error: "Internal server error" }, 500);
+    }
+  });
+
+  // ─── Worker ack (confirm instruction executed) ────────────────────────
+
+  app.post("/ack", workerAuth, async (c) => {
+    try {
+      const workerId = c.get("workerId") as string;
+      const body = await c.req.json<{ instruction_id: string; action?: string; package_id?: string }>();
+      if (!body.instruction_id) {
+        return c.json({ error: "instruction_id required" }, 400);
+      }
+
+      // Look up the instruction we sent — but we don't persist instructions in Phase 2.
+      // Workers send back the full instruction shape for now.
+      // The ack is purely informational; the real state tracking is worker_skill_cache.
+
+      // If worker reports a successful sync, update worker_skill_cache
+      // (The worker should include the full instruction object in the ack body)
+      const instruction = body as SkillSyncInstruction;
+      if (instruction.action && instruction.package_id) {
+        await recordSyncAck(workerId, instruction);
+      }
+
+      return c.json({ acknowledged: true });
+    } catch (err) {
+      console.error("[Hub] Ack error:", err);
       return c.json({ error: "Internal server error" }, 500);
     }
   });

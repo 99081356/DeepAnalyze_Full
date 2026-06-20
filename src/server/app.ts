@@ -56,6 +56,10 @@ export async function createApp(): Promise<Hono> {
   const { createRbacRoutes } = await import("./routes/rbac.js");
   app.route("/api/v1/rbac", createRbacRoutes());
 
+  // Skills marketplace (Phase 2: org-scoped packages)
+  const { createSkillRoutes } = await import("./routes/skills.js");
+  app.route("/api/v1/skills", createSkillRoutes());
+
   // ─── Static frontend (admin panel) ───────────────────────────────────
   // Serves built React app from frontend/dist/. Falls back to index.html
   // for client-side routing (SPA).

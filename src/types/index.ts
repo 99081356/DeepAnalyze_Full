@@ -202,3 +202,24 @@ export interface AuditLog {
   ipAddress?: string;
   createdAt: string;
 }
+
+// ─── Protocol v2: SkillSync (Phase 2) ────────────────────────────────────────
+
+export interface CachedSkill {
+  package_id: string;
+  version: string;
+  content_hash: string;
+}
+
+export interface SkillSyncInstruction {
+  action: "sync" | "force_update" | "kill" | "rollback" | "policy_refresh";
+  package_id: string;
+  version_id?: string;
+  version?: string;
+  content?: string;
+  content_url?: string;
+  hash?: string;
+  deadline?: string;
+  reason?: string;
+  instruction_id: string;
+}
