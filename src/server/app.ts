@@ -56,6 +56,11 @@ export async function createApp(): Promise<Hono> {
   const { createRbacRoutes } = await import("./routes/rbac.js");
   app.route("/api/v1/rbac", createRbacRoutes());
 
+  // Skill workflow (Phase 3: state machine + approval + audit + force_update)
+  // Mounted BEFORE marketplace routes so /approvals doesn't collide with /:id
+  const { createSkillWorkflowRoutes } = await import("./routes/skill-workflow.js");
+  app.route("/api/v1/skills", createSkillWorkflowRoutes());
+
   // Skills marketplace (Phase 2: org-scoped packages)
   const { createSkillRoutes } = await import("./routes/skills.js");
   app.route("/api/v1/skills", createSkillRoutes());

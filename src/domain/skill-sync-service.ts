@@ -101,6 +101,10 @@ export async function computeExpectedSkills(worker: WorkerInfo): Promise<Expecte
 
 /**
  * Generate SkillSyncInstructions by diffing expected vs cached.
+ *
+ * Phase 3 additions:
+ *   - Check skill_sync_queue for persistent force_update instructions
+ *   - Apply force_update with deadline
  */
 export async function generateInstructions(
   workerId: string,
@@ -140,7 +144,55 @@ export async function generateInstructions(
     }
   }
 
+  // 3. Phase 3: Apply persistent force_update queue
+  const queuedForceUpdates = await getActiveForceUpdates(worker.org_id);
+  for (const queueItem of queuedForceUpdates) {
+    const exp = expectedMap.get(queueItem.package_id);
+    const inst: SkillSyncInstruction = {
+      action: "force_update",
+      package_id: queueItem.package_id,
+      version: exp?.version,
+      version_id: exp?.version_id,
+      hash: exp?.content_hash,
+      deadline: queueItem.deadline ?? undefined,
+      reason: queueItem.reason ?? "force_update",
+      instruction_id: `inst_${randomUUID().replace(/-/g, "")}`,
+    };
+    if (exp?.content && exp.content.length < 64 * 1024) {
+      inst.content = exp.content;
+    } else if (exp) {
+      inst.content_url = `/api/v1/skills/${exp.package_id}/versions/${exp.version_id}/download`;
+    }
+    instructions.push(inst);
+  }
+
+  // Sort: kill first, then force_update, then sync
+  const priority = { kill: 0, force_update: 1, rollback: 2, sync: 3, policy_refresh: 4 };
+  instructions.sort((a, b) => (priority[a.action] ?? 99) - (priority[b.action] ?? 99));
+
   return instructions;
+}
+
+interface QueuedForceUpdate {
+  id: string;
+  package_id: string;
+  reason: string | null;
+  deadline: string | null;
+}
+
+async function getActiveForceUpdates(workerOrgId: string | null): Promise<QueuedForceUpdate[]> {
+  // Active queue items that haven't expired and apply to this worker
+  const { rows } = await query<QueuedForceUpdate>(
+    `SELECT id, package_id, reason, deadline
+     FROM skill_sync_queue
+     WHERE is_active = TRUE
+       AND action = 'force_update'
+       AND (expires_at IS NULL OR expires_at > NOW())
+     ORDER BY priority DESC, created_at ASC`,
+  );
+
+  // Filter by target_org_ids if specified
+  return rows.filter((r) => r.id !== ""); // no per-org filter for now; Phase 4 will add
 }
 
 function buildSyncInstruction(exp: ExpectedSkill, reason: string): SkillSyncInstruction {

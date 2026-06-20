@@ -64,6 +64,7 @@ export function createSkillRoutes(): Hono {
       name: string;
       description?: string;
       scope?: "system" | "org" | "user";
+      org_id?: string;
       category?: string;
       tags?: string[];
     }>();
@@ -77,8 +78,14 @@ export function createSkillRoutes(): Hono {
     if (scope === "system") {
       if (!isSuperAdmin) return c.json({ error: "Only super admin can create system-scoped packages" }, 403);
     } else if (scope === "org") {
-      if (!userOrgId) return c.json({ error: "You don't belong to any org" }, 403);
-      orgId = userOrgId;
+      // Super admin can specify any org_id (defaults to root)
+      if (isSuperAdmin) {
+        orgId = body.org_id ?? "root";
+      } else if (userOrgId) {
+        orgId = userOrgId;
+      } else {
+        return c.json({ error: "You don't belong to any org" }, 403);
+      }
     }
 
     try {

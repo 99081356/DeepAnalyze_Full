@@ -216,3 +216,48 @@ export async function unkillSwitch(packageId: string): Promise<void> {
     [packageId],
   );
 }
+
+// ─── Phase 3: Version status transitions ─────────────────────────────
+
+export async function getVersion(versionId: string): Promise<SkillVersionRow | null> {
+  const { rows } = await query<SkillVersionRow>(
+    `SELECT * FROM skill_versions WHERE id = $1`,
+    [versionId],
+  );
+  return rows[0] ?? null;
+}
+
+export async function setVersionStatus(
+  versionId: string,
+  newStatus: string,
+): Promise<SkillVersionRow | null> {
+  const publishedAt = newStatus === "published" ? "NOW()" : "published_at";
+  const { rows } = await query<SkillVersionRow>(
+    `UPDATE skill_versions
+     SET status = $2, published_at = ${publishedAt}
+     WHERE id = $1
+     RETURNING *`,
+    [versionId, newStatus],
+  );
+  return rows[0] ?? null;
+}
+
+export async function setActiveVersion(packageId: string, versionId: string): Promise<void> {
+  await query(
+    `UPDATE skill_packages SET active_version_id = $1, updated_at = NOW() WHERE id = $2`,
+    [versionId, packageId],
+  );
+}
+
+export async function getPackageWithScope(
+  packageId: string,
+): Promise<{ id: string; scope: string; org_id: string | null; author_id: string | null; name: string; trust_level: string } | null> {
+  const { rows } = await query<{
+    id: string; scope: string; org_id: string | null; author_id: string | null;
+    name: string; trust_level: string;
+  }>(
+    `SELECT id, scope, org_id, author_id, name, trust_level FROM skill_packages WHERE id = $1`,
+    [packageId],
+  );
+  return rows[0] ?? null;
+}
