@@ -39,6 +39,22 @@ export async function createApp(): Promise<Hono> {
   const { createMarketplaceRoutes } = await import("./routes/marketplace.js");
   app.route("/api/v1/marketplace", createMarketplaceRoutes());
 
+  // Auth (login/refresh/logout/me/apikey)
+  const { createAuthRoutes } = await import("./routes/auth.js");
+  app.route("/api/v1/auth", createAuthRoutes());
+
+  // Organizations
+  const { createOrgRoutes } = await import("./routes/orgs.js");
+  app.route("/api/v1/orgs", createOrgRoutes());
+
+  // Users
+  const { createUserRoutes } = await import("./routes/users.js");
+  app.route("/api/v1/users", createUserRoutes());
+
+  // RBAC
+  const { createRbacRoutes } = await import("./routes/rbac.js");
+  app.route("/api/v1/rbac", createRbacRoutes());
+
   // ─── 404 fallback ────────────────────────────────────────────────────
   app.notFound((c) =>
     c.json({ error: "Not found", path: c.req.path }, 404),

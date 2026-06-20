@@ -28,6 +28,7 @@ export const HUB_CONFIG = {
   /** JWT configuration */
   auth: {
     jwtSecret: process.env.JWT_SECRET || "change-me-in-production",
+    jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || "change-me-refresh-in-production",
     jwtExpiry: process.env.JWT_EXPIRY || "7d",
     workerTokenExpiry: process.env.WORKER_TOKEN_EXPIRY || "30d",
   },

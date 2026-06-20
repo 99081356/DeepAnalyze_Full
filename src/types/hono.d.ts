@@ -1,5 +1,5 @@
 /**
- * Hono type augmentation for worker authentication context.
+ * Hono type augmentation for authentication context.
  */
 
 import "hono";
@@ -7,5 +7,9 @@ import "hono";
 declare module "hono" {
   interface ContextVariableMap {
     workerId: string;
+    userId: string;
+    userPermissions: string[];
+    userOrgId: string | null;
+    isSuperAdmin: boolean;
   }
 }
