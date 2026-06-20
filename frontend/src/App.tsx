@@ -7,6 +7,8 @@ import { OrgTree } from "./pages/OrgTree.js";
 import { UserList } from "./pages/UserList.js";
 import { WorkerApproval } from "./pages/WorkerApproval.js";
 import { Skills } from "./pages/Skills.js";
+import { Sharings } from "./pages/Sharings.js";
+import { Security } from "./pages/Security.js";
 
 function Layout({ user, onLogout, children }: { user: MeResponse; onLogout: () => void; children: React.ReactNode }) {
   const location = useLocation();
@@ -16,6 +18,8 @@ function Layout({ user, onLogout, children }: { user: MeResponse; onLogout: () =
     { to: "/users", label: "用户" },
     { to: "/workers", label: "Worker 审批" },
     { to: "/skills", label: "Skills 市场" },
+    { to: "/sharings", label: "跨组织共享" },
+    { to: "/security", label: "安全网关" },
   ];
   return (
     <div style={{ display: "flex", minHeight: "100vh", fontFamily: "system-ui, -apple-system, sans-serif" }}>
@@ -112,6 +116,8 @@ export default function App() {
       <Route path="/users" element={<ProtectedRoute user={user} setUser={setUser}><UserList /></ProtectedRoute>} />
       <Route path="/workers" element={<ProtectedRoute user={user} setUser={setUser}><WorkerApproval /></ProtectedRoute>} />
       <Route path="/skills" element={<ProtectedRoute user={user} setUser={setUser}><Skills user={user!} /></ProtectedRoute>} />
+      <Route path="/sharings" element={<ProtectedRoute user={user} setUser={setUser}><Sharings /></ProtectedRoute>} />
+      <Route path="/security" element={<ProtectedRoute user={user} setUser={setUser}><Security /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );

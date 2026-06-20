@@ -173,6 +173,77 @@ export const api = {
     request<{ success: boolean }>("DELETE", `/skills/${pkgId}/subscribe`),
   killSwitchSkill: (pkgId: string, reason: string) =>
     request<{ success: boolean }>("POST", `/skills/${pkgId}/kill`, { reason }),
+
+  // ─── Phase 4: SkillSharing ──────────────────────────────────────────
+  listSharings: (params?: { status?: string; package_id?: string }) => {
+    const q = new URLSearchParams();
+    if (params?.status) q.set("status", params.status);
+    if (params?.package_id) q.set("package_id", params.package_id);
+    const qs = q.toString();
+    return request<{ sharings: SkillSharing[] }>(
+      "GET",
+      `/sharings${qs ? `?${qs}` : ""}`,
+    );
+  },
+  createSharing: (data: {
+    package_id: string;
+    source_org_id?: string;
+    target_org_id: string;
+    restrictions?: Record<string, unknown>;
+  }) => request<{ sharing: SkillSharing }>("POST", "/sharings", data),
+  approveSharing: (id: string) =>
+    request<{ sharing: SkillSharing }>("POST", `/sharings/${id}/approve`),
+  rejectSharing: (id: string, reason: string) =>
+    request<{ sharing: SkillSharing }>("POST", `/sharings/${id}/reject`, { reason }),
+  revokeSharing: (id: string, reason: string) =>
+    request<{ sharing: SkillSharing; killed_workers: number }>(
+      "DELETE",
+      `/sharings/${id}`,
+      { reason },
+    ),
+
+  // ─── Phase 4: Skill usage ───────────────────────────────────────────
+  getUsageStats: (pkgId: string) =>
+    request<{ stats: UsageStats }>("GET", `/skills/${pkgId}/usage/stats`),
+  getUsageTop: (limit = 20) =>
+    request<{ top: Array<{ package_id: string; package_name: string; calls: number; success_rate: number }> }>(
+      "GET",
+      `/skills/usage/top?limit=${limit}`,
+    ),
+
+  // ─── Phase 4: Security Gateway ──────────────────────────────────────
+  getSecurityStatus: () =>
+    request<{ enabled: boolean; fail_open: boolean; timeout_ms: number }>(
+      "GET",
+      "/security/status",
+    ),
+  scanText: (text: string, direction?: "input" | "output") =>
+    request<{ result: ScanResult }>("POST", "/security/scan", { text, direction }),
+  checkTool: (toolName: string, args: unknown) =>
+    request<{ result: ScanResult }>("POST", "/security/check-tool", {
+      tool_name: toolName,
+      args,
+    }),
+
+  // ─── Phase 4: MFA ───────────────────────────────────────────────────
+  getMfaStatus: () =>
+    request<{ configured: boolean; required: boolean; globally_required: boolean }>(
+      "GET",
+      "/auth/mfa/status",
+    ),
+  setupMfa: () =>
+    request<{ secret: string; provisioning_uri: string }>("POST", "/auth/mfa/setup"),
+  verifyMfa: (secret: string, code: string) =>
+    request<{ enabled: boolean }>("POST", "/auth/mfa/verify", { secret, code }),
+  disableMfa: (code: string) =>
+    request<{ disabled: boolean }>("POST", "/auth/mfa/disable", { code }),
+
+  // ─── Phase 4: Auth adapters ─────────────────────────────────────────
+  getAuthAdapters: () =>
+    request<{ adapters: Array<{ provider: string; enabled: boolean }>; mfa_required: boolean }>(
+      "GET",
+      "/auth/adapters",
+    ),
 };
 
 export interface SkillPackageV2 {
@@ -193,4 +264,49 @@ export interface SkillVersionV2 {
   content_hash: string;
   status: string;
   created_at: string;
+}
+
+export interface SkillSharing {
+  id: string;
+  package_id: string;
+  source_org_id: string;
+  target_org_id: string;
+  status: "pending" | "approved" | "rejected" | "revoked";
+  initiated_by: string;
+  approved_by: string | null;
+  restrictions: Record<string, unknown>;
+  created_at: string;
+  approved_at: string | null;
+  revoked_at: string | null;
+  revoke_reason: string | null;
+}
+
+export interface UsageStats {
+  package_id: string;
+  total: number;
+  success: number;
+  failure: number;
+  timeout: number;
+  blocked: number;
+  success_rate: number;
+  avg_duration_ms: number | null;
+  unique_workers: number;
+  unique_users: number;
+  last_24h: number;
+  last_7d: number;
+}
+
+export interface ScanResult {
+  action: "approve" | "sanitize" | "block";
+  reason?: string;
+  sanitized?: string;
+  matches: Array<{
+    engine: string;
+    rule_id: string;
+    matched_text: string;
+    severity: number;
+    category: string;
+  }>;
+  severity: number;
+  duration_ms: number;
 }

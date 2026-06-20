@@ -17,6 +17,10 @@ export async function createApp(): Promise<Hono> {
   app.use("*", cors());
   app.use("*", logger());
 
+  // Security Gateway input filter (Phase 4)
+  const { securityInputFilter } = await import("./middleware/security-gateway.js");
+  app.use("/api/v1/*", securityInputFilter);
+
   // ─── Health check ─────────────────────────────────────────────────────
   app.get("/api/health", (c) =>
     c.json({
@@ -44,6 +48,10 @@ export async function createApp(): Promise<Hono> {
   const { createAuthRoutes } = await import("./routes/auth.js");
   app.route("/api/v1/auth", createAuthRoutes());
 
+  // Enterprise auth adapters (Phase 4: MFA + LDAP/OIDC bridges)
+  const { createAuthAdapterRoutes } = await import("./routes/auth-adapters.js");
+  app.route("/api/v1/auth", createAuthAdapterRoutes());
+
   // Organizations
   const { createOrgRoutes } = await import("./routes/orgs.js");
   app.route("/api/v1/orgs", createOrgRoutes());
@@ -61,9 +69,22 @@ export async function createApp(): Promise<Hono> {
   const { createSkillWorkflowRoutes } = await import("./routes/skill-workflow.js");
   app.route("/api/v1/skills", createSkillWorkflowRoutes());
 
+  // Skill usage (Phase 4: usage logging + stats)
+  // Mounted BEFORE marketplace routes so /usage/top doesn't collide with /:id
+  const { createSkillUsageRoutes } = await import("./routes/skill-usage.js");
+  app.route("/api/v1/skills", createSkillUsageRoutes());
+
   // Skills marketplace (Phase 2: org-scoped packages)
   const { createSkillRoutes } = await import("./routes/skills.js");
   app.route("/api/v1/skills", createSkillRoutes());
+
+  // Skill sharing (Phase 4: cross-org bilateral approval)
+  const { createSkillSharingRoutes } = await import("./routes/skill-sharing.js");
+  app.route("/api/v1/sharings", createSkillSharingRoutes());
+
+  // Security Gateway admin (Phase 4: scan / status / rules)
+  const { createSecurityRoutes } = await import("./routes/security.js");
+  app.route("/api/v1/security", createSecurityRoutes());
 
   // ─── Static frontend (admin panel) ───────────────────────────────────
   // Serves built React app from frontend/dist/. Falls back to index.html
