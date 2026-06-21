@@ -250,9 +250,15 @@ export interface SkillPackageV2 {
   id: string;
   name: string;
   slug: string;
+  display_name: string;
   scope: "system" | "org" | "user";
-  description: string | null;
+  description: string;
+  category: string;
   tags: string[];
+  icon: string;
+  trust_level: string;
+  author_name?: string;
+  active_version?: string;
   stats: { downloads: number; subscriptions: number; rating_avg: number };
   is_kill_switched: boolean;
   created_at: string;

@@ -1,56 +1,74 @@
-import { useEffect, useState, useCallback } from "react";
-import { api, type MeResponse } from "../api/client.js";
+import { useEffect, useState, useCallback, useMemo, type CSSProperties } from "react";
+import { useNavigate } from "react-router-dom";
+import { Package } from "lucide-react";
+import { api, type MeResponse, type SkillPackageV2 } from "../api/client.js";
+import { SearchBar } from "../components/ui/SearchBar.js";
+import { EmptyState } from "../components/ui/EmptyState.js";
+import { SkillCard, type SkillCardData } from "../components/hub/SkillCard.js";
 
-interface SkillPackage {
-  id: string;
-  name: string;
-  slug: string;
-  display_name: string;
-  description: string | null;
-  scope: "system" | "org" | "user";
-  category: string;
-  tags: string[];
-  stats: { downloads: number; subscriptions: number; rating_avg: number };
-  trust_level: string;
-  is_kill_switched: boolean;
-  created_at: string;
+/* -------------------------------------------------------------------------- */
+/*  Constants                                                                 */
+/* -------------------------------------------------------------------------- */
+
+const CATEGORIES = [
+  "全部",
+  "engineering",
+  "writing",
+  "operations",
+  "business",
+  "security",
+  "productivity",
+] as const;
+
+type Category = (typeof CATEGORIES)[number];
+
+/* -------------------------------------------------------------------------- */
+/*  Helpers                                                                   */
+/* -------------------------------------------------------------------------- */
+
+/** Transform API SkillPackageV2 to SkillCardData */
+function toCardData(pkg: SkillPackageV2): SkillCardData {
+  return {
+    id: pkg.id,
+    name: pkg.name,
+    display_name: pkg.display_name || pkg.name,
+    description: pkg.description || "",
+    scope: pkg.scope,
+    category: pkg.category || "engineering",
+    tags: pkg.tags ?? [],
+    icon: pkg.icon || "",
+    version: pkg.active_version || "",
+    trust_level: pkg.trust_level || "normal",
+    author_name: pkg.author_name || "未知",
+    subscriptions: pkg.stats?.subscriptions ?? 0,
+    is_kill_switched: pkg.is_kill_switched,
+  };
 }
 
-interface SkillVersion {
-  id: string;
-  version: string;
-  status: string;
-  content_hash: string;
-  created_at: string;
-  published_at: string | null;
-  change_summary: string | null;
-}
+/* -------------------------------------------------------------------------- */
+/*  Component                                                                 */
+/* -------------------------------------------------------------------------- */
 
-export function Skills({ user }: { user: MeResponse }) {
-  const [packages, setPackages] = useState<SkillPackage[]>([]);
-  const [selectedPkg, setSelectedPkg] = useState<SkillPackage | null>(null);
-  const [versions, setVersions] = useState<SkillVersion[]>([]);
+export function Skills({ user: _user }: { user: MeResponse }) {
+  const navigate = useNavigate();
+
+  const [packages, setPackages] = useState<SkillPackageV2[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [showCreate, setShowCreate] = useState(false);
-  const [newPkg, setNewPkg] = useState({
-    name: "",
-    description: "",
-    scope: "user",
-    version: "1.0.0",
-    content: "",
-  });
+  const [category, setCategory] = useState<Category>("全部");
+
+  /* -- load skills -- */
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const resp = await api.getRaw<{ items: SkillPackage[]; total: number }>(
+      const resp = await api.getRaw<{ items: SkillPackageV2[] }>(
         "GET",
-        `/skills?search=${encodeURIComponent(search)}`,
+        `/skills${search ? `?search=${encodeURIComponent(search)}` : ""}`,
       );
-      setPackages(resp.items);
+      setPackages(resp.items ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load skills");
     } finally {
@@ -62,191 +80,179 @@ export function Skills({ user }: { user: MeResponse }) {
     load();
   }, [load]);
 
-  const loadVersions = useCallback(async (pkgId: string) => {
+  /* -- filtered list -- */
+
+  const filtered = useMemo(() => {
+    let list = packages;
+    if (category !== "全部") {
+      list = list.filter((p) => (p.category || "engineering") === category);
+    }
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          (p.display_name || "").toLowerCase().includes(q) ||
+          (p.description || "").toLowerCase().includes(q),
+      );
+    }
+    return list;
+  }, [packages, category, search]);
+
+  /* -- handlers -- */
+
+  const handleDetail = useCallback(
+    (pkgId: string) => {
+      navigate(`/skills/${pkgId}`);
+    },
+    [navigate],
+  );
+
+  const handleSubscribe = useCallback(async (pkgId: string) => {
     try {
-      const resp = await api.getRaw<{ versions: SkillVersion[] }>("GET", `/skills/${pkgId}/versions`);
-      setVersions(resp.versions);
+      await api.subscribeSkill(pkgId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load versions");
+      console.error("Subscribe failed:", err);
     }
   }, []);
 
-  const handleSelect = (pkg: SkillPackage) => {
-    setSelectedPkg(pkg);
-    loadVersions(pkg.id);
+  /* -- styles -- */
+
+  const pageStyle: CSSProperties = {
+    display: "flex",
+    flexDirection: "column",
+    gap: "var(--space-5)",
   };
 
-  const handleCreate = async () => {
-    if (!newPkg.name || !newPkg.content) return;
-    try {
-      // Step 1: create package
-      const pkgResp = await api.createPackage({
-        name: newPkg.name,
-        description: newPkg.description,
-        scope: newPkg.scope as "system" | "org" | "user",
-      });
-      // Step 2: add first version
-      await api.createVersionRaw(pkgResp.package.id, {
-        version: newPkg.version,
-        content: newPkg.content,
-      });
-      setNewPkg({ name: "", description: "", scope: "user", version: "1.0.0", content: "" });
-      setShowCreate(false);
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create");
-    }
+  const searchRowStyle: CSSProperties = {
+    width: "100%",
   };
 
-  const handleSubscribe = async (pkgId: string) => {
-    try {
-      await api.subscribeSkill(pkgId);
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed");
-    }
+  const chipRowStyle: CSSProperties = {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "var(--space-2)",
   };
 
-  const handleUnsubscribe = async (pkgId: string) => {
-    try {
-      await api.unsubscribeSkill(pkgId);
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed");
-    }
+  const chipBase: CSSProperties = {
+    padding: "var(--space-1) var(--space-3)",
+    borderRadius: "var(--radius-full)",
+    fontSize: "var(--text-sm)",
+    fontWeight: "var(--font-medium)" as unknown as number,
+    cursor: "pointer",
+    border: "1px solid var(--border-primary)",
+    background: "var(--bg-tertiary)",
+    color: "var(--text-secondary)",
+    transition: "all var(--transition-fast)",
+    userSelect: "none",
   };
 
-  const handleKillSwitch = async (pkgId: string, reason: string) => {
-    if (!confirm(`激活 Kill Switch？原因: ${reason}`)) return;
-    try {
-      await api.killSwitchSkill(pkgId, reason);
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed");
-    }
+  const chipActive: CSSProperties = {
+    background: "var(--brand-primary)",
+    color: "var(--brand-foreground)",
+    borderColor: "var(--brand-primary)",
+  };
+
+  const countStyle: CSSProperties = {
+    fontSize: "var(--text-sm)",
+    color: "var(--text-secondary)",
+  };
+
+  const gridStyle: CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+    gap: "var(--space-4)",
+  };
+
+  const errorStyle: CSSProperties = {
+    padding: "var(--space-4) var(--space-5)",
+    background: "var(--error-light)",
+    border: "1px solid var(--error)",
+    borderRadius: "var(--radius-lg)",
+    color: "var(--error-dark)",
+    fontSize: "var(--text-sm)",
+  };
+
+  const loadingStyle: CSSProperties = {
+    padding: "var(--space-10)",
+    textAlign: "center",
+    color: "var(--text-tertiary)",
+    fontSize: "var(--text-sm)",
   };
 
   return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 600 }}>Skills 市场 ({packages.length})</h2>
-        <div style={{ display: "flex", gap: 8 }}>
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && load()}
-            placeholder="搜索..."
-            style={inputStyle}
-          />
-          <button onClick={() => setShowCreate(!showCreate)} style={btnPrimary}>+ 新建</button>
-        </div>
+    <div style={pageStyle}>
+      {/* Search bar */}
+      <div style={searchRowStyle}>
+        <SearchBar
+          value={search}
+          onChange={(v) => setSearch(v)}
+          placeholder="搜索 Skills..."
+        />
       </div>
 
-      {showCreate && (
-        <div style={{ background: "white", padding: 16, marginBottom: 16, borderRadius: 8 }}>
-          <h3 style={{ fontSize: 15, fontWeight: 500, marginBottom: 12 }}>创建 Skill 包</h3>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 200px", gap: 12, marginBottom: 12 }}>
-            <input placeholder="名称" value={newPkg.name} onChange={(e) => setNewPkg({ ...newPkg, name: e.target.value })} style={inputStyle} />
-            <input placeholder="版本 (如 1.0.0)" value={newPkg.version} onChange={(e) => setNewPkg({ ...newPkg, version: e.target.value })} style={inputStyle} />
-            <select value={newPkg.scope} onChange={(e) => setNewPkg({ ...newPkg, scope: e.target.value })} style={inputStyle}>
-              <option value="user">user</option>
-              <option value="org">org</option>
-              {user.is_super_admin && <option value="system">system</option>}
-            </select>
-          </div>
-          <input placeholder="描述（可选）" value={newPkg.description} onChange={(e) => setNewPkg({ ...newPkg, description: e.target.value })} style={{ ...inputStyle, width: "100%", marginBottom: 12 }} />
-          <textarea
-            placeholder="SKILL.md 内容"
-            value={newPkg.content}
-            onChange={(e) => setNewPkg({ ...newPkg, content: e.target.value })}
-            style={{ ...inputStyle, width: "100%", minHeight: 120, fontFamily: "monospace", marginBottom: 12 }}
-          />
-          <button onClick={handleCreate} style={{ ...btnPrimary, background: "#059669" }}>创建</button>
-        </div>
+      {/* Category chips */}
+      <div style={chipRowStyle}>
+        {CATEGORIES.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setCategory(cat)}
+            style={{
+              ...chipBase,
+              ...(cat === category ? chipActive : {}),
+            }}
+            onMouseEnter={(e) => {
+              if (cat !== category) {
+                e.currentTarget.style.borderColor = "var(--border-secondary)";
+                e.currentTarget.style.background = "var(--bg-hover)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (cat !== category) {
+                e.currentTarget.style.borderColor = "var(--border-primary)";
+                e.currentTarget.style.background = "var(--bg-tertiary)";
+              }
+            }}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {/* Result count */}
+      <div style={countStyle}>
+        共 {filtered.length} 个 Skills
+      </div>
+
+      {/* Error */}
+      {error && <div style={errorStyle}>{error}</div>}
+
+      {/* Loading */}
+      {loading && <div style={loadingStyle}>加载中...</div>}
+
+      {/* Grid or EmptyState */}
+      {!loading && !error && (
+        <>
+          {filtered.length === 0 ? (
+            <EmptyState
+              icon={<Package size={24} />}
+              title="未找到 Skill"
+              description="尝试调整搜索条件或切换分类筛选器。"
+            />
+          ) : (
+            <div style={gridStyle}>
+              {filtered.map((pkg) => (
+                <SkillCard
+                  key={pkg.id}
+                  skill={toCardData(pkg)}
+                  onDetail={() => handleDetail(pkg.id)}
+                  onSubscribe={() => handleSubscribe(pkg.id)}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
-
-      {error && <div style={errStyle}>{error}</div>}
-
-      <div style={{ display: "grid", gridTemplateColumns: selectedPkg ? "1fr 1fr" : "1fr", gap: 16 }}>
-        <div style={{ display: "grid", gap: 8 }}>
-          {loading ? (
-            <div style={emptyStyle}>加载中...</div>
-          ) : packages.length === 0 ? (
-            <div style={emptyStyle}>无 Skills</div>
-          ) : packages.map((pkg) => (
-            <div
-              key={pkg.id}
-              onClick={() => handleSelect(pkg)}
-              style={{
-                background: "white", padding: 12, borderRadius: 8, cursor: "pointer",
-                borderLeft: `4px solid ${pkg.scope === "system" ? "#dc2626" : pkg.scope === "org" ? "#2563eb" : "#10b981"}`,
-                opacity: pkg.is_kill_switched ? 0.5 : 1,
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <div>
-                  <span style={{ fontWeight: 500 }}>{pkg.name}</span>
-                  <span style={{ marginLeft: 8, fontSize: 11, padding: "1px 8px", borderRadius: 10, background: "#e5e7eb" }}>{pkg.scope}</span>
-                  {pkg.is_kill_switched && <span style={{ marginLeft: 8, fontSize: 11, color: "#dc2626" }}>KILLED</span>}
-                </div>
-                <div style={{ fontSize: 11, color: "#6b7280" }}>
-                  👥 {pkg.stats?.subscriptions ?? 0} · ⬇ {pkg.stats?.downloads ?? 0}
-                </div>
-              </div>
-              {pkg.description && <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>{pkg.description}</div>}
-            </div>
-          ))}
-        </div>
-
-        {selectedPkg && (
-          <div style={{ background: "white", padding: 16, borderRadius: 8 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 500, marginBottom: 8 }}>{selectedPkg.name}</h3>
-            <div style={{ fontSize: 13, color: "#6b7280", marginBottom: 12 }}>
-              {selectedPkg.description || "无描述"}
-            </div>
-            <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-              <button onClick={() => handleSubscribe(selectedPkg.id)} style={{ ...btnPrimary, background: "#059669" }}>订阅</button>
-              <button onClick={() => handleUnsubscribe(selectedPkg.id)} style={btnPrimary}>取消订阅</button>
-              {(user.is_super_admin || user.is_org_admin) && (
-                <button
-                  onClick={() => handleKillSwitch(selectedPkg.id, prompt("Kill 原因:") || "test")}
-                  style={{ ...btnPrimary, background: "#dc2626" }}
-                  disabled={selectedPkg.is_kill_switched}
-                >
-                  Kill Switch
-                </button>
-              )}
-            </div>
-            <h4 style={{ fontSize: 13, fontWeight: 500, marginBottom: 8 }}>版本历史</h4>
-            {versions.length === 0 ? (
-              <div style={{ fontSize: 12, color: "#6b7280" }}>无版本</div>
-            ) : (
-              versions.map((v) => (
-                <div key={v.id} style={{ padding: "6px 0", borderBottom: "1px solid #f3f4f6", fontSize: 12 }}>
-                  <div>v{v.version} <span style={{ color: v.status === "published" ? "#059669" : "#6b7280", fontSize: 11 }}>({v.status})</span></div>
-                  <div style={{ color: "#9ca3af", marginTop: 2 }}>
-                    hash: {v.content_hash.slice(0, 12)} · {new Date(v.created_at).toLocaleString("zh-CN")}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
-      </div>
     </div>
   );
 }
-
-const inputStyle: React.CSSProperties = {
-  padding: "6px 10px", border: "1px solid #d1d5db", borderRadius: 4, fontSize: 13,
-};
-const btnPrimary: React.CSSProperties = {
-  padding: "6px 14px", background: "#2563eb", color: "white",
-  border: "none", borderRadius: 4, fontSize: 13, cursor: "pointer",
-};
-const emptyStyle: React.CSSProperties = {
-  padding: 40, textAlign: "center", color: "#6b7280", background: "white", borderRadius: 8,
-};
-const errStyle: React.CSSProperties = {
-  padding: 12, background: "#fee2e2", color: "#991b1b", borderRadius: 4, marginBottom: 16,
-};
