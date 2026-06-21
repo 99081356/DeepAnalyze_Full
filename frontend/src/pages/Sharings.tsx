@@ -48,13 +48,22 @@ function buildAuditEntries(s: SkillSharing): AuditEntry[] {
     to_status: "pending",
     created_at: s.created_at,
   }];
-  if (s.approved_at) {
+  if (s.status === "rejected" && (s.approved_at || s.revoked_at)) {
+    entries.push({
+      id: `${s.id}:reject`,
+      actor_name: s.approved_by ?? "?",
+      action: "sharing_rejected",
+      from_status: "pending",
+      to_status: "rejected",
+      created_at: s.approved_at ?? s.revoked_at!,
+    });
+  } else if (s.approved_at && s.status !== "rejected") {
     entries.push({
       id: `${s.id}:approve`,
       actor_name: s.approved_by ?? "?",
       action: "sharing_approved",
       from_status: "pending",
-      to_status: s.status === "rejected" ? "rejected" : "approved",
+      to_status: "approved",
       created_at: s.approved_at,
     });
   }
@@ -70,12 +79,6 @@ function buildAuditEntries(s: SkillSharing): AuditEntry[] {
     });
   }
   return entries;
-}
-
-function formatRestrictions(r: Record<string, unknown>): string {
-  const keys = Object.keys(r ?? {});
-  if (keys.length === 0) return "—";
-  return keys.map((k) => `${k}: ${String(r[k])}`).join(" · ");
 }
 
 /* -------------------------------------------------------------------------- */
@@ -262,13 +265,14 @@ export function Sharings() {
       {/* Status tab chips + refresh */}
       <div style={tabBarStyle}>
         {STATUS_TABS.map((tab) => (
-          <span
+          <button
             key={tab.value}
+            type="button"
             style={{ ...chipBase, ...(statusFilter === tab.value ? chipActive : {}) }}
             onClick={() => setStatusFilter(tab.value)}
           >
             {tab.label}
-          </span>
+          </button>
         ))}
         <div style={{ marginLeft: "auto" }}>
           <Button

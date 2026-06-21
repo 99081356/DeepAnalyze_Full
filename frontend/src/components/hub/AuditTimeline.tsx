@@ -48,6 +48,10 @@ const ACTION_LABELS: Record<string, string> = {
   unshare: '取消分享',
   enable: '启用',
   disable: '禁用',
+  sharing_initiated: '发起共享',
+  sharing_approved: '批准共享',
+  sharing_rejected: '拒绝共享',
+  sharing_revoked: '撤销共享',
 };
 
 function getActionLabel(action: string): string {
