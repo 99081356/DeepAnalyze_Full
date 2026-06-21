@@ -21,12 +21,14 @@
  */
 
 import { Hono } from "hono";
+import { z } from "zod";
 import { query } from "../../store/pg.js";
 import { jwtAuth } from "../middleware/jwt-auth.js";
 import { requirePermission } from "../middleware/require-permission.js";
 import { workerAuth } from "../middleware/worker-auth.js";
 import * as skillPkg from "../../domain/skill-package.js";
 import * as skillSub from "../../domain/skill-subscription.js";
+import { createPackageSchema, createVersionSchema } from "../validations/skill-schemas.js";
 
 export function createSkillRoutes(): Hono {
   const app = new Hono();
@@ -60,19 +62,22 @@ export function createSkillRoutes(): Hono {
     const userId = c.get("userId") as string;
     const userOrgId = c.get("userOrgId") as string | null;
     const isSuperAdmin = c.get("isSuperAdmin") as boolean;
-    const body = await c.req.json<{
-      name: string;
-      description?: string;
-      scope?: "system" | "org" | "user";
-      org_id?: string;
-      category?: string;
-      tags?: string[];
-    }>();
 
-    if (!body.name) return c.json({ error: "name required" }, 400);
+    const rawBody = await c.req.json().catch(() => ({}));
+    const parsed = createPackageSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      const flat = z.flattenError(parsed.error);
+      return c.json({
+        error: "Validation failed",
+        fields: Object.fromEntries(
+          Object.entries(flat.fieldErrors).map(([k, v]) => [k, v?.[0]]),
+        ),
+      }, 400);
+    }
+    const body = parsed.data;
 
     // Enforce scope permissions
-    let scope = body.scope ?? "user";
+    const scope = body.scope;
     let orgId: string | null = null;
 
     if (scope === "system") {
@@ -138,19 +143,18 @@ export function createSkillRoutes(): Hono {
       }
     }
 
-    const body = await c.req.json<{
-      version: string;
-      content: string;
-      when_to_use?: string;
-      allowed_tools?: string[];
-      data_classification?: string;
-      change_summary?: string;
-      autoPublish?: boolean;
-    }>();
-
-    if (!body.version || !body.content) {
-      return c.json({ error: "version and content required" }, 400);
+    const rawBody = await c.req.json().catch(() => ({}));
+    const parsed = createVersionSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      const flat = z.flattenError(parsed.error);
+      return c.json({
+        error: "Validation failed",
+        fields: Object.fromEntries(
+          Object.entries(flat.fieldErrors).map(([k, v]) => [k, v?.[0]]),
+        ),
+      }, 400);
     }
+    const body = parsed.data;
 
     try {
       const version = await skillPkg.createVersion({
