@@ -2,6 +2,7 @@ import React from 'react';
 import { Download } from 'lucide-react';
 import { Badge } from '../ui/Badge.js';
 import { Button } from '../ui/Button.js';
+import { SCOPE_LABEL, SCOPE_VARIANT } from './skill-constants.js';
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
@@ -28,22 +29,6 @@ export interface SkillCardProps {
   onSubscribe?: () => void;
   onDetail?: () => void;
 }
-
-/* -------------------------------------------------------------------------- */
-/*  Scope → Badge variant mapping                                             */
-/* -------------------------------------------------------------------------- */
-
-const SCOPE_LABELS: Record<SkillCardData['scope'], string> = {
-  system: '系统',
-  org: '组织',
-  user: '用户',
-};
-
-const SCOPE_VARIANT: Record<SkillCardData['scope'], 'default' | 'info' | 'success'> = {
-  system: 'success',
-  org: 'info',
-  user: 'default',
-};
 
 /* -------------------------------------------------------------------------- */
 /*  Color palette for icon backgrounds                                        */
@@ -209,7 +194,7 @@ export function SkillCard({ skill, onSubscribe, onDetail }: SkillCardProps) {
           <div style={nameRowStyle}>
             <span style={nameStyle}>{skill.display_name || skill.name}</span>
             <Badge variant={SCOPE_VARIANT[skill.scope]} size="sm">
-              {SCOPE_LABELS[skill.scope]}
+              {SCOPE_LABEL[skill.scope]}
             </Badge>
             {skill.is_kill_switched && (
               <Badge variant="error" size="sm">

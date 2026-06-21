@@ -6,23 +6,8 @@ import { Badge } from "../components/ui/Badge.js";
 import { Button } from "../components/ui/Button.js";
 import { Tabs } from "../components/ui/Tabs.js";
 import { AuditTimeline, type AuditEntry } from "../components/hub/AuditTimeline.js";
+import { SCOPE_LABEL, SCOPE_VARIANT } from "../components/hub/skill-constants.js";
 import { useUIStore } from "../store/ui.js";
-
-/* -------------------------------------------------------------------------- */
-/*  Constants                                                                 */
-/* -------------------------------------------------------------------------- */
-
-const SCOPE_LABEL: Record<string, string> = {
-  system: "系统级",
-  org: "组织级",
-  user: "用户级",
-};
-
-const SCOPE_VARIANT: Record<string, "error" | "info" | "success"> = {
-  system: "error",
-  org: "info",
-  user: "success",
-};
 
 interface VersionItem {
   version: string;
@@ -38,6 +23,7 @@ export function SkillDetail({ user }: { user: MeResponse }) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const showConfirm = useUIStore((s) => s.showConfirm);
+  const addToast = useUIStore((s) => s.addToast);
 
   const [pkg, setPkg] = useState<SkillPackageV2 | null>(null);
   const [version, setVersion] = useState<VersionItem | null>(null);
@@ -76,8 +62,13 @@ export function SkillDetail({ user }: { user: MeResponse }) {
     if (!pkg) return;
     try {
       await api.subscribeSkill(pkg.id);
+      addToast("success", `已订阅 ${pkg.display_name || pkg.name}`);
+      location.reload();
     } catch (err) {
-      console.error("Subscribe failed:", err);
+      addToast(
+        "error",
+        `订阅失败: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   };
 
@@ -96,9 +87,13 @@ export function SkillDetail({ user }: { user: MeResponse }) {
     if (confirmed) {
       try {
         await api.killSwitchSkill(pkg.id, "手动禁用");
+        addToast("success", `已禁用 ${pkg.display_name || pkg.name}`);
         location.reload();
       } catch (err) {
-        console.error("Kill switch failed:", err);
+        addToast(
+          "error",
+          `禁用失败: ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
   };
