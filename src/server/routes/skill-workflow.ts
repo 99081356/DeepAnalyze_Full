@@ -94,7 +94,7 @@ export function createSkillWorkflowRoutes(): Hono {
         return c.json({
           error: "Publish requires approval. Call /request-publish first.",
           current_status: version.status,
-        }, 409);
+        }, 400);
       }
     }
 
