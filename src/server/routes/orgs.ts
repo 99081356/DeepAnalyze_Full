@@ -39,7 +39,11 @@ export function createOrgRoutes() {
 
   // GET /api/v1/orgs/tree — 完整组织树
   router.get("/tree", requirePermission("org:read"), async (c) => {
-    const tree = await buildOrgTree("root");
+    // Dynamic root resolution: parent_id IS NULL 的组织是真正的根节点。
+    // 避免硬编码 "root" 字符串与实际根 id（如 "org_dsi"）不匹配。
+    const root = await getRootOrg();
+    if (!root) return c.json({ tree: null });
+    const tree = await buildOrgTree(root.id);
     return c.json({ tree });
   });
 
@@ -61,11 +65,22 @@ export function createOrgRoutes() {
     return c.json({ organization: org });
   });
 
-  // GET /api/v1/orgs/:id/tree
+  // GET /api/v1/orgs/:id/tree — 非超管仅可见本组织子树（与 GET /:id 一致的 DataScope）
   router.get("/:id/tree", async (c) => {
     const id = c.req.param("id")!;
+    const requested = await getOrgById(id);
+    if (!requested) return c.json({ error: "Organization not found" }, 404);
+
+    const isSuperAdmin = c.get("isSuperAdmin");
+    const userOrgId = c.get("userOrgId") as string | null;
+    if (!isSuperAdmin && userOrgId) {
+      const userOrg = await getOrgById(userOrgId);
+      if (!userOrg || !requested.path.startsWith(userOrg.path)) {
+        return c.json({ error: "Access denied" }, 403);
+      }
+    }
+
     const tree = await buildOrgTree(id);
-    if (!tree) return c.json({ error: "Organization not found" }, 404);
     return c.json({ tree });
   });
 

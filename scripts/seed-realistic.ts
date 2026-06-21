@@ -25,17 +25,19 @@ interface OrgDef {
 }
 
 const ORGS: OrgDef[] = [
-  { id: "org_dsi",     name: "深度智能科技",       code: "DSI",   type: "company",    level: 0, parent_code: null,    path: "dsi" },
-  { id: "org_prc",     name: "产品研发中心",       code: "PRC",   type: "department", level: 1, parent_code: "DSI",   path: "dsi.prc" },
-  { id: "org_infra",   name: "基础平台部",         code: "INFRA", type: "department", level: 2, parent_code: "PRC",   path: "dsi.prc.infra" },
-  { id: "org_agent",   name: "Agent 引擎组",       code: "AGENT", type: "team",       level: 3, parent_code: "INFRA", path: "dsi.prc.infra.agent" },
-  { id: "org_data",    name: "数据基础设施组",     code: "DATA",  type: "team",       level: 3, parent_code: "INFRA", path: "dsi.prc.infra.data" },
-  { id: "org_app",     name: "应用产品部",         code: "APP",   type: "department", level: 2, parent_code: "PRC",   path: "dsi.prc.app" },
-  { id: "org_kb",      name: "知识库产品组",       code: "KB",    type: "team",       level: 3, parent_code: "APP",   path: "dsi.prc.app.kb" },
-  { id: "org_comm",    name: "商业化中心",         code: "COMM",  type: "department", level: 1, parent_code: "DSI",   path: "dsi.comm" },
-  { id: "org_sol",     name: "解决方案部",         code: "SOL",   type: "department", level: 2, parent_code: "COMM",  path: "dsi.comm.sol" },
-  { id: "org_cs",      name: "客户成功部",         code: "CS",    type: "department", level: 2, parent_code: "COMM",  path: "dsi.comm.cs" },
-  { id: "org_sec",     name: "安全合规部",         code: "SEC",   type: "department", level: 1, parent_code: "DSI",   path: "dsi.sec" },
+  // path 使用 "/" 分隔符，与 domain/organization.ts 的 computePathLevel 一致。
+  // getSubtree() 依赖 path LIKE 'root/%' 前缀匹配，不能用 "." 分隔。
+  { id: "org_dsi",     name: "深度智能科技",       code: "DSI",   type: "company",    level: 1, parent_code: null,    path: "dsi" },
+  { id: "org_prc",     name: "产品研发中心",       code: "PRC",   type: "department", level: 2, parent_code: "DSI",   path: "dsi/prc" },
+  { id: "org_infra",   name: "基础平台部",         code: "INFRA", type: "department", level: 3, parent_code: "PRC",   path: "dsi/prc/infra" },
+  { id: "org_agent",   name: "Agent 引擎组",       code: "AGENT", type: "team",       level: 4, parent_code: "INFRA", path: "dsi/prc/infra/agent" },
+  { id: "org_data",    name: "数据基础设施组",     code: "DATA",  type: "team",       level: 4, parent_code: "INFRA", path: "dsi/prc/infra/data" },
+  { id: "org_app",     name: "应用产品部",         code: "APP",   type: "department", level: 3, parent_code: "PRC",   path: "dsi/prc/app" },
+  { id: "org_kb",      name: "知识库产品组",       code: "KB",    type: "team",       level: 4, parent_code: "APP",   path: "dsi/prc/app/kb" },
+  { id: "org_comm",    name: "商业化中心",         code: "COMM",  type: "department", level: 2, parent_code: "DSI",   path: "dsi/comm" },
+  { id: "org_sol",     name: "解决方案部",         code: "SOL",   type: "department", level: 3, parent_code: "COMM",  path: "dsi/comm/sol" },
+  { id: "org_cs",      name: "客户成功部",         code: "CS",    type: "department", level: 3, parent_code: "COMM",  path: "dsi/comm/cs" },
+  { id: "org_sec",     name: "安全合规部",         code: "SEC",   type: "department", level: 2, parent_code: "DSI",   path: "dsi/sec" },
 ];
 
 interface UserDef {
