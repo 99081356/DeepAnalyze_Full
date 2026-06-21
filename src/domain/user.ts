@@ -81,15 +81,19 @@ export async function createUser(params: {
     ],
   );
 
-  // 默认赋予 user 角色
+  // 默认赋予 user 角色（仅当角色存在时；seed 数据可能使用 UUID 而非 'role_user'）
   await query(
-    `INSERT INTO user_roles (user_id, role_id) VALUES ($1, 'role_user') ON CONFLICT DO NOTHING`,
+    `INSERT INTO user_roles (user_id, role_id)
+     SELECT $1, id FROM roles WHERE id = 'role_user' OR name = 'user'
+     ON CONFLICT DO NOTHING`,
     [id],
   );
 
   if (is_org_admin) {
     await query(
-      `INSERT INTO user_roles (user_id, role_id) VALUES ($1, 'role_org_admin') ON CONFLICT DO NOTHING`,
+      `INSERT INTO user_roles (user_id, role_id)
+       SELECT $1, id FROM roles WHERE id = 'role_org_admin' OR name = 'org_admin'
+       ON CONFLICT DO NOTHING`,
       [id],
     );
   }
