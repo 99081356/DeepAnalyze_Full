@@ -256,7 +256,8 @@ export function createSkillRoutes(): Hono {
 
   app.post("/:id/unkill", jwtAuth, requirePermission("skill:kill"), async (c) => {
     const id = c.req.param("id");
-    await skillPkg.unkillSwitch(id);
+    const userId = c.get("userId") as string;
+    await skillPkg.unkillSwitch(id, userId);
     return c.json({ success: true });
   });
 
