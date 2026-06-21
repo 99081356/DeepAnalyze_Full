@@ -11,8 +11,10 @@
  */
 
 import { Hono } from "hono";
+import { z } from "zod";
 import { jwtAuth } from "../middleware/jwt-auth.js";
 import { requirePermission } from "../middleware/require-permission.js";
+import { createSharingSchema } from "../validations/skill-schemas.js";
 import * as sharing from "../../domain/skill-sharing.js";
 
 export function createSkillSharingRoutes(): Hono {
@@ -24,20 +26,18 @@ export function createSkillSharingRoutes(): Hono {
     const userId = c.get("userId") as string;
     const isSuperAdmin = c.get("isSuperAdmin") as boolean;
     const userOrgId = c.get("userOrgId") as string | null;
-    const body = await c.req.json<{
-      package_id: string;
-      source_org_id?: string;
-      target_org_id: string;
-      restrictions?: {
-        max_users?: number;
-        expires_at?: string;
-        data_classification_max?: string;
-      };
-    }>();
-
-    if (!body.package_id || !body.target_org_id) {
-      return c.json({ error: "package_id and target_org_id required" }, 400);
+    const rawBody = await c.req.json().catch(() => ({}));
+    const parsed = createSharingSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      const flat = z.flattenError(parsed.error);
+      return c.json({
+        error: "Validation failed",
+        fields: Object.fromEntries(
+          Object.entries(flat.fieldErrors).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v]),
+        ),
+      }, 400);
     }
+    const body = parsed.data;
 
     // Resolve source_org_id
     let sourceOrgId = body.source_org_id;
@@ -51,23 +51,13 @@ export function createSkillSharingRoutes(): Hono {
       return c.json({ error: "You don't belong to any org" }, 403);
     }
 
-    // Normalize restriction types (JSON body may have loose strings)
-    const restrictions: sharing.SharingRestrictions | undefined = body.restrictions
-      ? {
-          max_users: body.restrictions.max_users,
-          expires_at: body.restrictions.expires_at,
-          data_classification_max: body.restrictions.data_classification_max as
-            | "public" | "internal" | "secret" | "confidential"
-            | undefined,
-        }
-      : undefined;
-
+    // zod schema already validates restriction types including the enum
     const { sharing: result, error } = await sharing.requestSharing({
       package_id: body.package_id,
       source_org_id: sourceOrgId,
       target_org_id: body.target_org_id,
       initiated_by: userId,
-      restrictions,
+      restrictions: body.restrictions,
     });
 
     if (error) {
