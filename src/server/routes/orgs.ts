@@ -6,6 +6,7 @@ import { Hono } from "hono";
 import {
   createOrg,
   getOrgById,
+  getRootOrg,
   buildOrgTree,
   updateOrg,
   deleteOrg,
@@ -84,11 +85,19 @@ export function createOrgRoutes() {
     }
 
     try {
+      // Resolve parent: if not supplied, attach under the system root org
+      // (parent_id IS NULL). Avoids hardcoding "root" string which may not
+      // match the actual root id in seed data (e.g. "org_dsi").
+      let parentId = body.parent_id;
+      if (!parentId) {
+        const root = await getRootOrg();
+        parentId = root?.id;
+      }
       const org = await createOrg({
         name: body.name,
         code: body.code,
         description: body.description,
-        parent_id: body.parent_id ?? "root",
+        parent_id: parentId,
         type: body.type,
         settings: body.settings,
       });

@@ -88,6 +88,18 @@ export async function getOrgById(id: string): Promise<OrgRecord | null> {
   return rows.rows[0] ?? null;
 }
 
+/**
+ * 获取系统根组织（parent_id IS NULL 的第一行）。
+ * 用于 POST /orgs 在未指定 parent_id 时自动挂接到现有 root 下，
+ * 避免硬编码 "root" 字符串与实际 root id（如 "org_dsi"）不一致。
+ */
+export async function getRootOrg(): Promise<OrgRecord | null> {
+  const rows = await query<OrgRecord>(
+    `SELECT * FROM organizations WHERE parent_id IS NULL ORDER BY created_at LIMIT 1`,
+  );
+  return rows.rows[0] ?? null;
+}
+
 /** 获取子树（通过 path 前缀匹配） */
 export async function getSubtree(rootId: string): Promise<OrgRecord[]> {
   const rows = await query<OrgRecord>(
