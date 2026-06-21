@@ -1,7 +1,18 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, type CSSProperties } from "react";
 import { api, type PendingWorker } from "../api/client.js";
+import { Badge } from "../components/ui/Badge.js";
+import { Button } from "../components/ui/Button.js";
+import { StatusBadge } from "../components/hub/StatusBadge.js";
+import { useUIStore } from "../store/ui.js";
+
+/* -------------------------------------------------------------------------- */
+/*  Component                                                                 */
+/* -------------------------------------------------------------------------- */
 
 export function WorkerApproval() {
+  const showConfirm = useUIStore((s) => s.showConfirm);
+  const addToast = useUIStore((s) => s.addToast);
+
   const [pending, setPending] = useState<PendingWorker[]>([]);
   const [all, setAll] = useState<PendingWorker[]>([]);
   const [loading, setLoading] = useState(true);
@@ -27,83 +38,249 @@ export function WorkerApproval() {
   }, [load]);
 
   const handleApprove = async (id: string) => {
+    const confirmed = await showConfirm({
+      title: "批准 Worker",
+      message: "确定要批准此 Worker 的接入请求吗？",
+      confirmLabel: "确认批准",
+      variant: "default",
+    });
+    if (!confirmed) return;
+
     try {
       const resp = await api.approveWorker(id);
       setApprovedToken({ id, token: resp.worker_token });
+      addToast("success", "Worker 已批准");
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to approve worker");
+      const msg = err instanceof Error ? err.message : "Failed to approve worker";
+      setError(msg);
+      addToast("error", msg);
     }
   };
 
   const handleReject = async (id: string) => {
-    const reason = prompt("拒绝原因（可选）:");
+    const confirmed = await showConfirm({
+      title: "拒绝 Worker",
+      message: "确定要拒绝此 Worker 的接入请求吗？",
+      confirmLabel: "确认拒绝",
+      variant: "danger",
+    });
+    if (!confirmed) return;
+
     try {
-      await api.rejectWorker(id, reason || undefined);
+      await api.rejectWorker(id, "Rejected via admin UI");
+      addToast("success", "Worker 已拒绝");
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to reject worker");
+      const msg = err instanceof Error ? err.message : "Failed to reject worker";
+      setError(msg);
+      addToast("error", msg);
     }
   };
 
-  return (
-    <div>
-      <h2 style={{ fontSize: 20, fontWeight: 600, marginBottom: 20 }}>Worker 审批</h2>
+  /* -- styles -- */
 
-      {error && (
-        <div style={{ padding: 12, background: "#fee2e2", color: "#991b1b", borderRadius: 4, marginBottom: 16 }}>
-          {error}
-        </div>
-      )}
+  const pageStyle: CSSProperties = {
+    display: "flex",
+    flexDirection: "column",
+    gap: "var(--space-5)",
+  };
+
+  const titleStyle: CSSProperties = {
+    fontSize: "var(--text-xl)",
+    fontWeight: "var(--font-semibold)" as unknown as number,
+    color: "var(--text-primary)",
+    margin: 0,
+  };
+
+  const sectionTitleStyle: CSSProperties = {
+    fontSize: "var(--text-base)",
+    fontWeight: "var(--font-semibold)" as unknown as number,
+    color: "var(--text-primary)",
+    margin: 0,
+  };
+
+  const errorStyle: CSSProperties = {
+    padding: "var(--space-4) var(--space-5)",
+    background: "var(--error-light)",
+    border: "1px solid var(--error)",
+    borderRadius: "var(--radius-lg)",
+    color: "var(--error-dark)",
+    fontSize: "var(--text-sm)",
+  };
+
+  const tokenBannerStyle: CSSProperties = {
+    padding: "var(--space-4)",
+    background: "var(--success-light)",
+    border: "1px solid var(--success)",
+    borderRadius: "var(--radius-xl)",
+    display: "flex",
+    flexDirection: "column",
+    gap: "var(--space-2)",
+  };
+
+  const tokenTitleStyle: CSSProperties = {
+    fontWeight: 600,
+    color: "var(--success-dark)",
+    fontSize: "var(--text-sm)",
+  };
+
+  const tokenValueStyle: CSSProperties = {
+    fontSize: "var(--text-xs)",
+    color: "var(--success-dark)",
+    fontFamily: "var(--font-mono)",
+    wordBreak: "break-all",
+  };
+
+  const loadingStyle: CSSProperties = {
+    padding: "var(--space-10)",
+    textAlign: "center",
+    color: "var(--text-tertiary)",
+    fontSize: "var(--text-sm)",
+  };
+
+  const emptyStyle: CSSProperties = {
+    padding: "var(--space-5)",
+    background: "var(--bg-card)",
+    border: "1px solid var(--border-primary)",
+    borderRadius: "var(--radius-xl)",
+    textAlign: "center",
+    color: "var(--text-tertiary)",
+    fontSize: "var(--text-sm)",
+  };
+
+  const pendingCardStyle: CSSProperties = {
+    background: "var(--bg-card)",
+    border: "1px solid var(--border-primary)",
+    borderLeft: "4px solid var(--warning)",
+    borderRadius: "var(--radius-xl)",
+    padding: "var(--space-4)",
+  };
+
+  const cardRowStyle: CSSProperties = {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "var(--space-3)",
+    flexWrap: "wrap",
+  };
+
+  const workerNameStyle: CSSProperties = {
+    fontSize: "var(--text-sm)",
+    fontWeight: 600,
+    color: "var(--text-primary)",
+  };
+
+  const workerMetaStyle: CSSProperties = {
+    fontSize: "var(--text-xs)",
+    color: "var(--text-secondary)",
+    marginTop: "var(--space-1)",
+  };
+
+  const workerIdStyle: CSSProperties = {
+    fontSize: 11,
+    color: "var(--text-tertiary)",
+    marginTop: "var(--space-1)",
+    fontFamily: "var(--font-mono)",
+  };
+
+  const actionRowStyle: CSSProperties = {
+    display: "flex",
+    gap: "var(--space-2)",
+  };
+
+  const tableCardStyle: CSSProperties = {
+    background: "var(--bg-card)",
+    border: "1px solid var(--border-primary)",
+    borderRadius: "var(--radius-xl)",
+    overflow: "hidden",
+  };
+
+  const thStyle: CSSProperties = {
+    textAlign: "left",
+    padding: "var(--space-3)",
+    fontWeight: 500,
+    color: "var(--text-primary)",
+    fontSize: "var(--text-sm)",
+    background: "var(--bg-tertiary)",
+  };
+
+  const tdStyle: CSSProperties = {
+    padding: "var(--space-3)",
+    color: "var(--text-primary)",
+    fontSize: "var(--text-sm)",
+    borderTop: "1px solid var(--border-primary)",
+  };
+
+  const sectionHeaderStyle: CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: "var(--space-2)",
+  };
+
+  return (
+    <div style={pageStyle}>
+      <h2 style={titleStyle}>Worker 审批</h2>
+
+      {error && <div style={errorStyle}>{error}</div>}
 
       {approvedToken && (
-        <div style={{
-          padding: 16, background: "#d1fae5", border: "1px solid #6ee7b7",
-          borderRadius: 4, marginBottom: 16,
-        }}>
-          <div style={{ fontWeight: 500, color: "#065f46", marginBottom: 8 }}>
-            ✅ Worker {approvedToken.id.slice(0, 12)} 已批准
+        <div style={tokenBannerStyle}>
+          <div style={tokenTitleStyle}>
+            Worker {approvedToken.id.slice(0, 12)} 已批准
           </div>
-          <div style={{ fontSize: 12, color: "#064e3b", fontFamily: "monospace", wordBreak: "break-all" }}>
+          <div style={tokenValueStyle}>
             Token: {approvedToken.token}
           </div>
-          <button
-            onClick={() => setApprovedToken(null)}
-            style={{ marginTop: 8, padding: "4px 10px", fontSize: 12, cursor: "pointer" }}
-          >关闭</button>
+          <div>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setApprovedToken(null)}
+            >
+              关闭
+            </Button>
+          </div>
         </div>
       )}
 
-      <h3 style={{ fontSize: 16, fontWeight: 500, margin: "24px 0 12px" }}>待审批 ({pending.length})</h3>
+      {/* Pending section */}
+      <div style={sectionHeaderStyle}>
+        <h3 style={sectionTitleStyle}>待审批</h3>
+        <Badge variant="warning">{pending.length}</Badge>
+      </div>
+
       {loading ? (
-        <div style={{ padding: 40, textAlign: "center", color: "#6b7280" }}>加载中...</div>
+        <div style={loadingStyle}>加载中...</div>
       ) : pending.length === 0 ? (
-        <div style={{ padding: 20, background: "white", borderRadius: 8, textAlign: "center", color: "#6b7280", fontSize: 13 }}>
-          无待审批 Worker
-        </div>
+        <div style={emptyStyle}>无待审批 Worker</div>
       ) : (
-        <div style={{ display: "grid", gap: 12 }}>
+        <div style={{ display: "grid", gap: "var(--space-3)" }}>
           {pending.map((w) => (
-            <div key={w.id} style={{ background: "white", padding: 16, borderRadius: 8, borderLeft: "4px solid #f59e0b" }}>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <div key={w.id} style={pendingCardStyle}>
+              <div style={cardRowStyle}>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 500 }}>{w.name}</div>
-                  <div style={{ fontSize: 12, color: "#6b7280", marginTop: 4 }}>
+                  <div style={workerNameStyle}>{w.name}</div>
+                  <div style={workerMetaStyle}>
                     hostname: {w.hostname} · protocol: v{w.protocol_version} · applied: {w.applied_at ? new Date(w.applied_at).toLocaleString("zh-CN") : "-"}
                   </div>
-                  <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 4, fontFamily: "monospace" }}>
-                    {w.id}
-                  </div>
+                  <div style={workerIdStyle}>{w.id}</div>
                 </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button
+                <div style={actionRowStyle}>
+                  <Button
+                    variant="primary"
+                    size="sm"
                     onClick={() => handleApprove(w.id)}
-                    style={{ padding: "6px 16px", background: "#059669", color: "white", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 13 }}
-                  >批准</button>
-                  <button
+                  >
+                    批准
+                  </Button>
+                  <Button
+                    variant="danger"
+                    size="sm"
                     onClick={() => handleReject(w.id)}
-                    style={{ padding: "6px 16px", background: "#dc2626", color: "white", border: "none", borderRadius: 4, cursor: "pointer", fontSize: 13 }}
-                  >拒绝</button>
+                  >
+                    拒绝
+                  </Button>
                 </div>
               </div>
             </div>
@@ -111,11 +288,16 @@ export function WorkerApproval() {
         </div>
       )}
 
-      <h3 style={{ fontSize: 16, fontWeight: 500, margin: "24px 0 12px" }}>所有 Worker ({all.length})</h3>
-      <div style={{ background: "white", borderRadius: 8, overflow: "hidden" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+      {/* All workers section */}
+      <div style={sectionHeaderStyle}>
+        <h3 style={sectionTitleStyle}>所有 Worker</h3>
+        <Badge variant="default">{all.length}</Badge>
+      </div>
+
+      <div style={tableCardStyle}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ background: "#f9fafb" }}>
+            <tr>
               <th style={thStyle}>名称</th>
               <th style={thStyle}>Hostname</th>
               <th style={thStyle}>协议</th>
@@ -124,16 +306,12 @@ export function WorkerApproval() {
           </thead>
           <tbody>
             {all.map((w) => (
-              <tr key={w.id} style={{ borderTop: "1px solid #f3f4f6" }}>
+              <tr key={w.id}>
                 <td style={tdStyle}>{w.name}</td>
                 <td style={tdStyle}>{w.hostname}</td>
                 <td style={tdStyle}>v{w.protocol_version}</td>
                 <td style={tdStyle}>
-                  <span style={{
-                    padding: "1px 8px", borderRadius: 10, fontSize: 11,
-                    background: w.status === "approved" ? "#d1fae5" : w.status === "pending" ? "#fef3c7" : "#fee2e2",
-                    color: w.status === "approved" ? "#065f46" : w.status === "pending" ? "#92400e" : "#991b1b",
-                  }}>{w.status}</span>
+                  <StatusBadge status={w.status} />
                 </td>
               </tr>
             ))}
@@ -143,6 +321,3 @@ export function WorkerApproval() {
     </div>
   );
 }
-
-const thStyle: React.CSSProperties = { textAlign: "left", padding: "10px 12px", fontWeight: 500, color: "#374151" };
-const tdStyle: React.CSSProperties = { padding: "10px 12px", color: "#111827" };
