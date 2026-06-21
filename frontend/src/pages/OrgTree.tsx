@@ -1,140 +1,144 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { api, type OrgNode } from "../api/client.js";
+import { OrgTreeNode, type OrgTreeNodeData } from "../components/hub/OrgTreeNode.js";
+import { Badge } from "../components/ui/Badge.js";
+import { Button } from "../components/ui/Button.js";
 
-function renderNode(node: OrgNode, depth = 0): React.ReactNode {
-  return (
-    <div key={node.id} style={{ marginLeft: depth * 24 }}>
-      <div style={{
-        padding: "8px 12px",
-        background: "white",
-        marginBottom: 4,
-        borderRadius: 4,
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-      }}>
-        <span style={{ fontSize: 14, fontWeight: 500 }}>{node.name}</span>
-        <span style={{ fontSize: 12, color: "#6b7280" }}>({node.code})</span>
-        <span style={{
-          padding: "1px 8px", background: "#dbeafe", color: "#1e40af",
-          fontSize: 11, borderRadius: 10,
-        }}>{node.type}</span>
-        {node.user_count !== undefined && (
-          <span style={{ fontSize: 11, color: "#6b7280" }}>👥 {node.user_count}</span>
-        )}
-      </div>
-      {node.children?.map((child) => renderNode(child, depth + 1))}
-    </div>
-  );
+function toTreeNode(node: OrgNode): OrgTreeNodeData {
+  return {
+    id: node.id,
+    name: node.name,
+    code: node.code,
+    type: node.type,
+    level: node.level,
+    user_count: node.user_count,
+    children: node.children?.map(toTreeNode),
+  };
 }
+
+const ICON_MAP: Record<string, string> = {
+  company: "🏢",
+  department: "📁",
+  team: "👥",
+};
 
 export function OrgTree() {
   const [tree, setTree] = useState<OrgNode | null>(null);
+  const [selected, setSelected] = useState<OrgNode | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showCreate, setShowCreate] = useState(false);
-  const [newOrg, setNewOrg] = useState({ name: "", code: "", type: "department", parent_id: "" });
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const resp = await api.getOrgTree();
-      setTree(resp.tree);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load org tree");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    api.getOrgTree().then((res) => {
+      setTree(res.tree);
+      setLoading(false);
+    });
+  }, []);
 
-  const handleCreate = async () => {
-    if (!newOrg.name || !newOrg.code) return;
-    try {
-      await api.createOrg({
-        name: newOrg.name,
-        code: newOrg.code,
-        type: newOrg.type,
-        parent_id: newOrg.parent_id || null,
-      });
-      setNewOrg({ name: "", code: "", type: "department", parent_id: "" });
-      setShowCreate(false);
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create org");
-    }
+  if (loading) {
+    return (
+      <div style={{ padding: 40, textAlign: "center", color: "var(--text-tertiary)" }}>
+        加载中...
+      </div>
+    );
+  }
+
+  if (!tree) {
+    return (
+      <div style={{ padding: 40, textAlign: "center", color: "var(--text-tertiary)" }}>
+        无数据
+      </div>
+    );
+  }
+
+  const selectedNode = selected ?? tree;
+
+  const findNode = (node: OrgNode, id: string): OrgNode | undefined => {
+    if (node.id === id) return node;
+    return (node.children ?? [])
+      .map((c) => findNode(c, id))
+      .find((r): r is OrgNode => r !== undefined);
   };
 
   return (
-    <div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 600 }}>组织树</h2>
-        <button
-          onClick={() => setShowCreate(!showCreate)}
-          style={{
-            padding: "6px 14px", background: "#2563eb", color: "white",
-            border: "none", borderRadius: 4, fontSize: 13, cursor: "pointer",
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: "var(--space-4)" }}>
+      {/* 左侧：树 */}
+      <div
+        style={{
+          background: "var(--bg-card)",
+          border: "1px solid var(--border-primary)",
+          borderRadius: "var(--radius-xl)",
+          padding: "var(--space-4)",
+        }}
+      >
+        <OrgTreeNode
+          node={toTreeNode(tree)}
+          selectedId={selectedNode?.id}
+          onSelect={(n) => {
+            const found = findNode(tree, n.id);
+            if (found) setSelected(found);
           }}
-        >
-          {showCreate ? "取消" : "+ 新建组织"}
-        </button>
+        />
       </div>
 
-      {showCreate && (
-        <div style={{
-          background: "white", padding: 16, marginBottom: 16, borderRadius: 8,
-          display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end",
-        }}>
-          <div>
-            <label style={{ fontSize: 12, color: "#6b7280", display: "block" }}>名称</label>
-            <input value={newOrg.name} onChange={(e) => setNewOrg({ ...newOrg, name: e.target.value })}
-              style={inputStyle} />
-          </div>
-          <div>
-            <label style={{ fontSize: 12, color: "#6b7280", display: "block" }}>代码</label>
-            <input value={newOrg.code} onChange={(e) => setNewOrg({ ...newOrg, code: e.target.value })}
-              style={inputStyle} />
-          </div>
-          <div>
-            <label style={{ fontSize: 12, color: "#6b7280", display: "block" }}>类型</label>
-            <select value={newOrg.type} onChange={(e) => setNewOrg({ ...newOrg, type: e.target.value })}
-              style={inputStyle}>
-              <option value="company">公司</option>
-              <option value="department">部门</option>
-              <option value="team">团队</option>
-            </select>
-          </div>
-          <button onClick={handleCreate} style={{ padding: "8px 16px", background: "#059669", color: "white", border: "none", borderRadius: 4, cursor: "pointer" }}>
-            创建
-          </button>
-        </div>
-      )}
-
-      {error && (
-        <div style={{ padding: 12, background: "#fee2e2", color: "#991b1b", borderRadius: 4, marginBottom: 16 }}>
-          {error}
-        </div>
-      )}
-
-      {loading ? (
-        <div style={{ padding: 40, textAlign: "center", color: "#6b7280" }}>加载中...</div>
-      ) : tree ? (
-        renderNode(tree)
-      ) : (
-        <div style={{ padding: 40, textAlign: "center", color: "#6b7280" }}>无数据</div>
-      )}
+      {/* 右侧：详情侧栏 */}
+      <div
+        style={{
+          background: "var(--bg-card)",
+          border: "1px solid var(--border-primary)",
+          borderRadius: "var(--radius-xl)",
+          padding: "var(--space-5)",
+          height: "fit-content",
+          position: "sticky",
+          top: "var(--space-6)",
+        }}
+      >
+        {selectedNode && (
+          <>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "var(--space-2)",
+                marginBottom: "var(--space-3)",
+              }}
+            >
+              <span style={{ fontSize: 24 }}>
+                {ICON_MAP[selectedNode.type] ?? "🏢"}
+              </span>
+              <div>
+                <div style={{ fontSize: "var(--text-lg)", fontWeight: 600 }}>
+                  {selectedNode.name}
+                </div>
+                <div
+                  style={{
+                    fontSize: "var(--text-xs)",
+                    color: "var(--text-tertiary)",
+                    fontFamily: "var(--font-mono)",
+                  }}
+                >
+                  {selectedNode.code}
+                </div>
+              </div>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                gap: "var(--space-2)",
+                marginBottom: "var(--space-4)",
+              }}
+            >
+              <Badge>{selectedNode.type}</Badge>
+              <Badge variant="info">Level {selectedNode.level}</Badge>
+              {selectedNode.user_count != null && (
+                <Badge variant="success">{selectedNode.user_count} 成员</Badge>
+              )}
+            </div>
+            <Button variant="secondary" size="sm">
+              添加子节点
+            </Button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
-
-const inputStyle: React.CSSProperties = {
-  padding: "6px 10px",
-  border: "1px solid #d1d5db",
-  borderRadius: 4,
-  fontSize: 13,
-  minWidth: 120,
-};
