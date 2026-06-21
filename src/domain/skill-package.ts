@@ -5,6 +5,7 @@
 import { randomUUID } from "crypto";
 import { query } from "../store/pg.js";
 import { createHash } from "crypto";
+import * as auditLog from "./skill-audit-log.js";
 
 export interface SkillPackage {
   id: string;
@@ -205,9 +206,15 @@ export async function killSwitch(
      WHERE id = $3`,
     [reason, userId, packageId],
   );
+  await auditLog.log({
+    package_id: packageId,
+    actor_id: userId,
+    action: "kill_switch",
+    details: { reason },
+  });
 }
 
-export async function unkillSwitch(packageId: string): Promise<void> {
+export async function unkillSwitch(packageId: string, userId?: string): Promise<void> {
   await query(
     `UPDATE skill_packages
      SET is_kill_switched = FALSE, kill_switch_reason = NULL, kill_switched_at = NULL, kill_switched_by = NULL,
@@ -215,6 +222,12 @@ export async function unkillSwitch(packageId: string): Promise<void> {
      WHERE id = $1`,
     [packageId],
   );
+  await auditLog.log({
+    package_id: packageId,
+    actor_id: userId ?? "system",
+    action: "unkill_switch",
+    details: {},
+  });
 }
 
 // ─── Phase 3: Version status transitions ─────────────────────────────
