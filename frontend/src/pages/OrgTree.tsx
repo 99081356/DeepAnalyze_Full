@@ -24,20 +24,35 @@ const ICON_MAP: Record<string, string> = {
 
 export function OrgTree() {
   const [tree, setTree] = useState<OrgNode | null>(null);
-  const [selected, setSelected] = useState<OrgNode | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.getOrgTree().then((res) => {
-      setTree(res.tree);
-      setLoading(false);
-    });
+    api.getOrgTree()
+      .then((res) => {
+        setTree(res.tree);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to load org tree:", err);
+        setError(err instanceof Error ? err.message : String(err));
+        setLoading(false);
+      });
   }, []);
 
   if (loading) {
     return (
       <div style={{ padding: 40, textAlign: "center", color: "var(--text-tertiary)" }}>
         加载中...
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ padding: 40, textAlign: "center", color: "var(--error)" }}>
+        加载失败：{error}
       </div>
     );
   }
@@ -50,14 +65,14 @@ export function OrgTree() {
     );
   }
 
-  const selectedNode = selected ?? tree;
-
   const findNode = (node: OrgNode, id: string): OrgNode | undefined => {
     if (node.id === id) return node;
     return (node.children ?? [])
       .map((c) => findNode(c, id))
       .find((r): r is OrgNode => r !== undefined);
   };
+
+  const selectedNode = (tree && selectedId ? findNode(tree, selectedId) : null) ?? tree;
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr 320px", gap: "var(--space-4)" }}>
@@ -73,10 +88,7 @@ export function OrgTree() {
         <OrgTreeNode
           node={toTreeNode(tree)}
           selectedId={selectedNode?.id}
-          onSelect={(n) => {
-            const found = findNode(tree, n.id);
-            if (found) setSelected(found);
-          }}
+          onSelect={(n) => setSelectedId(n.id)}
         />
       </div>
 
@@ -133,7 +145,7 @@ export function OrgTree() {
                 <Badge variant="success">{selectedNode.user_count} 成员</Badge>
               )}
             </div>
-            <Button variant="secondary" size="sm">
+            <Button variant="secondary" size="sm" disabled title="暂未实现">
               添加子节点
             </Button>
           </>
