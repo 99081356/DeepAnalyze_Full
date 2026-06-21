@@ -1,5 +1,5 @@
 /**
- * RedFlag Scanner — 14 条安全红线扫描（Phase 3 PublishGate 第 1 维）
+ * RedFlag Scanner — 15 条安全红线扫描（Phase 3 PublishGate 第 1 维）
  *
  * 参考 DAclaw redflag_scanner.py:60-249
  *
@@ -128,6 +128,13 @@ const RULES: Rule[] = [
     severity: "HIGH",
     pattern: /(?:rm\s+-rf\s|del\s+\/[sS]|Remove-Item\s+-Recurse\s+-Force|rmtree\()/i,
     description: "Recursive/forced delete operation",
+  },
+  // RF15: SQL destructive operations (DROP/TRUNCATE/mass DELETE/UNION injection)
+  {
+    id: "RF15",
+    severity: "CRITICAL",
+    pattern: /(?:DROP\s+(?:TABLE|DATABASE|SCHEMA|INDEX)\b|TRUNCATE\s+(?:TABLE\s+)?[\w.]+|DELETE\s+FROM\s+[\w.]+\s*;|\bUNION\s+SELECT\s+[\w*,\s]+\s+FROM\b)/i,
+    description: "SQL destructive operation (DROP TABLE / TRUNCATE / mass DELETE / UNION injection)",
   },
 ];
 
