@@ -57,6 +57,8 @@ export async function requestSharing(params: {
   target_org_id: string;
   initiated_by: string;
   restrictions?: SharingRestrictions;
+  usage_intent?: string;
+  business_justification?: string;
 }): Promise<{ sharing: SkillSharing; error?: string }> {
   if (params.source_org_id === params.target_org_id) {
     return { sharing: null as never, error: "Cannot share within the same org" };
@@ -102,8 +104,8 @@ export async function requestSharing(params: {
   try {
     const { rows } = await query<SkillSharing>(
       `INSERT INTO skill_sharings
-        (id, package_id, source_org_id, target_org_id, status, initiated_by, restrictions)
-       VALUES ($1, $2, $3, $4, 'pending', $5, $6)
+        (id, package_id, source_org_id, target_org_id, status, initiated_by, restrictions, usage_intent, business_justification)
+       VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8)
        RETURNING *`,
       [
         id,
@@ -112,6 +114,8 @@ export async function requestSharing(params: {
         params.target_org_id,
         params.initiated_by,
         JSON.stringify(params.restrictions ?? {}),
+        params.usage_intent ?? null,
+        params.business_justification ?? null,
       ],
     );
     inserted = rows[0];

@@ -58,6 +58,8 @@ export function createSkillSharingRoutes(): Hono {
       target_org_id: body.target_org_id,
       initiated_by: userId,
       restrictions: body.restrictions,
+      usage_intent: body.usage_intent,
+      business_justification: body.business_justification,
     });
 
     if (error) {
