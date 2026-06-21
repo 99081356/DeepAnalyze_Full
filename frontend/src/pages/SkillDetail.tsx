@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Share2, Bell, Ban } from "lucide-react";
-import { api, type MeResponse, type SkillPackageV2, type UsageStats } from "../api/client.js";
+import { api, type MeResponse, type SkillPackageV2 } from "../api/client.js";
 import { Badge } from "../components/ui/Badge.js";
 import { Button } from "../components/ui/Button.js";
 import { Tabs } from "../components/ui/Tabs.js";
@@ -27,25 +27,21 @@ const SCOPE_VARIANT: Record<string, "error" | "info" | "success"> = {
 interface VersionItem {
   version: string;
   content: string;
-  change_summary?: string;
-  created_at?: string;
-  status?: string;
+  change_summary: string;
 }
 
 /* -------------------------------------------------------------------------- */
 /*  Component                                                                 */
 /* -------------------------------------------------------------------------- */
 
-export function SkillDetail({ user: _user }: { user: MeResponse }) {
+export function SkillDetail({ user }: { user: MeResponse }) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const showConfirm = useUIStore((s) => s.showConfirm);
 
   const [pkg, setPkg] = useState<SkillPackageV2 | null>(null);
   const [version, setVersion] = useState<VersionItem | null>(null);
-  const [versions, setVersions] = useState<VersionItem[]>([]);
   const [audit, setAudit] = useState<AuditEntry[]>([]);
-  const [usage, setUsage] = useState<UsageStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("content");
@@ -58,24 +54,15 @@ export function SkillDetail({ user: _user }: { user: MeResponse }) {
       api.getRaw<SkillPackageV2>("GET", `/skills/${id}`),
       api
         .getRaw<{ items: VersionItem[] }>("GET", `/skills/${id}/versions`)
-        .then((v) => {
-          const items = v.items ?? [];
-          setVersions(items);
-          return items[0] ?? null;
-        }),
+        .then((v) => v.items?.[0] ?? null),
       api
         .getRaw<{ items: AuditEntry[] }>("GET", `/skills/${id}/audit`)
         .catch(() => ({ items: [] as AuditEntry[] })),
-      api
-        .getRaw<{ stats: UsageStats }>("GET", `/skills/${id}/usage/stats`)
-        .then((r) => r.stats)
-        .catch(() => null),
     ])
-      .then(([p, v, a, u]) => {
+      .then(([p, v, a]) => {
         setPkg(p);
         setVersion(v);
         setAudit(a.items ?? []);
-        setUsage(u);
       })
       .catch((err) => {
         setError(err instanceof Error ? err.message : "加载失败");
@@ -232,40 +219,6 @@ export function SkillDetail({ user: _user }: { user: MeResponse }) {
     overflowY: "auto",
   };
 
-  const versionItemStyle: CSSProperties = {
-    display: "flex",
-    flexDirection: "column",
-    gap: "var(--space-1)",
-    padding: "var(--space-3) 0",
-    borderBottom: "1px solid var(--border-primary)",
-  };
-
-  const statGridStyle: CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-    gap: "var(--space-3)",
-  };
-
-  const statCardStyle: CSSProperties = {
-    padding: "var(--space-4)",
-    background: "var(--bg-tertiary)",
-    borderRadius: "var(--radius-md)",
-    display: "flex",
-    flexDirection: "column",
-    gap: "var(--space-1)",
-  };
-
-  const statLabelStyle: CSSProperties = {
-    fontSize: "var(--text-xs)",
-    color: "var(--text-tertiary)",
-  };
-
-  const statValueStyle: CSSProperties = {
-    fontSize: "var(--text-xl)",
-    fontWeight: "var(--font-semibold)" as unknown as number,
-    color: "var(--text-primary)",
-  };
-
   const backBtnStyle: CSSProperties = {
     display: "inline-flex",
     alignItems: "center",
@@ -342,14 +295,16 @@ export function SkillDetail({ user: _user }: { user: MeResponse }) {
 
           {/* Action buttons */}
           <div style={actionRowStyle}>
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={<Bell size={14} />}
-              onClick={handleSubscribe}
-            >
-              订阅
-            </Button>
+            {!pkg.is_kill_switched && (
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<Bell size={14} />}
+                onClick={handleSubscribe}
+              >
+                订阅
+              </Button>
+            )}
             <Button
               variant="secondary"
               size="sm"
@@ -358,15 +313,16 @@ export function SkillDetail({ user: _user }: { user: MeResponse }) {
             >
               分享
             </Button>
-            <Button
-              variant="danger"
-              size="sm"
-              icon={<Ban size={14} />}
-              onClick={handleKillSwitch}
-              disabled={pkg.is_kill_switched}
-            >
-              Kill Switch
-            </Button>
+            {(user.is_super_admin || user.permissions?.includes("skill:kill")) && !pkg.is_kill_switched && (
+              <Button
+                variant="danger"
+                size="sm"
+                icon={<Ban size={14} />}
+                onClick={handleKillSwitch}
+              >
+                Kill Switch
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -391,134 +347,19 @@ export function SkillDetail({ user: _user }: { user: MeResponse }) {
           </pre>
         )}
 
-        {activeTab === "versions" && (
+        {activeTab === "versions" && version && (
           <div>
-            {versions.length === 0 ? (
-              <div style={{ color: "var(--text-tertiary)", fontSize: "var(--text-sm)" }}>
-                暂无版本记录
-              </div>
-            ) : (
-              versions.map((v, i) => (
-                <div
-                  key={v.version || i}
-                  style={{
-                    ...versionItemStyle,
-                    borderBottom:
-                      i === versions.length - 1
-                        ? "none"
-                        : "1px solid var(--border-primary)",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "var(--space-2)",
-                    }}
-                  >
-                    <span
-                      style={{
-                      fontSize: "var(--text-sm)",
-                      fontWeight: "var(--font-semibold)" as unknown as number,
-                      color: "var(--text-primary)",
-                    }}
-                  >
-                    v{v.version}
-                  </span>
-                  {v.status && (
-                    <Badge variant="default">{v.status}</Badge>
-                  )}
-                  {v.created_at && (
-                    <span
-                      style={{
-                        fontSize: "var(--text-xs)",
-                        color: "var(--text-tertiary)",
-                      }}
-                    >
-                      {new Date(v.created_at).toLocaleString("zh-CN")}
-                    </span>
-                  )}
-                  </div>
-                  {v.change_summary && (
-                    <p
-                      style={{
-                        fontSize: "var(--text-sm)",
-                        color: "var(--text-secondary)",
-                        margin: 0,
-                      }}
-                    >
-                      {v.change_summary}
-                    </p>
-                  )}
-                </div>
-              ))
-            )}
+            <strong>v{version.version}</strong>
+            <p style={{ color: "var(--text-secondary)", marginTop: "var(--space-2)" }}>
+              {version.change_summary}
+            </p>
           </div>
         )}
 
         {activeTab === "audit" && <AuditTimeline entries={audit} />}
 
         {activeTab === "stats" && (
-          <div>
-            {usage ? (
-              <div style={statGridStyle}>
-                <div style={statCardStyle}>
-                  <span style={statLabelStyle}>总调用</span>
-                  <span style={statValueStyle}>{usage.total}</span>
-                </div>
-                <div style={statCardStyle}>
-                  <span style={statLabelStyle}>成功率</span>
-                  <span style={statValueStyle}>
-                    {(usage.success_rate * 100).toFixed(1)}%
-                  </span>
-                </div>
-                <div style={statCardStyle}>
-                  <span style={statLabelStyle}>成功</span>
-                  <span style={statValueStyle}>{usage.success}</span>
-                </div>
-                <div style={statCardStyle}>
-                  <span style={statLabelStyle}>失败</span>
-                  <span style={statValueStyle}>{usage.failure}</span>
-                </div>
-                <div style={statCardStyle}>
-                  <span style={statLabelStyle}>超时</span>
-                  <span style={statValueStyle}>{usage.timeout}</span>
-                </div>
-                <div style={statCardStyle}>
-                  <span style={statLabelStyle}>已拦截</span>
-                  <span style={statValueStyle}>{usage.blocked}</span>
-                </div>
-                <div style={statCardStyle}>
-                  <span style={statLabelStyle}>平均耗时</span>
-                  <span style={statValueStyle}>
-                    {usage.avg_duration_ms != null
-                      ? `${usage.avg_duration_ms.toFixed(0)}ms`
-                      : "-"}
-                  </span>
-                </div>
-                <div style={statCardStyle}>
-                  <span style={statLabelStyle}>Worker 数</span>
-                  <span style={statValueStyle}>{usage.unique_workers}</span>
-                </div>
-                <div style={statCardStyle}>
-                  <span style={statLabelStyle}>用户数</span>
-                  <span style={statValueStyle}>{usage.unique_users}</span>
-                </div>
-                <div style={statCardStyle}>
-                  <span style={statLabelStyle}>近 24h</span>
-                  <span style={statValueStyle}>{usage.last_24h}</span>
-                </div>
-                <div style={statCardStyle}>
-                  <span style={statLabelStyle}>近 7d</span>
-                  <span style={statValueStyle}>{usage.last_7d}</span>
-                </div>
-              </div>
-            ) : (
-              <div style={{ color: "var(--text-tertiary)", fontSize: "var(--text-sm)" }}>
-                暂无使用统计数据
-              </div>
-            )}
-          </div>
+          <div style={{ color: "var(--text-tertiary)" }}>使用统计待接入</div>
         )}
       </div>
     </div>
