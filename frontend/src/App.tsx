@@ -12,6 +12,8 @@ import { Skills } from "./pages/Skills.js";
 import { SkillDetail } from "./pages/SkillDetail.js";
 import { Sharings } from "./pages/Sharings.js";
 import { Security } from "./pages/Security.js";
+import { ConfirmDialog } from "./components/ui/ConfirmDialog.js";
+import { ToastContainer } from "./components/ui/Toast.js";
 
 /* ──────────────────────────────────────────────────────────────────────────
  * Navigation items — used by both Sidebar and Header
@@ -458,6 +460,8 @@ function Layout({
         >
           {children}
         </main>
+        <ConfirmDialog />
+        <ToastContainer />
       </div>
     </div>
   );
