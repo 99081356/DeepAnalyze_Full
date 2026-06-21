@@ -29,6 +29,7 @@ export const jwtAuth: MiddlewareHandler = async (c, next) => {
       return c.json({ error: "Invalid API key" }, 401);
     }
     userId = result.userId;
+    c.set("apiKeyScope", result.scope);
   } else {
     return c.json({ error: "Authentication required" }, 401);
   }
@@ -45,6 +46,16 @@ export const jwtAuth: MiddlewareHandler = async (c, next) => {
   c.set("userPermissions", permissions);
   c.set("userOrgId", user.organization_id);
   c.set("isSuperAdmin", isSuperAdmin);
+
+  // API Key scope enforcement: a read-scoped key may only perform safe (GET/HEAD/OPTIONS)
+  // requests. Mutating endpoints are rejected before reaching the handler.
+  const scope = c.get("apiKeyScope");
+  if (scope === "read") {
+    const method = c.req.method;
+    if (method !== "GET" && method !== "HEAD" && method !== "OPTIONS") {
+      return c.json({ error: `API key scope 'read' forbids ${method} requests` }, 403);
+    }
+  }
 
   await next();
 };

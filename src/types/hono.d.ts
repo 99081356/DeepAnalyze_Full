@@ -19,5 +19,7 @@ declare module "hono" {
     securitySanitizedBody: string;
     // Phase 4: MFA pending secret (between setup and verify)
     pendingMfaSecret: string;
+    // API Key scope enforcement (set when X-API-Key auth is used; undefined for JWT)
+    apiKeyScope?: string;
   }
 }
