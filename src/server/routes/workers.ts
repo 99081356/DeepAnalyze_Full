@@ -42,6 +42,8 @@ export function createWorkerRoutes(): Hono {
     const capabilities = body.capabilities ?? {};
     const protocolVersion: number = body.protocol_version ?? 1;
     const workerName: string = body.name ?? hostname ?? `worker-${Date.now()}`;
+    // org association — accept both org_id (snake) and organization_id (camel)
+    const orgIdParam: string | undefined = body.org_id ?? body.organization_id;
 
     // v1 兼容路径：如果带了 workerId 且已存在，直接返回 token
     if (workerIdParam) {
@@ -91,9 +93,9 @@ export function createWorkerRoutes(): Hono {
     const workerToken = `wkt_${randomUUID().replace(/-/g, "")}`;
 
     await query(
-      `INSERT INTO workers (id, name, hostname, endpoint, version, capabilities, worker_token, status, protocol_version, applied_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, NOW())`,
-      [workerId, workerName, hostname, endpoint, version, JSON.stringify(capabilities), workerToken, protocolVersion],
+      `INSERT INTO workers (id, name, hostname, endpoint, version, capabilities, worker_token, status, protocol_version, applied_at, organization_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, NOW(), $9)`,
+      [workerId, workerName, hostname, endpoint, version, JSON.stringify(capabilities), workerToken, protocolVersion, orgIdParam ?? null],
     );
 
     await logWorkerEvent(workerId, "apply", `Worker applied: ${workerName} (proto v${protocolVersion})`);
