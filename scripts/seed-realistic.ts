@@ -154,6 +154,46 @@ async function seed() {
       user_roles, users, organizations CASCADE
   `);
 
+  // 1.5. 重建系统角色 + 权限映射
+  // TRUNCATE ... CASCADE 会级联清除 roles（因 roles.org_id → organizations）
+  // 和 role_permissions（因 role_permissions.role_id → roles），需在此重建。
+  console.log("1.5. Re-seed system roles + permission mappings...");
+  await query(`
+    INSERT INTO roles (id, name, org_id, description, is_system) VALUES
+      ('role_super_admin', '超级管理员', NULL, '系统全权限', TRUE),
+      ('role_org_admin', '组织管理员', NULL, '本组织管理权限', TRUE),
+      ('role_user', '普通用户', NULL, '基本使用权限', TRUE)
+    ON CONFLICT (id) DO NOTHING
+  `);
+  // super_admin 拥有所有权限（自动适配后续 migration 新增的权限码）
+  await query(`
+    INSERT INTO role_permissions (role_id, permission_id)
+    SELECT 'role_super_admin', id FROM permissions
+    ON CONFLICT DO NOTHING
+  `);
+  // org_admin: 组织/用户/角色/Worker/Skill 管理 + 只读配置
+  await query(`
+    INSERT INTO role_permissions (role_id, permission_id)
+    SELECT 'role_org_admin', p.id FROM permissions p
+    WHERE p.code = ANY($1::text[])
+    ON CONFLICT DO NOTHING
+  `, [[
+    "org:read", "org:create", "org:update",
+    "user:create", "user:read", "user:update", "user:delete",
+    "role:read", "role:assign",
+    "worker:read", "worker:approve", "worker:reject",
+    "skill:read", "skill:create", "skill:share", "skill:approve",
+    "skill:kill", "skill:publish", "skill:subscribe",
+    "config:read", "usage:read",
+  ]]);
+  // user: 基本只读 + 订阅
+  await query(`
+    INSERT INTO role_permissions (role_id, permission_id)
+    SELECT 'role_user', p.id FROM permissions p
+    WHERE p.code = ANY($1::text[])
+    ON CONFLICT DO NOTHING
+  `, [["skill:read", "worker:read", "config:read", "skill:subscribe"]]);
+
   // 2. 插入组织树
   console.log("2. Insert org tree (11 nodes)...");
   for (const org of ORGS) {
@@ -185,7 +225,7 @@ async function seed() {
   const { rows: roles } = await query<{ id: string; name: string }>(
     "SELECT id, name FROM roles WHERE is_system = TRUE",
   );
-  const roleByCode = Object.fromEntries(roles.map(r => [r.name, r.id]));
+  const roleByCode = Object.fromEntries(roles.map(r => [r.id, r.id]));
 
   const ORG_ADMINS: Record<string, string> = {
     "wang.siyuan": "AGENT",
