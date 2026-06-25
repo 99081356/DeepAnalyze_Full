@@ -78,7 +78,9 @@ export function createSkillSharingRoutes(): Hono {
     const packageId = c.req.query("package_id");
     const limit = parseInt(c.req.query("limit") || "50", 10);
 
-    // Non-super_admin can only see sharings involving their org
+    // Non-super_admin can only see sharings involving their org.
+    // Super_admin can see all sharings (only apply org filter if they
+    // explicitly request one via the org_role query param).
     const filter: sharing.ListSharingsFilter = {
       status,
       package_id: packageId ?? undefined,
@@ -86,8 +88,9 @@ export function createSkillSharingRoutes(): Hono {
     if (!isSuperAdmin) {
       filter.org_id = userOrgId ?? undefined;
       filter.org_role = orgRole ?? "either";
-    } else if (userOrgId || orgRole) {
-      filter.org_id = userOrgId ?? undefined;
+    } else if (orgRole && userOrgId) {
+      // Super_admin explicitly requesting a specific org role.
+      filter.org_id = userOrgId;
       filter.org_role = orgRole;
     }
 
