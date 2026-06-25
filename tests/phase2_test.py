@@ -93,7 +93,9 @@ code, data = api("POST", f"/api/v1/skills/{user_pkg_id}/versions", token=admin_t
     "version": "1.0.0",
     "content": SKILL_CONTENT,
     "when_to_use": "For testing",
-    "allowed_tools": ["*"]
+    "allowed_tools": ["*"],
+    "change_summary": "Initial version for SkillSync testing",
+    "autoPublish": True,
 })
 test("version 1.0.0 created", code == 201 and "version" in data, f"{code} {str(data)[:80]}")
 v1_id = data.get("version", {}).get("id", "")
@@ -112,6 +114,8 @@ sys_pkg_id = data.get("package", {}).get("id", "")
 code, data = api("POST", f"/api/v1/skills/{sys_pkg_id}/versions", token=admin_token, data={
     "version": "1.0.0",
     "content": f"# System Skill\n\nFor all workers.\nTimestamp: {ts}\n",
+    "change_summary": "Initial system skill version",
+    "autoPublish": True,
 })
 test("system version created", code == 201, str(data)[:80])
 sys_v1_hash = data.get("version", {}).get("content_hash", "")
@@ -133,13 +137,17 @@ user_token = data.get("access_token", "")
 
 # Regular user tries to create system package
 code, data = api("POST", "/api/v1/skills", token=user_token, data={
-    "name": "hack-system", "scope": "system"
+    "name": "hack-system",
+    "description": "Sufficiently long description to pass validation",
+    "scope": "system",
 })
 test("regular user forbidden system pkg", code == 403, f"got {code}")
 
 # Regular user CAN create user-scoped package
 code, data = api("POST", "/api/v1/skills", token=user_token, data={
-    "name": f"user-own-{ts}", "scope": "user"
+    "name": f"user-own-{ts}",
+    "description": "Sufficiently long description to pass validation",
+    "scope": "user",
 })
 test("regular user can create user pkg", code == 201, f"got {code}")
 

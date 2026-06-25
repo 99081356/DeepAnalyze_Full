@@ -123,7 +123,8 @@ pkg_id = data.get("package", {}).get("id", "")
 code, data = api("POST", f"/api/v1/skills/{pkg_id}/versions", token=admin_token, data={
     "version": "1.0.0",
     "content": "# Phase 4 shareable skill\n\n## When to use\nFor cross-org tests.\n## Instructions\nBe cooperative.",
-    "autoPublish": False
+    "autoPublish": False,
+    "change_summary": "Phase 4 shareable skill initial version",
 })
 v_id = data.get("version", {}).get("id", "")
 # Go through the approval flow (org-scope requires it)
@@ -145,6 +146,7 @@ code, data = api("POST", "/api/v1/sharings", token=admin_token, data={
     "package_id": pkg_id,
     "source_org_id": source_org_id,
     "target_org_id": target_org_id,
+    "usage_intent": "Cross-org collaboration for skill evaluation",
     "restrictions": {"max_users": 50, "data_classification_max": "internal"}
 })
 test("sharing initiated", code == 201 and "id" in data.get("sharing", {}), f"got {code}: {str(data)[:100]}")
@@ -164,6 +166,7 @@ code, data = api("POST", "/api/v1/sharings", token=admin_token, data={
     "package_id": pkg_id,
     "source_org_id": source_org_id,
     "target_org_id": target_org_id,
+    "usage_intent": "Second sharing attempt after rejection",
 })
 test("second sharing initiated", code == 201, str(data)[:80])
 sharing_id_2 = data.get("sharing", {}).get("id", "")
@@ -182,6 +185,7 @@ code, data = api("POST", "/api/v1/sharings", token=admin_token, data={
     "package_id": pkg_id,
     "source_org_id": source_org_id,
     "target_org_id": target_org_id,
+    "usage_intent": "Duplicate sharing attempt for rejection test",
 })
 test("duplicate sharing rejected", code == 400, f"got {code}: {str(data)[:80]}")
 
@@ -200,6 +204,7 @@ code, data = api("POST", "/api/v1/sharings", token=admin_token, data={
     "package_id": pkg_id,
     "source_org_id": source_org_id,
     "target_org_id": source_org_id,
+    "usage_intent": "Same-org sharing should be rejected",
 })
 test("same-org sharing rejected", code == 400, f"got {code}")
 
