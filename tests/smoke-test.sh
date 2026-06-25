@@ -59,14 +59,15 @@ assert_contains "admin token issued" "$LOGIN" 'access_token'
 # T3: /me 端点
 echo "[T3] /me endpoint"
 ME=$(curl -s "$HUB_URL/api/v1/auth/me" -H "Authorization: Bearer $ADMIN_TOKEN")
-assert_contains "is_super_admin true" "$ME" '"is_super_admin": true'
+assert_contains "is_super_admin true" "$ME" '"is_super_admin":true'
 
 # T4: 创建组织
 echo "[T4] Create organization"
+E2E_TS=$(date +%s)
 ORG=$(curl -s -X POST "$HUB_URL/api/v1/orgs" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H 'Content-Type: application/json' \
-  -d '{"name":"E2E测试公司","code":"E2E_TEST","type":"company"}')
+  -d "{\"name\":\"E2E测试公司_$E2E_TS\",\"code\":\"E2E_TEST_$E2E_TS\",\"type\":\"company\"}")
 ORG_ID=$(echo "$ORG" | python3 -c "import sys,json; print(json.load(sys.stdin)['organization']['id'])" 2>/dev/null || echo "")
 assert_contains "org created" "$ORG" '"id"'
 [ -n "$ORG_ID" ] || { echo "FATAL: no org id"; exit 1; }
@@ -77,7 +78,7 @@ echo "[T5] Create sub-department"
 CHILD=$(curl -s -X POST "$HUB_URL/api/v1/orgs" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H 'Content-Type: application/json' \
-  -d "{\"name\":\"技术部\",\"code\":\"E2E_TECH\",\"type\":\"department\",\"parent_id\":\"$ORG_ID\"}")
+  -d "{\"name\":\"技术部\",\"code\":\"E2E_TECH_$E2E_TS\",\"type\":\"department\",\"parent_id\":\"$ORG_ID\"}")
 CHILD_ID=$(echo "$CHILD" | python3 -c "import sys,json; print(json.load(sys.stdin)['organization']['id'])" 2>/dev/null || echo "")
 assert_contains "child created" "$CHILD" '"id"'
 
@@ -91,14 +92,14 @@ echo "[T7] Create regular user"
 USER=$(curl -s -X POST "$HUB_URL/api/v1/users" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H 'Content-Type: application/json' \
-  -d "{\"username\":\"e2e_user\",\"password\":\"test123\",\"display_name\":\"E2E用户\",\"organization_id\":\"$ORG_ID\"}")
+  -d "{\"username\":\"e2e_user_$E2E_TS\",\"password\":\"test123\",\"display_name\":\"E2E用户\",\"organization_id\":\"$ORG_ID\"}")
 assert_contains "user created" "$USER" '"id"'
 
 # T8: 普通用户登录
 echo "[T8] Regular user login"
 USER_LOGIN=$(curl -s -X POST "$HUB_URL/api/v1/auth/login" \
   -H 'Content-Type: application/json' \
-  -d '{"username":"e2e_user","password":"test123"}')
+  -d "{\"username\":\"e2e_user_$E2E_TS\",\"password\":\"test123\"}")
 USER_TOKEN=$(echo "$USER_LOGIN" | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])" 2>/dev/null || echo "")
 assert_contains "user token issued" "$USER_LOGIN" 'access_token'
 
@@ -113,7 +114,7 @@ assert_status "user forbidden from org:create" "403" "$HTTP_CODE"
 # T10: 普通用户读 /me
 echo "[T10] User can read own info"
 OWN_ME=$(curl -s "$HUB_URL/api/v1/auth/me" -H "Authorization: Bearer $USER_TOKEN")
-assert_contains "user is_super_admin false" "$OWN_ME" '"is_super_admin": false'
+assert_contains "user is_super_admin false" "$OWN_ME" '"is_super_admin":false'
 
 # T11: Worker v1 自动审批
 echo "[T11] Worker v1 auto-approve"
@@ -170,16 +171,16 @@ echo "[T17] Org admin isolation"
 ORG_ADMIN=$(curl -s -X POST "$HUB_URL/api/v1/users" \
   -H "Authorization: Bearer $ADMIN_TOKEN" \
   -H 'Content-Type: application/json' \
-  -d "{\"username\":\"e2e_orgadmin\",\"password\":\"test123\",\"organization_id\":\"$ORG_ID\",\"is_org_admin\":true}")
+  -d "{\"username\":\"e2e_orgadmin_$E2E_TS\",\"password\":\"test123\",\"organization_id\":\"$ORG_ID\",\"is_org_admin\":true}")
 assert_contains "org admin created" "$ORG_ADMIN" '"id"'
 
 OA_LOGIN=$(curl -s -X POST "$HUB_URL/api/v1/auth/login" \
   -H 'Content-Type: application/json' \
-  -d '{"username":"e2e_orgadmin","password":"test123"}')
+  -d "{\"username\":\"e2e_orgadmin_$E2E_TS\",\"password\":\"test123\"}")
 OA_TOKEN=$(echo "$OA_LOGIN" | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])" 2>/dev/null || echo "")
 
 ORG_USERS=$(curl -s "$HUB_URL/api/v1/users" -H "Authorization: Bearer $OA_TOKEN")
-assert_contains "org admin sees org users" "$ORG_USERS" 'e2e_user'
+assert_contains "org admin sees org users" "$ORG_USERS" "e2e_user_$E2E_TS"
 
 # T18: 错误密码登录失败
 echo "[T18] Wrong password login fails"
