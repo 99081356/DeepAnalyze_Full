@@ -244,6 +244,58 @@ export const api = {
       "GET",
       "/auth/adapters",
     ),
+
+  // ─── Phase 1 Marketplace admin (Worker 技能市场管理) ───────────────────
+  listMarketplaceAdminSkills: (params: {
+    status?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }) => {
+    const qs = new URLSearchParams();
+    if (params.status) qs.set("status", params.status);
+    if (params.search) qs.set("search", params.search);
+    if (params.limit !== undefined) qs.set("limit", String(params.limit));
+    if (params.offset !== undefined) qs.set("offset", String(params.offset));
+    const query = qs.toString();
+    return request<AdminSkillListResponse>(
+      "GET",
+      `/marketplace/admin/skills${query ? `?${query}` : ""}`,
+    );
+  },
+
+  approveMarketplaceSkill: (id: string) =>
+    request<AdminSkillMutationResponse>(
+      "POST",
+      `/marketplace/admin/skills/${id}/approve`,
+    ),
+
+  rejectMarketplaceSkill: (id: string, reason: string) =>
+    request<AdminSkillMutationResponse>(
+      "POST",
+      `/marketplace/admin/skills/${id}/reject`,
+      { reason },
+    ),
+
+  deprecateMarketplaceSkill: (id: string, reason: string) =>
+    request<AdminSkillMutationResponse>(
+      "POST",
+      `/marketplace/admin/skills/${id}/deprecate`,
+      { reason },
+    ),
+
+  removeMarketplaceSkill: (id: string) =>
+    request<AdminSkillMutationResponse>(
+      "DELETE",
+      `/marketplace/admin/skills/${id}`,
+    ),
+
+  promotePackageToMarketplace: (packageId: string) =>
+    request<PromoteResponse>(
+      "POST",
+      `/marketplace/admin/promote`,
+      { packageId },
+    ),
 };
 
 export interface SkillPackageV2 {
@@ -315,4 +367,47 @@ export interface ScanResult {
   }>;
   severity: number;
   duration_ms: number;
+}
+
+// ─── Phase 1 Marketplace admin (Worker 技能市场管理) ─────────────────────
+
+export interface AdminSkill {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  prompt: string;
+  tools: string[] | null;
+  model_role: string | null;
+  tags: string[] | null;
+  version: string;
+  review_status: "pending" | "approved" | "rejected" | "deprecated";
+  reviewer_id: string | null;
+  review_notes: string | null;
+  submitter_id: string;
+  download_count: number;
+  rating_avg: string | number; // pg NUMERIC 返回 string，前端用 Number() 转
+  review_count: number;
+  published_at: string | null;
+  created_at: string;
+  updated_at: string;
+  source_package_id: string | null;
+  source_version_id: string | null;
+}
+
+export interface AdminSkillListResponse {
+  skills: AdminSkill[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface AdminSkillMutationResponse {
+  success: true;
+  skill: { id: string; slug: string; name: string };
+}
+
+export interface PromoteResponse {
+  success: true;
+  skill: { id: string; slug: string; name: string; version: string };
 }
