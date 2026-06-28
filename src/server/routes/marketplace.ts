@@ -24,6 +24,8 @@ import { Hono } from "hono";
 import { randomUUID } from "crypto";
 import { query } from "../../store/pg.js";
 import { workerAuth } from "../middleware/worker-auth.js";
+import { jwtAuth } from "../middleware/jwt-auth.js";
+import { requirePermission } from "../middleware/require-permission.js";
 import { HUB_CONFIG } from "../../core/config.js";
 import type {
   SkillSubmitRequest,
@@ -32,6 +34,10 @@ import type {
 
 export function createMarketplaceRoutes(): Hono {
   const app = new Hono();
+
+  // ─── Admin routes: require JWT + skill:approve permission ──────────────
+  // 所有 /admin/* 路由统一走这个中间件，避免裸奔。
+  app.use("/admin/*", jwtAuth, requirePermission("skill:approve"));
 
   // ─── Skills: browse ────────────────────────────────────────────────────
 
@@ -307,37 +313,62 @@ export function createMarketplaceRoutes(): Hono {
   // ─── Admin: list all skills (including pending) ────────────────────────
 
   app.get("/admin/skills", async (c) => {
-    const status = c.req.query("status"); // pending/approved/rejected/all
-    let whereClause = "";
+    const status = c.req.query("status"); // pending/approved/rejected/deprecated/all
+    const search = c.req.query("search") || "";
+    const limit = Math.min(parseInt(c.req.query("limit") || "50", 10), 200);
+    const offset = parseInt(c.req.query("offset") || "0", 10);
+
+    const whereParts: string[] = [];
     const params: unknown[] = [];
+    let idx = 1;
 
     if (status && status !== "all") {
-      whereClause = "WHERE review_status = $1";
+      whereParts.push(`review_status = $${idx++}`);
       params.push(status);
     }
+    if (search) {
+      whereParts.push(`(name ILIKE $${idx} OR slug ILIKE $${idx} OR description ILIKE $${idx})`);
+      params.push(`%${search}%`);
+      idx++;
+    }
+    const whereClause = whereParts.length ? `WHERE ${whereParts.join(" AND ")}` : "";
 
-    const { rows } = await query(
-      `SELECT id, slug, name, description, version, review_status, reviewer_id, review_notes,
-              submitter_id, download_count, published_at, created_at
-       FROM marketplace_skills ${whereClause}
-       ORDER BY created_at DESC`,
+    const countRes = await query<{ total: string }>(
+      `SELECT COUNT(*) as total FROM marketplace_skills ${whereClause}`,
       params,
     );
+    const total = parseInt(countRes.rows[0].total, 10);
 
-    return c.json({ skills: rows });
+    // pending 状态按 created_at ASC（FIFO 审核），其他状态按 created_at DESC
+    const orderBy =
+      status === "pending" ? "created_at ASC" : "created_at DESC";
+
+    const { rows } = await query(
+      `SELECT id, slug, name, description, prompt, tools, model_role, tags, version,
+              review_status, reviewer_id, review_notes, submitter_id,
+              download_count, rating_avg, review_count, published_at, created_at, updated_at,
+              source_package_id, source_version_id
+       FROM marketplace_skills ${whereClause}
+       ORDER BY ${orderBy}
+       LIMIT $${idx} OFFSET $${idx + 1}`,
+      [...params, limit, offset],
+    );
+
+    return c.json({ skills: rows, total, limit, offset });
   });
 
   // ─── Admin: approve skill ──────────────────────────────────────────────
 
   app.post("/admin/skills/:id/approve", async (c) => {
     const { id } = c.req.param();
+    const reviewerId = c.get("userId") as string;
 
     const { rows } = await query(
       `UPDATE marketplace_skills
-       SET review_status = 'approved', reviewer_id = 'system', published_at = now(), updated_at = now()
+       SET review_status = 'approved', reviewer_id = $2, published_at = now(), updated_at = now()
        WHERE id = $1 AND review_status = 'pending'
        RETURNING id, slug, name`,
-      [id],
+      [id, reviewerId],
     );
 
     if (rows.length === 0) {
@@ -351,14 +382,15 @@ export function createMarketplaceRoutes(): Hono {
 
   app.post("/admin/skills/:id/reject", async (c) => {
     const { id } = c.req.param();
+    const reviewerId = c.get("userId") as string;
     const body = await c.req.json<{ reason?: string }>();
 
     const { rows } = await query(
       `UPDATE marketplace_skills
-       SET review_status = 'rejected', reviewer_id = 'system', review_notes = $2, updated_at = now()
+       SET review_status = 'rejected', reviewer_id = $2, review_notes = $3, updated_at = now()
        WHERE id = $1 AND review_status = 'pending'
        RETURNING id, slug, name`,
-      [id, body.reason || ""],
+      [id, reviewerId, body.reason || ""],
     );
 
     if (rows.length === 0) {
