@@ -12,6 +12,7 @@ import { Skills } from "./pages/Skills.js";
 import { SkillDetail } from "./pages/SkillDetail.js";
 import { Sharings } from "./pages/Sharings.js";
 import { Security } from "./pages/Security.js";
+import { WorkerSkills } from "./pages/WorkerSkills.js";
 import { ConfirmDialog } from "./components/ui/ConfirmDialog.js";
 import { ToastContainer } from "./components/ui/Toast.js";
 
@@ -23,7 +24,8 @@ const NAV_ITEMS = [
   { to: "/", label: "仪表盘", icon: "📊" },
   { to: "/orgs", label: "组织树", icon: "🏢" },
   { to: "/users", label: "用户", icon: "👥" },
-  { to: "/skills", label: "Skills 市场", icon: "📦" },
+  { to: "/skills", label: "企业技能包", icon: "📦" },
+  { to: "/worker-skills", label: "Worker 技能市场", icon: "🌐" },
   { to: "/sharings", label: "跨组织共享", icon: "🔄" },
   { to: "/workers", label: "Worker 审批", icon: "🖥️" },
   { to: "/security", label: "安全网关", icon: "🛡️" },
@@ -541,6 +543,7 @@ export default function App() {
       <Route path="/users" element={<ProtectedRoute user={user} setUser={setUser}><UserList /></ProtectedRoute>} />
       <Route path="/workers" element={<ProtectedRoute user={user} setUser={setUser}><WorkerApproval /></ProtectedRoute>} />
       <Route path="/skills" element={<ProtectedRoute user={user} setUser={setUser}><Skills user={user!} /></ProtectedRoute>} />
+      <Route path="/worker-skills" element={<ProtectedRoute user={user} setUser={setUser}><WorkerSkills /></ProtectedRoute>} />
       <Route path="/skills/:id" element={<ProtectedRoute user={user} setUser={setUser}><SkillDetail user={user!} /></ProtectedRoute>} />
       <Route path="/sharings" element={<ProtectedRoute user={user} setUser={setUser}><Sharings /></ProtectedRoute>} />
       <Route path="/security" element={<ProtectedRoute user={user} setUser={setUser}><Security /></ProtectedRoute>} />
