@@ -4,7 +4,9 @@ import { Package } from "lucide-react";
 import { api, type MeResponse, type SkillPackageV2 } from "../api/client.js";
 import { SearchBar } from "../components/ui/SearchBar.js";
 import { EmptyState } from "../components/ui/EmptyState.js";
+import { Button } from "../components/ui/Button.js";
 import { SkillCard, type SkillCardData } from "../components/hub/SkillCard.js";
+import { useUIStore } from "../store/ui.js";
 
 /* -------------------------------------------------------------------------- */
 /*  Constants                                                                 */
@@ -49,8 +51,10 @@ function toCardData(pkg: SkillPackageV2): SkillCardData {
 /*  Component                                                                 */
 /* -------------------------------------------------------------------------- */
 
-export function Skills({ user: _user }: { user: MeResponse }) {
+export function Skills({ user }: { user: MeResponse }) {
   const navigate = useNavigate();
+  const showConfirm = useUIStore((s) => s.showConfirm);
+  const addToast = useUIStore((s) => s.addToast);
 
   const [packages, setPackages] = useState<SkillPackageV2[]>([]);
   const [loading, setLoading] = useState(true);
@@ -115,6 +119,31 @@ export function Skills({ user: _user }: { user: MeResponse }) {
       console.error("Subscribe failed:", err);
     }
   }, []);
+
+  /* -- promote Phase 2 → Phase 1 (企业包推广到 Worker 市场) -- */
+
+  const handlePromote = useCallback(
+    async (pkg: SkillPackageV2) => {
+      const ok = await showConfirm({
+        title: "推广到 Worker 市场",
+        message: `将 "${pkg.name}" 推广到 DA Worker 市场？\n\n所有连接的 DA Worker 将能下载安装。`,
+        confirmLabel: "确认推广",
+        variant: "default",
+      });
+      if (!ok) return;
+      try {
+        const result = await api.promotePackageToMarketplace(pkg.id);
+        addToast(
+          "success",
+          `已推广到 Worker 市场（${result.skill.slug} v${result.skill.version}）`,
+        );
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "推广失败";
+        addToast("error", msg);
+      }
+    },
+    [showConfirm, addToast],
+  );
 
   /* -- styles -- */
 
@@ -182,6 +211,28 @@ export function Skills({ user: _user }: { user: MeResponse }) {
 
   return (
     <div style={pageStyle}>
+      {/* Banner: explain this page's role */}
+      <div
+        style={{
+          padding: "var(--space-4) var(--space-5)",
+          marginBottom: "var(--space-4)",
+          background: "var(--info-light, #e7f1ff)",
+          borderLeft: "3px solid var(--info, #2196f3)",
+          borderRadius: "var(--radius-md)",
+          fontSize: "var(--text-sm)",
+        }}
+      >
+        本页管理 <strong>企业内部技能包</strong>（多租户订阅制，供企业内部用户使用）。
+        如需管理 <strong>DA Worker</strong> 可下载安装的全局 skill，请前往{" "}
+        <a
+          href="/worker-skills"
+          style={{ color: "var(--info, #2196f3)", textDecoration: "underline" }}
+        >
+          Worker 技能市场
+        </a>
+        。
+      </div>
+
       {/* Search bar */}
       <div style={searchRowStyle}>
         <SearchBar
@@ -242,12 +293,29 @@ export function Skills({ user: _user }: { user: MeResponse }) {
           ) : (
             <div style={gridStyle}>
               {filtered.map((pkg) => (
-                <SkillCard
+                <div
                   key={pkg.id}
-                  skill={toCardData(pkg)}
-                  onDetail={() => handleDetail(pkg.id)}
-                  onSubscribe={() => handleSubscribe(pkg.id)}
-                />
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "var(--space-2)",
+                  }}
+                >
+                  <SkillCard
+                    skill={toCardData(pkg)}
+                    onDetail={() => handleDetail(pkg.id)}
+                    onSubscribe={() => handleSubscribe(pkg.id)}
+                  />
+                  {user.is_super_admin && !pkg.is_kill_switched && (
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      onClick={() => handlePromote(pkg)}
+                    >
+                      推广到 Worker 市场
+                    </Button>
+                  )}
+                </div>
               ))}
             </div>
           )}
