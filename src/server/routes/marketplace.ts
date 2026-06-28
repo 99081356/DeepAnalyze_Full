@@ -400,6 +400,47 @@ export function createMarketplaceRoutes(): Hono {
     return c.json({ success: true, skill: rows[0] });
   });
 
+  // ─── Admin: deprecate skill (approved → deprecated) ────────────────────
+
+  app.post("/admin/skills/:id/deprecate", async (c) => {
+    const { id } = c.req.param();
+    const reviewerId = c.get("userId") as string;
+    const body = await c.req.json<{ reason?: string }>();
+
+    const { rows } = await query(
+      `UPDATE marketplace_skills
+       SET review_status = 'deprecated', reviewer_id = $2, review_notes = $3, updated_at = now()
+       WHERE id = $1 AND review_status = 'approved'
+       RETURNING id, slug, name`,
+      [id, reviewerId, body.reason || ""],
+    );
+
+    if (rows.length === 0) {
+      return c.json({ error: "Skill not found or not in approved status" }, 404);
+    }
+
+    return c.json({ success: true, skill: rows[0] });
+  });
+
+  // ─── Admin: hard delete skill (only pending or rejected) ───────────────
+
+  app.delete("/admin/skills/:id", async (c) => {
+    const { id } = c.req.param();
+
+    const { rows } = await query(
+      `DELETE FROM marketplace_skills
+       WHERE id = $1 AND review_status IN ('pending', 'rejected')
+       RETURNING id, slug, name`,
+      [id],
+    );
+
+    if (rows.length === 0) {
+      return c.json({ error: "Can only delete pending or rejected skills" }, 400);
+    }
+
+    return c.json({ success: true, skill: rows[0] });
+  });
+
   // ─── Admin: list all plugins (including pending) ───────────────────────
 
   app.get("/admin/plugins", async (c) => {
