@@ -441,6 +441,116 @@ export function createMarketplaceRoutes(): Hono {
     return c.json({ success: true, skill: rows[0] });
   });
 
+  // ─── Admin: promote Phase 2 package → Phase 1 marketplace ──────────────
+  // 一次性快照复制：读 skill_packages + 最新 published skill_versions，
+  // 写入 marketplace_skills (review_status='approved')。
+  // slug 冲突 → 409；无 published 版本 → 400；killed package → 400。
+  //
+  // 字段映射参见 plan Task 4（skill_versions.content → prompt,
+  // allowed_tools JSONB → tools TEXT[], 无 model_role/anti_hallucination/compatibility）。
+
+  app.post("/admin/promote", async (c) => {
+    const body = await c.req.json<{ packageId: string }>();
+    const adminId = c.get("userId") as string;
+
+    if (!body.packageId) {
+      return c.json({ error: "packageId is required" }, 400);
+    }
+
+    // 1. 读 package（用 is_kill_switched 判断 killed，不是 status）
+    const pkgRes = await query(
+      `SELECT id, slug, name, display_name, description, tags, is_kill_switched
+       FROM skill_packages WHERE id = $1`,
+      [body.packageId],
+    );
+    if (pkgRes.rows.length === 0) {
+      return c.json({ error: "Package not found" }, 404);
+    }
+    const pkg = pkgRes.rows[0] as {
+      id: string;
+      slug: string;
+      name: string;
+      display_name: string | null;
+      description: string | null;
+      tags: unknown; // JSONB
+      is_kill_switched: boolean;
+    };
+
+    if (pkg.is_kill_switched) {
+      return c.json({ error: "Package is kill-switched, cannot promote" }, 400);
+    }
+
+    // 2. 读最新 published 版本（status='published'，非 internal_test/canary）
+    const verRes = await query(
+      `SELECT id, version, content, allowed_tools
+       FROM skill_versions
+       WHERE package_id = $1 AND status = 'published'
+       ORDER BY created_at DESC LIMIT 1`,
+      [body.packageId],
+    );
+    if (verRes.rows.length === 0) {
+      return c.json({ error: "Package has no published version" }, 400);
+    }
+    const ver = verRes.rows[0] as {
+      id: string;
+      version: string;
+      content: string | null;
+      allowed_tools: unknown; // JSONB array
+    };
+
+    // 3. slug 冲突检查
+    const existing = await query(
+      `SELECT id FROM marketplace_skills WHERE slug = $1`,
+      [pkg.slug],
+    );
+    if (existing.rows.length > 0) {
+      return c.json({
+        error: `Slug '${pkg.slug}' already exists in worker market. Rename the source package or deprecate the existing worker skill first.`,
+      }, 409);
+    }
+
+    // 4. 字段转换：JSONB → TEXT[]（pg 不允许直接 cast JSONB to TEXT[]，用 jsonb_array_elements_text）
+    //    allowed_tools/tags 都可能是空数组或非数组 JSON，需 defensive 处理
+    const safeName = pkg.display_name || pkg.name;
+    const toolsArray = Array.isArray(ver.allowed_tools)
+      ? (ver.allowed_tools as string[]).filter((t) => typeof t === "string")
+      : ["*"];
+    const tagsArray = Array.isArray(pkg.tags)
+      ? (pkg.tags as string[]).filter((t) => typeof t === "string")
+      : [];
+
+    // 5. INSERT 到 marketplace_skills
+    const newId = randomUUID();
+    await query(
+      `INSERT INTO marketplace_skills
+        (id, slug, name, description, prompt, tools, model_role,
+         anti_hallucination_level, tags, version, submitter_id, reviewer_id,
+         review_status, published_at, compatibility,
+         source_package_id, source_version_id)
+       VALUES ($1, $2, $3, $4, $5, $6, 'main', NULL, $7, $8, $9, $10, 'approved', now(), $11, $12, $13)`,
+      [
+        newId,
+        pkg.slug,
+        safeName,
+        pkg.description || "",
+        ver.content || "",
+        toolsArray,
+        tagsArray,
+        ver.version,
+        adminId,
+        adminId,
+        JSON.stringify({ minVersion: "0.1.0" }),
+        pkg.id,
+        ver.id,
+      ],
+    );
+
+    return c.json({
+      success: true,
+      skill: { id: newId, slug: pkg.slug, name: safeName, version: ver.version },
+    });
+  });
+
   // ─── Admin: list all plugins (including pending) ───────────────────────
 
   app.get("/admin/plugins", async (c) => {
