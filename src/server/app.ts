@@ -90,6 +90,14 @@ export async function createApp(): Promise<Hono> {
   const { createModelRoutes } = await import("./routes/models.js");
   app.route("/api/v1/models", createModelRoutes());
 
+  // Bundle distribution (Phase 5: manifest + image list)
+  const { createBundleRoutes } = await import("./routes/bundle.js");
+  app.route("/api/v1/bundle", createBundleRoutes());
+
+  // Image tar streaming (Phase 5: curl | docker load)
+  const { createImageRoutes } = await import("./routes/images.js");
+  app.route("/api/v1/images", createImageRoutes());
+
   // ─── Static frontend (admin panel) ───────────────────────────────────
   // Serves built React app from frontend/dist/. Falls back to index.html
   // for client-side routing (SPA).

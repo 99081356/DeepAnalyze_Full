@@ -451,6 +451,63 @@ test("model version delete",
 code, data = api("GET", "/api/v1/models/manifests/bge-m3")
 test("model manifest 404 after delete", code == 404, f"code={code}")
 
+# --- T_E2: bundle manifest + image tar streaming ---
+print("\n--- T_E2: bundle manifest + image tar endpoints ---")
+
+# Manifest endpoint: 404 when no bundle exists, 200 when one does
+code, data = api("GET", "/api/v1/bundle/manifest")
+test("bundle manifest endpoint reachable",
+     code in (200, 404),
+     f"code={code} data={str(data)[:120]}")
+
+# Images list endpoint: should always return {images: [...]}
+code, data = api("GET", "/api/v1/bundle/images")
+test("bundle images list returns array",
+     code == 200 and "images" in data and isinstance(data["images"], list),
+     f"code={code} data={str(data)[:120]}")
+
+# Image tar streaming: create a real test tar file, then fetch it via API
+import os
+images_dir = os.environ.get("HUB_BUNDLE_IMAGES_DIR", "./data/bundle/images")
+os.makedirs(images_dir, exist_ok=True)
+test_tar_path = os.path.join(images_dir, "test-image.tar")
+test_tar_content = b"fake tar content for streaming test"
+with open(test_tar_path, "wb") as f:
+    f.write(test_tar_content)
+
+# Fetch the tar via raw urllib (binary response, not JSON)
+code_img = 0
+img_bytes = b""
+try:
+    img_req = urllib.request.Request(
+        f"{BASE}/api/v1/images/test-image.tar",
+        method="GET",
+    )
+    img_resp = urllib.request.urlopen(img_req)
+    code_img = img_resp.status
+    img_bytes = img_resp.read()
+except urllib.error.HTTPError as e:
+    code_img = e.code
+    try:
+        img_bytes = e.read()
+    except:
+        pass
+except Exception as e:
+    code_img = 0
+
+test("image tar stream returns 200",
+     code_img == 200,
+     f"code={code_img}")
+test("image tar content matches",
+     code_img == 200 and img_bytes == test_tar_content,
+     f"code={code_img} got_len={len(img_bytes)} expected_len={len(test_tar_content)}")
+
+# Clean up the test tar
+try:
+    os.remove(test_tar_path)
+except OSError:
+    pass
+
 # Summary
 passed = sum(1 for _, s, _ in results if s == "PASS")
 failed = sum(1 for _, s, _ in results if s == "FAIL")
