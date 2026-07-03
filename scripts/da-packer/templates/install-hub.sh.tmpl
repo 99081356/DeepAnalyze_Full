@@ -1,0 +1,98 @@
+#!/bin/bash
+# =============================================================================
+# DeepAnalyze Hub 一键安装脚本（由 da-packer 自动生成）
+# =============================================================================
+set -euo pipefail
+
+DATA_DIR="${DATA_DIR:-/opt/hub/data}"
+PORT="${PORT:-22000}"
+EXTERNAL_URL="${EXTERNAL_URL:-http://localhost:22000}"
+ADMIN_INIT_PASSWORD="${ADMIN_INIT_PASSWORD:-admin123}"
+
+# 颜色
+green() { echo -e "\033[32m$1\033[0m"; }
+red() { echo -e "\033[31m$1\033[0m"; }
+
+# Phase 1: 环境检测
+green "[1/8] 环境检测..."
+if ! command -v docker &> /dev/null; then
+  red "Docker 未安装。请先安装 Docker。"
+  exit 1
+fi
+if ! command -v curl &> /dev/null; then
+  red "curl 未安装。请先安装 curl。"
+  exit 1
+fi
+DISK_AVAIL=$(df -BG "${DATA_DIR}" 2>/dev/null | tail -1 | awk '{print $4}' | tr -d 'G')
+if [ -z "$DISK_AVAIL" ] || [ "$DISK_AVAIL" -lt 30 ]; then
+  red "${DATA_DIR} 可用空间不足 30GB（当前：${DISK_AVAIL:-unknown}GB）"
+  exit 1
+fi
+
+# Phase 2: 加载镜像
+green "[2/8] 加载 Docker 镜像..."
+for img in images/*.tar; do
+  [ -e "$img" ] || continue
+  echo "  Loading $img..."
+  docker load < "$img"
+done
+
+# Phase 3: 创建数据目录
+green "[3/8] 创建数据目录..."
+mkdir -p "${DATA_DIR}"/{models,skills,db,logs,secrets,bundle/images}
+mkdir -p "${DATA_DIR}"/postgres
+
+# Phase 4: 复制模型和 Skill
+green "[4/8] 复制模型和 Skill..."
+if [ -d models ]; then
+  cp -r models/* "${DATA_DIR}/models/" 2>/dev/null || echo "  (no models)"
+fi
+if [ -d skills ]; then
+  cp -r skills/* "${DATA_DIR}/skills/" 2>/dev/null || echo "  (no skills)"
+fi
+
+# Phase 5: 生成配置
+green "[5/8] 生成配置..."
+export DATA_DIR PORT EXTERNAL_URL ADMIN_INIT_PASSWORD
+if [ -f config/hub-default.yaml ]; then
+  envsubst < config/hub-default.yaml > "${DATA_DIR}/hub.yaml"
+fi
+
+# Phase 6: 启动
+green "[6/8] 启动 Hub + PostgreSQL..."
+export HUB_DATA_DIR="${DATA_DIR}"
+docker compose -p da-hub up -d
+
+# Phase 7: 健康检查
+green "[7/8] 等待 Hub 就绪..."
+for i in {1..60}; do
+  if curl -sf http://localhost:${PORT}/api/health > /dev/null; then
+    green "  ✓ Hub 已就绪"
+    break
+  fi
+  if [ $i -eq 60 ]; then
+    red "  ✗ 60s 内未就绪"
+    docker compose -p da-hub logs --tail 50
+    exit 1
+  fi
+  sleep 2
+done
+
+# Phase 8: 引导
+green "[8/8] 部署完成"
+cat <<EOF
+
+═══════════════════════════════════════════════
+  ✓ DeepAnalyze Hub 已部署完成！
+
+  访问 URL: ${EXTERNAL_URL}/setup
+
+  按页面引导完成：
+    1. 创建 super_admin 账号
+    2. 配置组织树
+    3. 添加 Worker（自动派发独立 DA 给员工）
+
+  数据目录: ${DATA_DIR}
+  日志: docker compose -p da-hub logs -f
+═══════════════════════════════════════════════
+EOF

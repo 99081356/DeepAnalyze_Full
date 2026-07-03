@@ -1,0 +1,30 @@
+# DeepAnalyze Bundle v{{VERSION}}
+
+## 包含内容
+
+- DA Worker 镜像：{{DA_IMAGE_TAG}}
+- Hub 镜像：{{HUB_IMAGE_TAG}}
+- PostgreSQL 17（pgvector）
+- 模型权重：{{MODEL_COUNT}} 个（{{MODELS_LIST}}）
+- Skill 包：{{SKILL_COUNT}} 个
+
+## 部署步骤
+
+1. 解压：`tar xzf da-bundle-v{{VERSION}}.tar.gz -C /opt/`
+2. 安装：`cd /opt/da-bundle-v{{VERSION}}/ && sudo ./install-hub.sh`
+3. 浏览器访问安装向导
+
+## 体积
+
+- 总大小：{{TOTAL_SIZE}}
+- 镜像：{{IMAGES_SIZE}}
+- 模型：{{MODELS_SIZE}}
+
+## 校验
+
+```
+sha256sum da-bundle-v{{VERSION}}.tar.gz
+# 应输出: {{BUNDLE_SHA256}}
+```
+
+由 da-packer 于 {{GENERATED_AT}} 生成。

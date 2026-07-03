@@ -1,0 +1,47 @@
+# 由 da-packer 生成 — Hub 部署 compose
+version: "3.8"
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: da-hub-postgres
+    environment:
+      POSTGRES_DB: deepanalyze_hub
+      POSTGRES_USER: deepanalyze_hub
+      POSTGRES_PASSWORD: ${HUB_DB_PASSWORD:-deepanalyze_hub_dev}
+    volumes:
+      - ${HUB_DATA_DIR}/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U deepanalyze_hub"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  hub:
+    image: deepanalyze/hub:${HUB_IMAGE_TAG}
+    container_name: da-hub
+    ports:
+      - "${PORT:-22000}:22000"
+    environment:
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_USER: deepanalyze_hub
+      PG_PASSWORD: ${HUB_DB_PASSWORD:-deepanalyze_hub_dev}
+      PG_DATABASE: deepanalyze_hub
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      HUB_EXTERNAL_URL: ${EXTERNAL_URL:-http://localhost:22000}
+      HUB_DATA_KEY: ${HUB_DATA_KEY}
+      HUB_MODEL_REPO_DIR: ${HUB_DATA_DIR}/models
+      HUB_BUNDLE_IMAGES_DIR: ${HUB_DATA_DIR}/bundle/images
+      HUB_JWT_KEY_ID: ${HUB_JWT_KEY_ID:-hub-rs256-v1}
+    volumes:
+      - ${HUB_DATA_DIR}:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:22000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
