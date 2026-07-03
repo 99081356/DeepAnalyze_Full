@@ -218,6 +218,66 @@ r = subprocess.run(
 )
 test("skill_packages_status_check constraint exists", "YES" in r.stdout, f"stdout={r.stdout.strip()}")
 
+# --- T_C2: skill submission query, version list, author withdraw ---
+print("\n--- T_C2: skill marketplace endpoints ---")
+
+# Ensure the 'system' user exists (submit endpoint hardcodes submitter_id='system')
+bun_query_sysuser = (
+    "const pg = require('pg'); "
+    "const pool = new pg.Pool({ "
+    "  host: process.env.PG_HOST || 'localhost', "
+    "  port: parseInt(process.env.PG_PORT || '5432'), "
+    "  database: process.env.PG_DATABASE || 'deepanalyze_hub', "
+    "  user: process.env.PG_USER || 'deepanalyze', "
+    "  password: process.env.PG_PASSWORD || 'deepanalyze_dev', "
+    "}); "
+    "pool.query(\"INSERT INTO users (id, username, display_name, role, status, auth_source, is_super_admin) "
+    "  VALUES ('system', 'system', 'System', 'admin', 'active', 'system', TRUE) "
+    "  ON CONFLICT (id) DO NOTHING\") "
+    "  .then(() => { console.log('OK'); return pool.end(); }) "
+    "  .catch(e => { console.error(e.message); process.exit(1); });"
+)
+subprocess.run(
+    ["bun", "-e", bun_query_sysuser],
+    capture_output=True, text=True, cwd="/mnt/d/code/deepanalyze/deepanalyze-hub",
+)
+
+# Register a worker to obtain a worker_token (prior tests don't preserve one)
+# Use protocol_version 1 for auto-approval (no join_token needed)
+code, data = api("POST", "/api/v1/workers/register",
+                  data={"hostname": f"c2-test-{ts}", "protocol_version": 1})
+worker_token = data.get("worker_token") or data.get("workerToken") or ""
+test("worker registered for C2", code == 200 and worker_token, str(data)[:200])
+
+sub_id = ""
+skill_slug = f"test-skill-{ts}"
+if worker_token:
+    # Submit a skill — endpoint expects name + prompt (slug auto-generated)
+    skill_name = f"Test Skill {ts}"
+    code, data = api("POST", "/api/v1/marketplace/skills/submit",
+                      token=worker_token,
+                      data={"name": skill_name, "prompt": "test prompt",
+                            "description": "C2 test skill"})
+    sub_id = data.get("submissionId", "")
+    test("submission created", code in (200, 201) and sub_id, str(data)[:200])
+
+    if sub_id:
+        # Query submission status by id
+        code, data = api("GET", f"/api/v1/marketplace/submissions/{sub_id}",
+                          token=worker_token)
+        test("submission status query", code == 200 and "review_status" in data, str(data)[:200])
+
+# Version list (public endpoint — returns 200 + versions key)
+code, data = api("GET", f"/api/v1/marketplace/skills/{skill_slug}/versions")
+test("skill versions list", code == 200 and "versions" in data, str(data)[:200])
+
+# Withdraw (soft-delete) — admin is super_admin so permission check passes
+# Use the slug we just submitted (if submission succeeded) or the fallback slug
+withdraw_slug = skill_slug
+code, data = api("DELETE", f"/api/v1/marketplace/skills/{withdraw_slug}",
+                  token=admin_token)
+test("skill withdraw", code in (200, 204), str(data)[:200])
+
 # Summary
 passed = sum(1 for _, s, _ in results if s == "PASS")
 failed = sum(1 for _, s, _ in results if s == "FAIL")

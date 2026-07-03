@@ -6,7 +6,11 @@
  *   GET  /skills/:slug              — Get skill detail
  *   GET  /skills/:slug/download     — Download skill package
  *   POST /skills/submit             — Submit a skill for review
- *   GET  /skills/:slug/versions     — List skill versions (placeholder)
+ *   GET  /skills/:slug/versions     — List skill versions
+ *   DELETE /skills/:slug            — Author/admin withdraw (soft-delete)
+ *
+ * Submissions:
+ *   GET  /submissions/:id           — Query submission status by id
  *
  * Plugins:
  *   GET  /plugins                   — List approved marketplace plugins
@@ -192,11 +196,72 @@ export function createMarketplaceRoutes(): Hono {
     }
   });
 
-  // ─── Skills: versions (placeholder) ────────────────────────────────────
+  // ─── Skills: versions ──────────────────────────────────────────────────
 
   app.get("/skills/:slug/versions", async (c) => {
-    // Version history is not yet implemented
-    return c.json({ versions: [], message: "Version history coming soon" });
+    const { slug: rawSlug } = c.req.param();
+    const slug = decodeURIComponent(rawSlug);
+    const result = await query<{ version: string; created_at: string; review_status: string }>(
+      `SELECT version, created_at, COALESCE(review_status, 'published') as review_status
+       FROM marketplace_skills
+       WHERE slug = $1 OR name = $1
+       ORDER BY created_at DESC`,
+      [slug],
+    );
+    return c.json({ versions: result.rows });
+  });
+
+  // ─── Submissions: query by id (workerAuth) ──────────────────────────────
+
+  app.get("/submissions/:id", workerAuth, async (c) => {
+    const id = c.req.param("id");
+    const result = await query<{
+      id: string;
+      review_status: string;
+      review_notes: string | null;
+      published_at: Date | null;
+      name: string;
+      slug: string;
+      version: string;
+    }>(
+      `SELECT id, review_status, review_notes, published_at, name, slug, version
+       FROM marketplace_skills WHERE id = $1`,
+      [id],
+    );
+    if (result.rows.length === 0) {
+      return c.json({ error: "submission not found" }, 404);
+    }
+    return c.json(result.rows[0]);
+  });
+
+  // ─── Skills: withdraw (soft-delete via review_status = 'withdrawn') ─────
+
+  app.delete("/skills/:slug", jwtAuth, async (c) => {
+    const { slug: rawSlug } = c.req.param();
+    const slug = decodeURIComponent(rawSlug);
+    const userId = c.get("userId") as string;
+    const isSuperAdmin = c.get("isSuperAdmin") as boolean;
+
+    // Find the skill (exclude already-rejected)
+    const found = await query<{ submitter_id: string | null }>(
+      `SELECT submitter_id FROM marketplace_skills
+       WHERE slug = $1 AND review_status != 'rejected'
+       ORDER BY created_at DESC LIMIT 1`,
+      [slug],
+    );
+    if (found.rows.length === 0) {
+      return c.json({ error: "skill not found" }, 404);
+    }
+    // Author or super-admin only
+    if (found.rows[0].submitter_id !== userId && !isSuperAdmin) {
+      return c.json({ error: "only author or admin can withdraw" }, 403);
+    }
+
+    await query(
+      `UPDATE marketplace_skills SET review_status = 'withdrawn', updated_at = now() WHERE slug = $1`,
+      [slug],
+    );
+    return c.json({ ok: true, slug });
   });
 
   // ─── Plugins: browse ───────────────────────────────────────────────────
