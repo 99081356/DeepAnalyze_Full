@@ -19,6 +19,7 @@ import {
   getUserPermissions,
 } from "../../domain/user.js";
 import { jwtAuth } from "../middleware/jwt-auth.js";
+import { getJwks } from "../../domain/jwks.js";
 
 export function createAuthRoutes() {
   const router = new Hono();
@@ -103,6 +104,11 @@ export function createAuthRoutes() {
       "refresh_token=; HttpOnly; Path=/api/v1/auth; Max-Age=0",
     );
     return c.json({ success: true });
+  });
+
+  // GET /api/v1/auth/jwks.json
+  router.get("/jwks.json", (c) => {
+    return c.json(getJwks());
   });
 
   // GET /api/v1/auth/me
