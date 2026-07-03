@@ -388,7 +388,85 @@ export const api = {
       "DELETE",
       `/marketplace/skills/${encodeURIComponent(slug)}`,
     ),
+
+  // ─── Phase 5 G3: Model repository management ──────────────────────────
+  models: {
+    /** List all model artifacts (admin view). */
+    list: async (): Promise<ModelArtifact[]> => {
+      const res = await request<{ models: ModelArtifact[] }>("GET", "/models");
+      return res.models;
+    },
+
+    /** Fetch the latest manifest for a named model (public). */
+    manifest: async (name: string): Promise<ModelManifest> =>
+      request<ModelManifest>(
+        "GET",
+        `/models/manifests/${encodeURIComponent(name)}`,
+      ),
+
+    /** Delete a specific model version (admin). */
+    delete: async (name: string, version: string): Promise<{ ok: boolean }> =>
+      request<{ ok: boolean }>(
+        "DELETE",
+        `/models/${encodeURIComponent(name)}/${encodeURIComponent(version)}`,
+      ),
+
+    /** Upload a new model artifact via multipart form-data.
+     *  Uses raw fetch (not the `request` helper) because the helper forces
+     *  Content-Type: application/json and JSON.stringify(body). FormData must
+     *  let the browser set the multipart boundary automatically. */
+    upload: async (
+      formData: FormData,
+    ): Promise<{
+      id: string;
+      files: Array<{ originalName: string; sha256: string; sizeBytes: number }>;
+    }> => {
+      const token = getToken();
+      const resp = await fetch(`${API_BASE}/models/upload`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData, // NO Content-Type — browser sets multipart boundary
+        credentials: "include",
+      });
+      if (resp.status === 401) {
+        setToken(null);
+        window.location.href = "/login";
+        throw new Error("Session expired");
+      }
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => "");
+        throw new Error(`HTTP ${resp.status}: ${text}`);
+      }
+      return (await resp.json()) as {
+        id: string;
+        files: Array<{ originalName: string; sha256: string; sizeBytes: number }>;
+      };
+    },
+  },
 };
+
+export interface ModelArtifact {
+  id: string;
+  name: string;
+  version: string;
+  category: string;
+  sha256: string;
+  /** pg BIGINT may arrive as string; coerce with Number() at render time. */
+  size_bytes: number | string | null;
+  uploaded_by: string | null;
+  created_at: string;
+}
+
+export interface ModelManifest {
+  name: string;
+  version: string;
+  category: string;
+  files: Array<{
+    originalName: string;
+    sha256: string;
+    sizeBytes: number;
+  }>;
+}
 
 export interface SkillPackageV2 {
   id: string;

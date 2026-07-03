@@ -565,6 +565,72 @@ test("deploy requires auth", code == 401, str(data)[:200])
 code, data = api("GET", "/api/v1/workers/deploy-jobs/nonexistent_dpl_id", token=admin_token)
 test("deploy-job query 404 for missing", code == 404, str(data)[:200])
 
+# --- T_G3: model repository list endpoint (admin view) ---
+print("\n--- T_G3: model repository list endpoint ---")
+
+# List endpoint requires auth
+code, data = api("GET", "/api/v1/models")
+test("models list requires auth", code == 401, f"code={code}")
+
+# Authenticated list returns {models: [...]} shape (array, even when empty)
+code, data = api("GET", "/api/v1/models", token=admin_token)
+test("models list returns 200",
+     code == 200, f"code={code} data={str(data)[:200]}")
+test("models list shape {models: array}",
+     code == 200 and isinstance(data, dict) and isinstance(data.get("models"), list),
+     f"keys={list(data.keys()) if isinstance(data, dict) else type(data).__name__}")
+
+# Upload a model so the list has at least one entry, then verify list grows
+boundary = "----deepanalyze-test-g3"
+body_str = (
+    f"--{boundary}\r\n"
+    'Content-Disposition: form-data; name="name"\r\n\r\n'
+    "g3-test-model\r\n"
+    f"--{boundary}\r\n"
+    'Content-Disposition: form-data; name="version"\r\n\r\n'
+    "9.9.9\r\n"
+    f"--{boundary}\r\n"
+    'Content-Disposition: form-data; name="category"\r\n\r\n'
+    "embedding\r\n"
+    f"--{boundary}\r\n"
+    'Content-Disposition: form-data; name="file"; filename="m.json"\r\n'
+    "Content-Type: application/octet-stream\r\n\r\n"
+    '{"ok":1}\r\n'
+    f"--{boundary}--\r\n"
+)
+req = urllib.request.Request(
+    f"{BASE}/api/v1/models/upload",
+    data=body_str.encode(),
+    headers={
+        "Content-Type": f"multipart/form-data; boundary={boundary}",
+        "Authorization": f"Bearer {admin_token}",
+    },
+    method="POST",
+)
+g3_uploaded = False
+try:
+    resp = urllib.request.urlopen(req)
+    g3_uploaded = resp.status == 201
+except urllib.error.HTTPError as e:
+    g3_uploaded = False
+
+# List should contain the row we just uploaded
+code, data = api("GET", "/api/v1/models", token=admin_token)
+g3_found = (
+    code == 200
+    and any(
+        isinstance(m, dict) and m.get("name") == "g3-test-model"
+        for m in data.get("models", [])
+    )
+)
+test("models list contains uploaded model",
+     g3_found,
+     f"uploaded={g3_uploaded} count={len(data.get('models', [])) if isinstance(data, dict) else 'NA'}")
+
+# Cleanup
+if g3_found:
+    api("DELETE", "/api/v1/models/g3-test-model/9.9.9", token=admin_token)
+
 # Summary
 passed = sum(1 for _, s, _ in results if s == "PASS")
 failed = sum(1 for _, s, _ in results if s == "FAIL")

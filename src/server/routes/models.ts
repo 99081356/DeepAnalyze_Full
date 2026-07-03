@@ -12,6 +12,7 @@ import type { Readable } from "node:stream";
 import { Readable as NodeReadable } from "node:stream";
 import { jwtAuth } from "../middleware/jwt-auth.js";
 import { requirePermission } from "../middleware/require-permission.js";
+import { query } from "../../store/pg.js";
 import {
   uploadModelArtifact,
   getLatestManifest,
@@ -21,6 +22,25 @@ import {
 
 export function createModelRoutes(): Hono {
   const app = new Hono();
+
+  // GET / — list all model artifacts (admin view)
+  // Placed BEFORE parameterized routes (/:name/:version) to avoid collisions.
+  app.get("/", jwtAuth, requirePermission("model:upload"), async (c) => {
+    const result = await query<{
+      id: string;
+      name: string;
+      version: string;
+      category: string;
+      sha256: string;
+      size_bytes: number | null;
+      created_at: Date;
+      uploaded_by: string | null;
+    }>(
+      `SELECT id, name, version, category, sha256, size_bytes, uploaded_by, created_at
+       FROM model_artifacts ORDER BY created_at DESC LIMIT 200`,
+    );
+    return c.json({ models: result.rows });
+  });
 
   // POST /upload — multipart upload (admin only)
   app.post("/upload", jwtAuth, requirePermission("model:upload"), async (c) => {
