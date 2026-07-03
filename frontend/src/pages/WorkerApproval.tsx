@@ -1,8 +1,10 @@
 import { useEffect, useState, useCallback, type CSSProperties } from "react";
+import { Plus } from "lucide-react";
 import { api, type PendingWorker } from "../api/client.js";
 import { Badge } from "../components/ui/Badge.js";
 import { Button } from "../components/ui/Button.js";
 import { StatusBadge } from "../components/hub/StatusBadge.js";
+import { DeployWorkerModal } from "../components/hub/DeployWorkerModal.js";
 import { useUIStore } from "../store/ui.js";
 
 /* -------------------------------------------------------------------------- */
@@ -18,6 +20,7 @@ export function WorkerApproval() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [approvedToken, setApprovedToken] = useState<{ id: string; token: string } | null>(null);
+  const [deployOpen, setDeployOpen] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -91,6 +94,13 @@ export function WorkerApproval() {
     fontWeight: "var(--font-semibold)" as unknown as number,
     color: "var(--text-primary)",
     margin: 0,
+  };
+
+  const headerRowStyle: CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "var(--space-3)",
   };
 
   const sectionTitleStyle: CSSProperties = {
@@ -220,7 +230,23 @@ export function WorkerApproval() {
 
   return (
     <div style={pageStyle}>
-      <h2 style={titleStyle}>Worker 审批</h2>
+      <div style={headerRowStyle}>
+        <h2 style={titleStyle}>Worker 审批</h2>
+        <Button
+          variant="primary"
+          size="sm"
+          icon={<Plus size={14} />}
+          onClick={() => setDeployOpen(true)}
+        >
+          添加 Worker
+        </Button>
+      </div>
+
+      <DeployWorkerModal
+        open={deployOpen}
+        onClose={() => setDeployOpen(false)}
+        onDeployed={load}
+      />
 
       {error && <div style={errorStyle}>{error}</div>}
 

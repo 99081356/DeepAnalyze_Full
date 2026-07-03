@@ -105,6 +105,30 @@ export interface PendingWorker {
   capabilities?: Record<string, unknown>;
 }
 
+export interface DeployJob {
+  id: string;
+  status:
+    | "pending"
+    | "running"
+    | "completed"
+    | "failed"
+    | "cancelled";
+  worker_id: string | null;
+  organization_id: string;
+  ssh_host: string;
+  ssh_port: number;
+  ssh_user: string;
+  image_tag: string;
+  source: "hub_stream" | "docker_pull";
+  assigned_user_id: string | null;
+  dry_run: boolean;
+  error: string | null;
+  created_at: string;
+  updated_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+}
+
 export const api = {
   // Auth
   login: (username: string, password: string) =>
@@ -160,6 +184,56 @@ export const api = {
       `/workers/${id}/reject`,
       { reason },
     ),
+
+  // ─── Phase 5: Worker remote deployment (F4 endpoints) ──────────────
+  deploy: {
+    /** Create a new deploy job. If dry_run=true the backend will validate
+     *  SSH connectivity and Docker availability without persisting the job. */
+    create: async (params: {
+      organization_id: string;
+      ssh_host: string;
+      ssh_port?: number;
+      ssh_user: string;
+      ssh_private_key: string;
+      image_tag: string;
+      source?: "hub_stream" | "docker_pull";
+      assigned_user_id?: string;
+      skill_package_ids?: string[];
+      dry_run?: boolean;
+    }): Promise<{ job_id: string; status: string }> => {
+      return request("POST", "/workers/deploy", params);
+    },
+
+    /** Query the status of a deploy job. */
+    status: async (jobId: string): Promise<DeployJob> => {
+      return request<DeployJob>("GET", `/workers/deploy-jobs/${jobId}`);
+    },
+
+    /** Upgrade an existing worker to a new image tag. */
+    upgrade: async (
+      workerId: string,
+      imageTag: string,
+    ): Promise<{ success: boolean; error?: string }> => {
+      return request("POST", `/workers/${workerId}/upgrade`, {
+        image_tag: imageTag,
+      });
+    },
+
+    /** Stop a running worker (does not delete the container). */
+    stop: async (workerId: string): Promise<{ success: boolean }> => {
+      return request("POST", `/workers/${workerId}/stop`);
+    },
+
+    /** Restart a stopped worker. */
+    restart: async (workerId: string): Promise<{ success: boolean }> => {
+      return request("POST", `/workers/${workerId}/restart`);
+    },
+
+    /** Rollback a worker to its previously deployed image tag. */
+    rollback: async (workerId: string): Promise<{ success: boolean }> => {
+      return request("POST", `/workers/${workerId}/rollback`);
+    },
+  },
 
   // Skills marketplace (Phase 2)
   getRaw,
