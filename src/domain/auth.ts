@@ -9,6 +9,7 @@ import jwt from "jsonwebtoken";
 import { createHash } from "node:crypto";
 import { query } from "../store/pg.js";
 import { HUB_CONFIG } from "../core/config.js";
+import { getKeyPair } from "../core/keys.js";
 
 const ACCESS_SECRET = HUB_CONFIG.auth.jwtSecret;
 const REFRESH_SECRET = HUB_CONFIG.auth.jwtRefreshSecret;
@@ -23,15 +24,16 @@ export interface TokenPair {
 
 /** 签发 JWT 双 token */
 export function issueTokenPair(userId: string): TokenPair {
+  const { privateKeyPem, kid } = getKeyPair();
   const access_token = jwt.sign(
     { sub: userId, type: "access" },
-    ACCESS_SECRET,
-    { expiresIn: ACCESS_EXPIRY } as jwt.SignOptions,
+    privateKeyPem,
+    { algorithm: "RS256", expiresIn: ACCESS_EXPIRY, keyid: kid } as jwt.SignOptions,
   );
   const refresh_token = jwt.sign(
     { sub: userId, type: "refresh" },
-    REFRESH_SECRET,
-    { expiresIn: REFRESH_EXPIRY } as jwt.SignOptions,
+    privateKeyPem,
+    { algorithm: "RS256", expiresIn: REFRESH_EXPIRY, keyid: kid } as jwt.SignOptions,
   );
 
   return {
@@ -46,10 +48,39 @@ export function verifyAccessToken(
   token: string,
 ): { sub: string; type: string } | null {
   try {
-    const payload = jwt.verify(token, ACCESS_SECRET) as {
-      sub: string;
-      type: string;
-    };
+    // 先解析 header 决定算法
+    const decoded = jwt.decode(token, { complete: true }) as
+      | { header: { alg: string; kid?: string } }
+      | null;
+    if (!decoded) return null;
+
+    if (decoded.header.alg === "RS256") {
+      return verifyAccessTokenRs256(token);
+    }
+    // 兼容期 HS256
+    if (decoded.header.alg === "HS256") {
+      const payload = jwt.verify(token, ACCESS_SECRET) as {
+        sub: string;
+        type: string;
+      };
+      if (payload.type !== "access") return null;
+      return payload;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/** 验证 RS256 access token */
+export function verifyAccessTokenRs256(
+  token: string,
+): { sub: string; type: string } | null {
+  try {
+    const { publicKeyPem } = getKeyPair();
+    const payload = jwt.verify(token, publicKeyPem, {
+      algorithms: ["RS256"],
+    }) as { sub: string; type: string };
     if (payload.type !== "access") return null;
     return payload;
   } catch {
