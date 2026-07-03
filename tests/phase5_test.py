@@ -67,6 +67,18 @@ if code == 200:
     test("new token alg is RS256", hdr.get("alg") == "RS256", str(hdr))
     test("new token has kid", "kid" in hdr, str(hdr))
 
+# --- T_A4: 手工构造 HS256 token 仍能通过验签 ---
+import jwt as pyjwt  # pip install pyjwt
+
+# 用 ACCESS_SECRET 手工签个 HS256 token（模拟旧客户端）
+old_token = pyjwt.encode(
+    {"sub": "u_admin", "type": "access", "exp": int(time.time()) + 3600},
+    "change-me-in-production",
+    algorithm="HS256",
+)
+code, data = api("GET", "/api/v1/auth/me", token=old_token)
+test("legacy HS256 token still accepted", code == 200, f"{code}: {str(data)[:100]}")
+
 # Summary
 passed = sum(1 for _, s, _ in results if s == "PASS")
 failed = sum(1 for _, s, _ in results if s == "FAIL")
