@@ -12,8 +12,11 @@
 
 import { Hono } from "hono";
 import { randomUUID } from "crypto";
+import * as crypto from "node:crypto";
 import { query } from "../../store/pg.js";
 import { HUB_CONFIG } from "../../core/config.js";
+import { encryptString } from "../../core/crypto.js";
+import { deployWorker, upgradeWorker, stopWorker, restartWorker, rollbackWorker } from "../../domain/worker-deployment.js";
 import { workerAuth } from "../middleware/worker-auth.js";
 import { jwtAuth } from "../middleware/jwt-auth.js";
 import { requirePermission } from "../middleware/require-permission.js";
@@ -327,6 +330,97 @@ export function createWorkerRoutes(): Hono {
     return c.json({ ok: true });
   });
 
+  // ─── Deploy (SSH-based orchestration) ──────────────────────────────────
+  // IMPORTANT: /deploy and /deploy-jobs/:id must be registered BEFORE /:id
+  // to avoid Hono matching "deploy" as a worker ID.
+
+  app.post("/deploy", jwtAuth, requirePermission("worker:deploy"), async (c) => {
+    const body = await c.req.json();
+    const required = ["organization_id", "ssh_host", "ssh_user", "ssh_private_key", "image_tag"];
+    for (const f of required) {
+      if (!body[f]) return c.json({ error: `${f} required` }, 400);
+    }
+
+    // Dry-run: only validate parameters, no SSH, no side effects
+    if (body.dry_run) {
+      return c.json({
+        job_id: `dpl_preview_${Date.now()}`,
+        status: "preview",
+        summary: {
+          target: `${body.ssh_user}@${body.ssh_host}:${body.ssh_port || 22}`,
+          image_tag: body.image_tag,
+          source: body.source || "hub_stream",
+        },
+      });
+    }
+
+    // Real deploy: create join_token, pre-create worker record, then async SSH
+    const joinToken = await createJoinToken({
+      organizationId: body.organization_id,
+      assignedUserId: body.assigned_user_id,
+      createdBy: c.get("userId"),
+      expiresInHours: 24,
+    });
+
+    // Pre-create worker record (status=pending; deploy success flips to approved)
+    const workerId = `wkr_${crypto.randomUUID().replace(/-/g, "")}`;
+    await query(
+      `INSERT INTO workers (id, name, hostname, endpoint, version, capabilities,
+                            worker_token, status, protocol_version, applied_at,
+                            organization_id, user_id, ssh_target_host, ssh_target_port,
+                            ssh_user, ssh_key_encrypted, current_image_tag)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', 2, NOW(),
+               $8, $9, $10, $11, $12, $13, $14)`,
+      [workerId, body.container_name || `da-${body.assigned_user_id || "default"}`,
+       body.ssh_host, `http://${body.ssh_host}:21000`, body.image_tag, JSON.stringify({}),
+       `wkt_${crypto.randomUUID().replace(/-/g, "")}`,
+       body.organization_id, body.assigned_user_id || null,
+       body.ssh_host, body.ssh_port || 22, body.ssh_user,
+       encryptString(body.ssh_private_key), body.image_tag],
+    );
+
+    // Async trigger deploy (non-blocking — fire and forget)
+    const hubBaseUrl = process.env.HUB_EXTERNAL_URL || `http://localhost:${HUB_CONFIG.port}`;
+    deployWorker({
+      workerId,
+      sshHost: body.ssh_host,
+      sshPort: body.ssh_port || 22,
+      sshUser: body.ssh_user,
+      sshPrivateKeyPem: body.ssh_private_key,
+      imageTag: body.image_tag,
+      source: body.source || "hub_stream",
+      hubBaseUrl,
+      containerName: body.container_name || `da-${workerId.slice(0, 12)}`,
+      containerPort: 21000,
+      envVars: {
+        DA_AUTH_MODE: "hub",
+        DA_HUB_URL: hubBaseUrl,
+        DA_JOIN_TOKEN: joinToken.token,
+        DA_ORG_ID: body.organization_id,
+        ...(body.env_vars || {}),
+      },
+      volumeMounts: body.volume_mounts || [`da-data-${workerId.slice(0, 12)}:/app/data`],
+      initiatedBy: c.get("userId"),
+    }).catch(err => console.error("[deploy] async error:", err));
+
+    return c.json({
+      job_id: workerId,
+      worker_id: workerId,
+      status: "deploying",
+      join_token: joinToken.token,
+    }, 202);
+  });
+
+  // GET /api/v1/workers/deploy-jobs/:id — query deploy job status
+  app.get("/deploy-jobs/:id", jwtAuth, requirePermission("worker:deploy"), async (c) => {
+    const id = c.req.param("id");
+    const result = await query(
+      `SELECT * FROM deploy_jobs WHERE id = $1`, [id],
+    );
+    if (result.rows.length === 0) return c.json({ error: "job not found" }, 404);
+    return c.json(result.rows[0]);
+  });
+
   // ─── Get worker details ────────────────────────────────────────────────
 
   app.get("/:id", async (c) => {
@@ -384,6 +478,34 @@ export function createWorkerRoutes(): Hono {
     await logWorkerEvent(id, "reject", `Rejected by ${rejecterId}: ${body.reason ?? "no reason"}`);
 
     return c.json({ success: true });
+  });
+
+  // ─── Worker lifecycle: upgrade / stop / restart / rollback ─────────────
+
+  app.post("/:id/upgrade", jwtAuth, requirePermission("worker:deploy"), async (c) => {
+    const workerId = c.req.param("id");
+    const body = await c.req.json();
+    if (!body.image_tag) return c.json({ error: "image_tag required" }, 400);
+    const result = await upgradeWorker(workerId, body.image_tag, c.get("userId"));
+    return c.json(result, result.success ? 200 : 500);
+  });
+
+  app.post("/:id/stop", jwtAuth, requirePermission("worker:deploy"), async (c) => {
+    const workerId = c.req.param("id");
+    const result = await stopWorker(workerId, c.get("userId"));
+    return c.json(result, result.success ? 200 : 500);
+  });
+
+  app.post("/:id/restart", jwtAuth, requirePermission("worker:deploy"), async (c) => {
+    const workerId = c.req.param("id");
+    const result = await restartWorker(workerId, c.get("userId"));
+    return c.json(result, result.success ? 200 : 500);
+  });
+
+  app.post("/:id/rollback", jwtAuth, requirePermission("worker:deploy"), async (c) => {
+    const workerId = c.req.param("id");
+    const result = await rollbackWorker(workerId, c.get("userId"));
+    return c.json(result, result.success ? 200 : 500);
   });
 
   return app;

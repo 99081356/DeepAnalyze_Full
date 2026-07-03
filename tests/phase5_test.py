@@ -528,6 +528,43 @@ except Exception as e:
     test("crypto round-trip", False, f"parse error: {e}; stdout={r.stdout[:200]}")
     test("crypto no plaintext leak", False, f"parse error: {e}; stderr={r.stderr[:200]}")
 
+# --- T_F4: worker deploy/upgrade/stop/restart/rollback endpoints ---
+print("\n--- T_F4: worker deploy endpoints ---")
+
+# Deploy dry-run: should return preview, no side effects
+code, data = api("POST", "/api/v1/workers/deploy",
+                  token=admin_token,
+                  data={
+                      "organization_id": org_id,
+                      "assigned_user_id": "usr_alice",
+                      "ssh_host": "10.0.0.42",
+                      "ssh_port": 22,
+                      "ssh_user": "ubuntu",
+                      "ssh_private_key": "-----BEGIN OPENSSH PRIVATE KEY-----\nfake\n-----END OPENSSH PRIVATE KEY-----",
+                      "image_tag": "da-base-v0.9.0-amd64",
+                      "source": "hub_stream",
+                      "skill_package_ids": [],
+                      "dry_run": True,
+                  })
+test("deploy dry_run returns preview",
+     code in (200, 202) and data.get("status") == "preview" and "job_id" in data,
+     str(data)[:200])
+
+# Missing required fields -> 400
+code, data = api("POST", "/api/v1/workers/deploy",
+                  token=admin_token,
+                  data={"dry_run": True})  # missing ssh_host etc.
+test("deploy missing fields rejected", code == 400, str(data)[:200])
+
+# Auth required
+code, data = api("POST", "/api/v1/workers/deploy",
+                  data={"dry_run": True, "ssh_host": "x"})
+test("deploy requires auth", code == 401, str(data)[:200])
+
+# Deploy-job query for nonexistent ID -> 404
+code, data = api("GET", "/api/v1/workers/deploy-jobs/nonexistent_dpl_id", token=admin_token)
+test("deploy-job query 404 for missing", code == 404, str(data)[:200])
+
 # Summary
 passed = sum(1 for _, s, _ in results if s == "PASS")
 failed = sum(1 for _, s, _ in results if s == "FAIL")
