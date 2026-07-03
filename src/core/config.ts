@@ -31,6 +31,20 @@ export const HUB_CONFIG = {
     jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || "change-me-refresh-in-production",
     jwtExpiry: process.env.JWT_EXPIRY || "7d",
     workerTokenExpiry: process.env.WORKER_TOKEN_EXPIRY || "30d",
+    rs256: {
+      publicKeyPath: process.env.HUB_JWT_PUBLIC_KEY_PATH || "",
+      privateKeyPath: process.env.HUB_JWT_PRIVATE_KEY_PATH || "",
+      keyId: process.env.HUB_JWT_KEY_ID || "hub-rs256-v1",
+    },
+    joinToken: {
+      expiry: process.env.HUB_JOIN_TOKEN_EXPIRY || "24h",
+      maxCount: parseInt(process.env.HUB_JOIN_TOKEN_MAX || "100", 10),
+    },
+    ssh: {
+      port: parseInt(process.env.HUB_SSH_DEFAULT_PORT || "22", 10),
+      timeout: parseInt(process.env.HUB_SSH_TIMEOUT || "60000", 10),
+    },
+    hs256TransitionUntil: process.env.HUB_HS256_TRANSITION_UNTIL || "",
   },
 
   /** Marketplace configuration */
