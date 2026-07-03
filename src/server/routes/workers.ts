@@ -280,7 +280,7 @@ export function createWorkerRoutes(): Hono {
     if (!orgId) return c.json({ error: "organization_id required" }, 400);
 
     const creatorId = c.get("userId") as string;
-    const tokens: string[] = [];
+    const tokens: { id: string; token: string; expires_at: Date }[] = [];
     for (let i = 0; i < count; i++) {
       const created = await createJoinToken({
         organizationId: orgId,
@@ -290,7 +290,11 @@ export function createWorkerRoutes(): Hono {
         maxUses: body.max_uses ?? 1,
         notes: body.notes,
       });
-      tokens.push(created.token);
+      tokens.push({
+        id: created.id,
+        token: created.token,
+        expires_at: created.expiresAt,
+      });
     }
     return c.json({ tokens }, 201);
   });

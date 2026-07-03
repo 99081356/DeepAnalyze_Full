@@ -116,8 +116,9 @@ code, data = api("POST", "/api/v1/workers/join-tokens",
                   token=admin_token,
                   data={"organization_id": org_id, "count": 1, "assigned_user_id": "usr_alice"})
 test("create join_token", code == 201 and "tokens" in data, str(data)[:200])
-jt = data.get("tokens", [None])[0] if isinstance(data.get("tokens"), list) else None
-test("join_token format", jt is not None and jt.startswith("djt_"))
+tokens = data.get("tokens", [])
+jt = tokens[0].get("token") if tokens else None
+test("join_token format", jt is not None and jt.startswith("djt_"), str(data)[:200])
 
 # 消费（DA 端会调用 register）
 code, data = api("POST", "/api/v1/workers/register",
