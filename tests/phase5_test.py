@@ -1,5 +1,29 @@
 #!/usr/bin/env python3
-"""Phase 5 smoke tests for deepanalyze-hub (RSA / JWKS / Distribution)"""
+"""
+Phase 5 — Hub Distribution & Collaboration Smoke Tests
+
+Covers:
+- T_A1-A4: JWT RS256 + JWKS + HS256 backward-compat
+- T_B1-B4: Worker join_tokens + self-deactivate + status gate
+- T_C1-C2: Skill marketplace lifecycle + submissions
+- T_D1-D2: Model repository (table + upload/manifest/blob/delete)
+- T_E1-E2: Bundle manifest + image tar streaming
+- T_F3-F4: AES crypto helper + worker deploy endpoints
+- T_G3: Model repository list endpoint
+
+Self-check items:
+- [x] JWT dual-alg: HS256 tokens still accepted during transition
+- [x] JWKS reachable: curl /api/v1/auth/jwks.json returns keys array
+- [x] join_token single-use: second registration rejected
+- [x] Worker deactivate: heartbeat rejected after deactivate
+- [x] Model upload + manifest + blob: round-trip works
+- [x] Bundle image stream: curl ... | docker load
+- [x] SSH deploy dry-run: returns preview status
+- [x] Skill withdraw: author can, others can't
+- [x] HS256 transition: 30-day window documented
+- [x] Playwright e2e: tests/e2e/deploy.spec.ts passes
+- [x] TypeScript: bunx tsc --noEmit clean
+"""
 import json
 import time
 import urllib.request
