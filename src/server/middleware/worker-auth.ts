@@ -31,12 +31,24 @@ export const workerAuth = createMiddleware(async (c, next) => {
     return c.json({ error: "Invalid worker token" }, 401);
   }
 
-  if (rows[0].status === "offline") {
+  const row = rows[0];
+
+  // Blocklist: reject workers whose status indicates they should no longer
+  // be able to authenticate (rejected, revoked, deactivated).
+  // Using a blocklist (rather than an allowlist) permits legitimate transient
+  // states like 'offline' and 'pending' (if needed) while cleanly blocking
+  // terminal/blocked states.
+  const BLOCKED_STATUSES = ["rejected", "revoked", "deactivated"];
+  if (BLOCKED_STATUSES.includes(row.status)) {
+    return c.json({ error: `worker blocked: status=${row.status}` }, 403);
+  }
+
+  if (row.status === "offline") {
     // Still allow the request but update status
-    await query("UPDATE workers SET status = 'online' WHERE id = $1", [rows[0].id]);
+    await query("UPDATE workers SET status = 'online' WHERE id = $1", [row.id]);
   }
 
   // Store worker ID in context for downstream handlers
-  c.set("workerId", rows[0].id);
+  c.set("workerId", row.id);
   await next();
 });

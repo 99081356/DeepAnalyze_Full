@@ -222,6 +222,22 @@ export function createWorkerRoutes(): Hono {
     }
   });
 
+  // ─── Self-deactivate (DA 主动退出 Hub) ──────────────────────────────────
+
+  app.post("/me/deactivate", workerAuth, async (c) => {
+    const workerId = c.get("workerId") as string;
+    await query(
+      `UPDATE workers
+       SET status = 'deactivated',
+           deactivated_at = NOW()
+       WHERE id = $1`,
+      [workerId],
+    );
+    // worker_token remains in DB but workerAuth middleware will reject
+    // subsequent requests because status is in BLOCKED_STATUSES.
+    return c.json({ status: "deactivated", worker_id: workerId });
+  });
+
   // ─── Worker ack (confirm instruction executed) ────────────────────────
 
   app.post("/ack", workerAuth, async (c) => {

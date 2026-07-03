@@ -134,6 +134,23 @@ test("join_token single-use",
      code in (400, 409) or data.get("status") == "rejected",
      str(data)[:200])
 
+# --- T_B4: DA 主动注销 (self-deactivate) ---
+print("\n--- T_B4: worker self-deactivate ---")
+code, data = api("POST", "/api/v1/workers/register",
+                  data={"hostname": "deactivate-test", "protocol_version": 1})
+wt = data.get("worker_token") or data.get("workerToken")
+test("prereg for deactivate", code == 200 and wt, str(data)[:200])
+
+if wt:
+    code, data = api("POST", "/api/v1/workers/me/deactivate", token=wt)
+    test("deactivate ok", code == 200 and data.get("status") == "deactivated", str(data)[:200])
+
+    # 注销后心跳应失败
+    code, data = api("POST", "/api/v1/workers/heartbeat", token=wt,
+                      data={"status": "online"})
+    test("heartbeat after deactivate rejected", code in (401, 403, 404),
+         f"code={code} data={str(data)[:120]}")
+
 # Summary
 passed = sum(1 for _, s, _ in results if s == "PASS")
 failed = sum(1 for _, s, _ in results if s == "FAIL")
