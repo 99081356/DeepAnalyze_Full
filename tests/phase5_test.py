@@ -368,6 +368,89 @@ test("both indexes (name, sha) exist",
      set(idxs) == {"idx_model_artifacts_name", "idx_model_artifacts_sha"},
      f"indexes={idxs}")
 
+# --- T_D2: model upload + manifest + blob endpoints ---
+print("\n--- T_D2: model repository endpoints ---")
+
+# Manifest should return 404 before any upload (endpoint must exist)
+code, data = api("GET", "/api/v1/models/manifests/bge-m3")
+test("model manifest 404 before upload", code == 404, f"code={code} data={str(data)[:120]}")
+
+# Upload via multipart (urllib.request — api() helper only does JSON)
+boundary = "----deepanalyze-test"
+body_str = (
+    f"--{boundary}\r\n"
+    'Content-Disposition: form-data; name="name"\r\n\r\n'
+    "bge-m3\r\n"
+    f"--{boundary}\r\n"
+    'Content-Disposition: form-data; name="version"\r\n\r\n'
+    "1.0.0\r\n"
+    f"--{boundary}\r\n"
+    'Content-Disposition: form-data; name="category"\r\n\r\n'
+    "embedding\r\n"
+    f"--{boundary}\r\n"
+    'Content-Disposition: form-data; name="file"; filename="config.json"\r\n'
+    "Content-Type: application/octet-stream\r\n\r\n"
+    '{"test":1}\r\n'
+    f"--{boundary}--\r\n"
+)
+body_bytes = body_str.encode()
+req = urllib.request.Request(
+    f"{BASE}/api/v1/models/upload",
+    data=body_bytes,
+    headers={
+        "Content-Type": f"multipart/form-data; boundary={boundary}",
+        "Authorization": f"Bearer {admin_token}",
+    },
+    method="POST",
+)
+upload_id = ""
+try:
+    resp = urllib.request.urlopen(req)
+    code, data = resp.status, json.loads(resp.read().decode())
+except urllib.error.HTTPError as e:
+    code, data = e.code, json.loads(e.read().decode())
+test("model upload returns 201", code == 201 and "id" in data, f"code={code} data={str(data)[:200]}")
+upload_id = data.get("id", "")
+
+# Manifest query after upload
+code, data = api("GET", "/api/v1/models/manifests/bge-m3")
+test("model manifest fetch after upload",
+     code == 200 and "files" in data and data.get("version") == "1.0.0",
+     f"code={code} data={str(data)[:200]}")
+
+# Blob download (sha256 from manifest)
+if code == 200 and data.get("files"):
+    blob_sha = data["files"][0].get("sha256", "")
+    if blob_sha:
+        code2, blob_bytes = 0, b""
+        try:
+            blob_req = urllib.request.Request(
+                f"{BASE}/api/v1/models/blobs/{blob_sha}",
+                method="GET",
+            )
+            blob_resp = urllib.request.urlopen(blob_req)
+            code2 = blob_resp.status
+            blob_bytes = blob_resp.read()
+        except urllib.error.HTTPError as e:
+            code2 = e.code
+        test("model blob download returns 200 with content",
+             code2 == 200 and len(blob_bytes) > 0,
+             f"code={code2} len={len(blob_bytes)}")
+    else:
+        test("model blob download returns 200 with content", False, "no sha256 in manifest")
+else:
+    test("model blob download returns 200 with content", False, "no manifest for blob test")
+
+# Delete the version
+code, data = api("DELETE", "/api/v1/models/bge-m3/1.0.0", token=admin_token)
+test("model version delete",
+     code == 200 and data.get("ok") is True,
+     f"code={code} data={str(data)[:200]}")
+
+# Manifest should 404 after delete
+code, data = api("GET", "/api/v1/models/manifests/bge-m3")
+test("model manifest 404 after delete", code == 404, f"code={code}")
+
 # Summary
 passed = sum(1 for _, s, _ in results if s == "PASS")
 failed = sum(1 for _, s, _ in results if s == "FAIL")

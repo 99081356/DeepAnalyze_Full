@@ -86,6 +86,10 @@ export async function createApp(): Promise<Hono> {
   const { createSecurityRoutes } = await import("./routes/security.js");
   app.route("/api/v1/security", createSecurityRoutes());
 
+  // Model repository (Phase 5: upload / manifest / blob / delete)
+  const { createModelRoutes } = await import("./routes/models.js");
+  app.route("/api/v1/models", createModelRoutes());
+
   // ─── Static frontend (admin panel) ───────────────────────────────────
   // Serves built React app from frontend/dist/. Falls back to index.html
   // for client-side routing (SPA).

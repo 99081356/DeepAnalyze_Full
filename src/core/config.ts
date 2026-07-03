@@ -53,6 +53,12 @@ export const HUB_CONFIG = {
     defaultPageSize: 20,
     maxPageSize: 100,
   },
+
+  /** Model repository configuration (Phase 5: internal model storage) */
+  modelRepo: {
+    storageDir: process.env.HUB_MODEL_REPO_DIR || "./data/model-repo",
+    maxFileSize: parseInt(process.env.HUB_MODEL_MAX_SIZE || "5368709120", 10), // 5GB
+  },
 } as const;
 
 export type HubConfig = typeof HUB_CONFIG;
