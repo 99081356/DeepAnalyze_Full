@@ -107,6 +107,32 @@ r = subprocess.run(
 )
 test("workers.assigned_user_id column exists", "YES" in r.stdout, f"stdout={r.stdout.strip()} stderr={r.stderr.strip()[:80]}")
 
+# --- T_B2: 生成 join_token + 消费 ---
+print("\n--- T_B2: join_token create + consume ---")
+# org_dsi is the root org seeded by scripts/seed-realistic.ts
+org_id = "org_dsi"
+
+code, data = api("POST", "/api/v1/workers/join-tokens",
+                  token=admin_token,
+                  data={"organization_id": org_id, "count": 1, "assigned_user_id": "usr_alice"})
+test("create join_token", code == 201 and "tokens" in data, str(data)[:200])
+jt = data.get("tokens", [None])[0] if isinstance(data.get("tokens"), list) else None
+test("join_token format", jt is not None and jt.startswith("djt_"))
+
+# 消费（DA 端会调用 register）
+code, data = api("POST", "/api/v1/workers/register",
+                  data={"join_token": jt, "hostname": "test-host", "protocol_version": 2})
+test("register via join_token auto-approved",
+     code == 200 and data.get("worker_token", "").startswith("wkt_"),
+     str(data)[:200])
+
+# 二次消费应失败
+code, data = api("POST", "/api/v1/workers/register",
+                  data={"join_token": jt, "hostname": "test-host2", "protocol_version": 2})
+test("join_token single-use",
+     code in (400, 409) or data.get("status") == "rejected",
+     str(data)[:200])
+
 # Summary
 passed = sum(1 for _, s, _ in results if s == "PASS")
 failed = sum(1 for _, s, _ in results if s == "FAIL")
