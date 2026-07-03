@@ -10,6 +10,7 @@ import type { ClientChannel } from "ssh2";
 import { randomUUID } from "node:crypto";
 import { query } from "../store/pg.js";
 import { resolveImageTar } from "./bundle.js";
+import { decryptString } from "../core/crypto.js";
 
 export interface DeployOpts {
   workerId: string;
@@ -356,10 +357,14 @@ export async function rollbackWorker(workerId: string, initiatedBy: string): Pro
   return upgradeWorker(workerId, w.rows[0].current_image_tag, initiatedBy);
 }
 
-// --- AES 解密占位（在 Task F3 实现） ---
-// PLACEHOLDER: This intentionally throws. Task F3 will implement the real
-// AES-256-GCM decryption using HUB_CONFIG.auth.jwtSecret as the key source.
-// Do NOT implement decryption in this task.
+// --- AES-256-GCM decryption for stored SSH keys ---
+// Wraps decryptString with a descriptive error for the deployment context.
 async function decryptSshKey(encrypted: string): Promise<string> {
-  throw new Error("decryptSshKey not implemented — see Task F3");
+  try {
+    return decryptString(encrypted);
+  } catch (err) {
+    throw new Error(
+      `failed to decrypt ssh key: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
 }

@@ -508,6 +508,26 @@ try:
 except OSError:
     pass
 
+# --- T_F3: AES-256-GCM encrypt/decrypt round-trip ---
+print("\n--- T_F3: crypto round-trip ---")
+r = subprocess.run(
+    ["bun", "-e", """
+import {encryptString, decryptString} from './src/core/crypto.ts';
+const plain = 'test-secret-key-' + Date.now();
+const enc = encryptString(plain);
+const dec = decryptString(enc);
+console.log(JSON.stringify({ok: dec === plain, hasPlain: enc.includes(plain)}));
+"""],
+    capture_output=True, text=True, cwd="/mnt/d/code/deepanalyze/deepanalyze-hub",
+)
+try:
+    info = json.loads(r.stdout.strip().split("\n")[-1])
+    test("crypto round-trip", info.get("ok") is True, str(info)[:200])
+    test("crypto no plaintext leak", info.get("hasPlain") is False, str(info)[:200])
+except Exception as e:
+    test("crypto round-trip", False, f"parse error: {e}; stdout={r.stdout[:200]}")
+    test("crypto no plaintext leak", False, f"parse error: {e}; stderr={r.stderr[:200]}")
+
 # Summary
 passed = sum(1 for _, s, _ in results if s == "PASS")
 failed = sum(1 for _, s, _ in results if s == "FAIL")
