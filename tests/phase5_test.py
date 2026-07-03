@@ -151,6 +151,73 @@ if wt:
     test("heartbeat after deactivate rejected", code in (401, 403, 404),
          f"code={code} data={str(data)[:120]}")
 
+# --- T_C1: skill_packages lifecycle columns ---
+print("\n--- T_C1: skill_packages lifecycle fields ---")
+bun_query_c1 = (
+    "const pg = require('pg'); "
+    "const pool = new pg.Pool({ "
+    "  host: process.env.PG_HOST || 'localhost', "
+    "  port: parseInt(process.env.PG_PORT || '5432'), "
+    "  database: process.env.PG_DATABASE || 'deepanalyze_hub', "
+    "  user: process.env.PG_USER || 'deepanalyze', "
+    "  password: process.env.PG_PASSWORD || 'deepanalyze_dev', "
+    "}); "
+    "pool.query(\"SELECT column_name FROM information_schema.columns "
+    "  WHERE table_name='skill_packages' AND column_name='status'\") "
+    "  .then(r => { console.log(r.rows.length > 0 ? 'YES' : 'NO'); return pool.end(); }) "
+    "  .catch(e => { console.error(e.message); process.exit(1); });"
+)
+r = subprocess.run(
+    ["bun", "-e", bun_query_c1],
+    capture_output=True, text=True, cwd="/mnt/d/code/deepanalyze/deepanalyze-hub",
+)
+test("skill_packages.status column exists", "YES" in r.stdout, f"stdout={r.stdout.strip()} stderr={r.stderr.strip()[:80]}")
+
+bun_query_c1b = (
+    "const pg = require('pg'); "
+    "const pool = new pg.Pool({ "
+    "  host: process.env.PG_HOST || 'localhost', "
+    "  port: parseInt(process.env.PG_PORT || '5432'), "
+    "  database: process.env.PG_DATABASE || 'deepanalyze_hub', "
+    "  user: process.env.PG_USER || 'deepanalyze', "
+    "  password: process.env.PG_PASSWORD || 'deepanalyze_dev', "
+    "}); "
+    "pool.query(\"SELECT column_name FROM information_schema.columns "
+    "  WHERE table_name='skill_packages' AND column_name IN ('status','deprecated_at','kill_reason') "
+    "  ORDER BY column_name\") "
+    "  .then(r => { console.log(r.rows.map(x=>x.column_name).join(',')); return pool.end(); }) "
+    "  .catch(e => { console.error(e.message); process.exit(1); });"
+)
+r = subprocess.run(
+    ["bun", "-e", bun_query_c1b],
+    capture_output=True, text=True, cwd="/mnt/d/code/deepanalyze/deepanalyze-hub",
+)
+cols = r.stdout.strip().split(",") if r.stdout.strip() else []
+test("skill_packages has all 3 lifecycle columns",
+     set(cols) == {"status", "deprecated_at", "kill_reason"},
+     f"found={cols}")
+
+# Verify CHECK constraint allows the 3 statuses
+bun_query_c1c = (
+    "const pg = require('pg'); "
+    "const pool = new pg.Pool({ "
+    "  host: process.env.PG_HOST || 'localhost', "
+    "  port: parseInt(process.env.PG_PORT || '5432'), "
+    "  database: process.env.PG_DATABASE || 'deepanalyze_hub', "
+    "  user: process.env.PG_USER || 'deepanalyze', "
+    "  password: process.env.PG_PASSWORD || 'deepanalyze_dev', "
+    "}); "
+    "pool.query(\"SELECT constraint_name FROM information_schema.table_constraints "
+    "  WHERE table_name='skill_packages' AND constraint_name='skill_packages_status_check'\") "
+    "  .then(r => { console.log(r.rows.length > 0 ? 'YES' : 'NO'); return pool.end(); }) "
+    "  .catch(e => { console.error(e.message); process.exit(1); });"
+)
+r = subprocess.run(
+    ["bun", "-e", bun_query_c1c],
+    capture_output=True, text=True, cwd="/mnt/d/code/deepanalyze/deepanalyze-hub",
+)
+test("skill_packages_status_check constraint exists", "YES" in r.stdout, f"stdout={r.stdout.strip()}")
+
 # Summary
 passed = sum(1 for _, s, _ in results if s == "PASS")
 failed = sum(1 for _, s, _ in results if s == "FAIL")
