@@ -1,0 +1,29 @@
+{
+  "name": "@deepanalyze/da-packer",
+  "version": "0.1.0",
+  "description": "Build offline deployment bundles for DeepAnalyze",
+  "type": "module",
+  "bin": {
+    "da-packer": "bin/da-packer.ts"
+  },
+  "scripts": {
+    "dev": "bun run bin/da-packer.ts",
+    "build": "tsc",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "commander": "^12.0.0",
+    "tar": "^7.0.0",
+    "dockerode": "^4.0.0",
+    "p-map": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/bun": "^1.1.0",
+    "@types/tar": "^6.1.0",
+    "@types/dockerode": "^3.3.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  }
+}
