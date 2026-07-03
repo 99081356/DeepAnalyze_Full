@@ -59,6 +59,12 @@ export const HUB_CONFIG = {
     storageDir: process.env.HUB_MODEL_REPO_DIR || "./data/model-repo",
     maxFileSize: parseInt(process.env.HUB_MODEL_MAX_SIZE || "5368709120", 10), // 5GB
   },
+
+  /** Bundle repository configuration (Phase 5: da-packer offline bundles) */
+  bundle: {
+    imagesDir: process.env.HUB_BUNDLE_IMAGES_DIR || "./data/bundle/images",
+    bundlesDir: process.env.HUB_BUNDLE_DIR || "./data/bundle",
+  },
 } as const;
 
 export type HubConfig = typeof HUB_CONFIG;
