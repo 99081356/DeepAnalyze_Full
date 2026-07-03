@@ -62,6 +62,7 @@ if code == 200:
 # --- T_A2: 新签的 token 是 RS256 ---
 code, data = api("POST", "/api/v1/auth/login", data={"username": "admin", "password": "admin123"})
 test("login still works", code == 200 and "access_token" in data)
+admin_token = data.get("access_token", "") if code == 200 else ""
 if code == 200:
     hdr = jwt_header(data["access_token"])
     test("new token alg is RS256", hdr.get("alg") == "RS256", str(hdr))
@@ -78,6 +79,33 @@ old_token = pyjwt.encode(
 )
 code, data = api("GET", "/api/v1/auth/me", token=old_token)
 test("legacy HS256 token still accepted", code == 200, f"{code}: {str(data)[:100]}")
+
+# --- T_B1: workers 表新字段存在 ---
+print("\n--- T_B1: workers distribution columns ---")
+code, data = api("GET", "/api/v1/workers", token=admin_token)
+test("workers list ok", code == 200, f"{code}: {str(data)[:120]}")
+
+# psql not available in this env; query PG via bun (auto-loads .env)
+import subprocess
+bun_query = (
+    "const pg = require('pg'); "
+    "const pool = new pg.Pool({ "
+    "  host: process.env.PG_HOST || 'localhost', "
+    "  port: parseInt(process.env.PG_PORT || '5432'), "
+    "  database: process.env.PG_DATABASE || 'deepanalyze_hub', "
+    "  user: process.env.PG_USER || 'deepanalyze', "
+    "  password: process.env.PG_PASSWORD || 'deepanalyze_dev', "
+    "}); "
+    "pool.query(\"SELECT column_name FROM information_schema.columns "
+    "  WHERE table_name='workers' AND column_name='assigned_user_id'\") "
+    "  .then(r => { console.log(r.rows.length > 0 ? 'YES' : 'NO'); return pool.end(); }) "
+    "  .catch(e => { console.error(e.message); process.exit(1); });"
+)
+r = subprocess.run(
+    ["bun", "-e", bun_query],
+    capture_output=True, text=True, cwd="/mnt/d/code/deepanalyze/deepanalyze-hub",
+)
+test("workers.assigned_user_id column exists", "YES" in r.stdout, f"stdout={r.stdout.strip()} stderr={r.stderr.strip()[:80]}")
 
 # Summary
 passed = sum(1 for _, s, _ in results if s == "PASS")
