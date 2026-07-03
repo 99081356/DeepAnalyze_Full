@@ -125,6 +125,78 @@ SSH 私钥在 Hub 数据库中以 **AES-256-GCM 密文** 存储（`ssh_key_encry
 
 ---
 
+## da-packer — 离线部署打包工具
+
+[`scripts/da-packer/`](scripts/da-packer/) 是独立 CLI，用于构建 DeepAnalyze 离线一体化部署包。
+不依赖 Hub/DA 后端运行，可在外网开发机独立使用（仅打包阶段需要 Docker 拉取镜像）。
+
+### 使用
+
+```bash
+cd scripts/da-packer
+bun install
+
+# 构建完整 bundle（DA + Hub + 模型 + Skill）
+DA_REPO_PATH=/path/to/DeepAnalyze \
+bun run bin/da-packer.ts build \
+  --da-version v0.9.0 \
+  --hub-version v0.9.0 \
+  --models bge-m3,whisper-tiny,whisper-base,docling \
+  --skills enterprise-essentials \
+  --output da-bundle-v0.9.0.tar.gz \
+  --source hf_mirror \
+  --platform linux/amd64,linux/arm64
+
+# 查看已构建的包
+bun run bin/da-packer.ts list
+
+# 验证 bundle 完整性（对比 sidecar `.sha256` 文件）
+bun run bin/da-packer.ts verify da-bundle-v0.9.0.tar.gz
+
+# 查看内容
+bun run bin/da-packer.ts info da-bundle-v0.9.0.tar.gz
+```
+
+### Bundle 结构
+
+```
+da-bundle-v0.9.0/
+├── bundle-manifest.json   # 内容清单（checksumSha256 字段为空，以 sidecar 为准）
+├── README.md              # 中文部署文档
+├── install-hub.sh         # 一键安装脚本
+├── docker-compose.yml     # Hub 部署 compose
+├── images/                # 所有 Docker 镜像 tar
+├── models/                # 模型权重
+├── skills/                # Skill 包
+├── config/                # 默认配置
+└── scripts/               # health-check / backup / restore
+```
+
+Bundle 同目录下还会生成 `da-bundle-v0.9.0.tar.gz.sha256`（sidecar 文件，`sha256sum` 格式），
+用于离线完整性校验。`install-hub.sh` 在目标机执行 `sha256sum -c` 完成自检。
+
+### 部署到企业内网
+
+```bash
+# 1. 拷贝 bundle + sidecar 到目标机器
+scp da-bundle-v0.9.0.tar.gz da-bundle-v0.9.0.tar.gz.sha256 target-host:/opt/
+
+# 2. 解压 + 安装
+ssh target-host
+cd /opt/
+sha256sum -c da-bundle-v0.9.0.tar.gz.sha256   # 校验完整性
+tar xzf da-bundle-v0.9.0.tar.gz
+cd da-bundle-v0.9.0/
+sudo ./install-hub.sh \
+  --data-dir /opt/hub/data \
+  --port 22000 \
+  --external-url https://hub.corp.internal:22000
+
+# 3. 浏览器访问 https://hub.corp.internal:22000/setup
+```
+
+---
+
 ## 完整环境变量示例
 
 参见 [`.env.example`](.env.example) —— 该文件按 Phase 分组列出了所有变量与默认值，
