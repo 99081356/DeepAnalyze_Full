@@ -278,6 +278,96 @@ code, data = api("DELETE", f"/api/v1/marketplace/skills/{withdraw_slug}",
                   token=admin_token)
 test("skill withdraw", code in (200, 204), str(data)[:200])
 
+# --- T_D1: model_artifacts table (Phase D model repository schema) ---
+print("\n--- T_D1: model_artifacts table ---")
+
+# Check the table exists with all 10 expected columns
+bun_query_d1 = (
+    "const pg = require('pg'); "
+    "const pool = new pg.Pool({ "
+    "  host: process.env.PG_HOST || 'localhost', "
+    "  port: parseInt(process.env.PG_PORT || '5432'), "
+    "  database: process.env.PG_DATABASE || 'deepanalyze_hub', "
+    "  user: process.env.PG_USER || 'deepanalyze', "
+    "  password: process.env.PG_PASSWORD || 'deepanalyze_dev', "
+    "}); "
+    "pool.query(\"SELECT column_name, data_type FROM information_schema.columns "
+    "  WHERE table_name='model_artifacts' ORDER BY ordinal_position\") "
+    "  .then(r => { console.log(r.rows.map(x => x.column_name+':'+x.data_type).join('|')); return pool.end(); }) "
+    "  .catch(e => { console.error(e.message); process.exit(1); });"
+)
+r = subprocess.run(
+    ["bun", "-e", bun_query_d1],
+    capture_output=True, text=True, cwd="/mnt/d/code/deepanalyze/deepanalyze-hub",
+)
+col_lines = r.stdout.strip().split("|") if r.stdout.strip() else []
+col_map = {}
+for line in col_lines:
+    if ":" in line:
+        cn, dt = line.split(":", 1)
+        col_map[cn] = dt
+test("model_artifacts table exists with all 10 columns",
+     set(col_map.keys()) == {"id", "name", "version", "category", "sha256",
+                              "size_bytes", "storage_path", "manifest",
+                              "uploaded_by", "created_at"},
+     f"cols={sorted(col_map.keys())}")
+
+# Spot-check key column types
+test("id is TEXT", col_map.get("id") == "text", f"id={col_map.get('id')}")
+test("manifest is JSONB", col_map.get("manifest") == "jsonb",
+     f"manifest={col_map.get('manifest')}")
+test("sha256 is TEXT", col_map.get("sha256") == "text", f"sha256={col_map.get('sha256')}")
+test("created_at is TIMESTAMPTZ (typo fixed)",
+     col_map.get("created_at") in ("timestamp with time zone", "timestamptz"),
+     f"created_at={col_map.get('created_at')}")
+
+# Check UNIQUE(name, version) constraint exists
+bun_query_d1b = (
+    "const pg = require('pg'); "
+    "const pool = new pg.Pool({ "
+    "  host: process.env.PG_HOST || 'localhost', "
+    "  port: parseInt(process.env.PG_PORT || '5432'), "
+    "  database: process.env.PG_DATABASE || 'deepanalyze_hub', "
+    "  user: process.env.PG_USER || 'deepanalyze', "
+    "  password: process.env.PG_PASSWORD || 'deepanalyze_dev', "
+    "}); "
+    "pool.query(\"SELECT indexname FROM pg_indexes WHERE tablename='model_artifacts' "
+    "  AND indexdef LIKE '%(name, version)%'\") "
+    "  .then(r => { console.log(r.rows.length > 0 ? 'YES' : 'NO'); return pool.end(); }) "
+    "  .catch(e => { console.error(e.message); process.exit(1); });"
+)
+r = subprocess.run(
+    ["bun", "-e", bun_query_d1b],
+    capture_output=True, text=True, cwd="/mnt/d/code/deepanalyze/deepanalyze-hub",
+)
+test("UNIQUE(name, version) constraint exists", "YES" in r.stdout,
+     f"stdout={r.stdout.strip()} stderr={r.stderr.strip()[:80]}")
+
+# Check both indexes exist
+bun_query_d1c = (
+    "const pg = require('pg'); "
+    "const pool = new pg.Pool({ "
+    "  host: process.env.PG_HOST || 'localhost', "
+    "  port: parseInt(process.env.PG_PORT || '5432'), "
+    "  database: process.env.PG_DATABASE || 'deepanalyze_hub', "
+    "  user: process.env.PG_USER || 'deepanalyze', "
+    "  password: process.env.PG_PASSWORD || 'deepanalyze_dev', "
+    "}); "
+    "pool.query(\"SELECT indexname FROM pg_indexes WHERE tablename='model_artifacts' "
+    "  AND indexname IN ('idx_model_artifacts_name','idx_model_artifacts_sha') "
+    "  ORDER BY indexname\") "
+    "  .then(r => { console.log(r.rows.map(x=>x.indexname).join(',')); return pool.end(); }) "
+    "  .catch(e => { console.error(e.message); process.exit(1); });"
+)
+r = subprocess.run(
+    ["bun", "-e", bun_query_d1c],
+    capture_output=True, text=True, cwd="/mnt/d/code/deepanalyze/deepanalyze-hub",
+)
+idxs = r.stdout.strip().split(",") if r.stdout.strip() else []
+test("both indexes (name, sha) exist",
+     set(idxs) == {"idx_model_artifacts_name", "idx_model_artifacts_sha"},
+     f"indexes={idxs}")
+
 # Summary
 passed = sum(1 for _, s, _ in results if s == "PASS")
 failed = sum(1 for _, s, _ in results if s == "FAIL")
