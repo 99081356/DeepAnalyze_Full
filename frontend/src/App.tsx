@@ -10,6 +10,7 @@ import { UserList } from "./pages/UserList.js";
 import { WorkerApproval } from "./pages/WorkerApproval.js";
 import { Skills } from "./pages/Skills.js";
 import { SkillDetail } from "./pages/SkillDetail.js";
+import { SkillSubmissions } from "./pages/SkillSubmissions.js";
 import { Sharings } from "./pages/Sharings.js";
 import { Security } from "./pages/Security.js";
 import { WorkerSkills } from "./pages/WorkerSkills.js";
@@ -26,6 +27,7 @@ const NAV_ITEMS = [
   { to: "/users", label: "用户", icon: "👥" },
   { to: "/skills", label: "企业技能包", icon: "📦" },
   { to: "/worker-skills", label: "Worker 技能市场", icon: "🌐" },
+  { to: "/submissions", label: "Skill 提交审核", icon: "📋" },
   { to: "/sharings", label: "跨组织共享", icon: "🔄" },
   { to: "/workers", label: "Worker 审批", icon: "🖥️" },
   { to: "/security", label: "安全网关", icon: "🛡️" },
@@ -545,6 +547,7 @@ export default function App() {
       <Route path="/skills" element={<ProtectedRoute user={user} setUser={setUser}><Skills user={user!} /></ProtectedRoute>} />
       <Route path="/worker-skills" element={<ProtectedRoute user={user} setUser={setUser}><WorkerSkills /></ProtectedRoute>} />
       <Route path="/skills/:id" element={<ProtectedRoute user={user} setUser={setUser}><SkillDetail user={user!} /></ProtectedRoute>} />
+      <Route path="/submissions" element={<ProtectedRoute user={user} setUser={setUser}><SkillSubmissions /></ProtectedRoute>} />
       <Route path="/sharings" element={<ProtectedRoute user={user} setUser={setUser}><Sharings /></ProtectedRoute>} />
       <Route path="/security" element={<ProtectedRoute user={user} setUser={setUser}><Security /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" />} />

@@ -370,6 +370,24 @@ export const api = {
       `/marketplace/admin/promote`,
       { packageId },
     ),
+
+  // ─── Phase 1 Marketplace: submission queries & withdraw ───────────────
+  getSubmission: (id: string) =>
+    request<{
+      id: string;
+      review_status: string;
+      review_notes: string | null;
+      published_at: string | null;
+      name: string;
+      slug: string;
+      version: string;
+    }>("GET", `/marketplace/submissions/${id}`),
+
+  withdrawSkill: (slug: string) =>
+    request<{ ok: boolean; slug: string }>(
+      "DELETE",
+      `/marketplace/skills/${encodeURIComponent(slug)}`,
+    ),
 };
 
 export interface SkillPackageV2 {
