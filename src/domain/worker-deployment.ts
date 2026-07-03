@@ -38,6 +38,10 @@ export interface DeployResult {
 }
 
 export async function deployWorker(opts: DeployOpts): Promise<DeployResult> {
+  // Validate all values that are interpolated into SSH shell commands to
+  // prevent injection. Callers (workers.ts) wrap in try/catch → 400/500.
+  validateDeployInputs(opts);
+
   const jobId = `dpl_${randomUUID().replace(/-/g, "")}`;
   const logs: DeployResult["logs"] = [];
   const addLog = (level: string, msg: string) =>
@@ -366,5 +370,41 @@ async function decryptSshKey(encrypted: string): Promise<string> {
     throw new Error(
       `failed to decrypt ssh key: ${err instanceof Error ? err.message : String(err)}`,
     );
+  }
+}
+
+// --- Input validation to prevent shell injection in SSH commands ---
+// All values that are interpolated into execRemote() commands must pass
+// strict character whitelists. Throws on first violation.
+function validateDeployInputs(opts: DeployOpts): void {
+  const imageTagRe = /^[a-zA-Z0-9._:/-]+$/;
+  const containerNameRe = /^[a-zA-Z0-9._-]+$/;
+  const tarNameRe = /^[a-zA-Z0-9._-]+$/;
+
+  if (!opts.imageTag || !imageTagRe.test(opts.imageTag)) {
+    throw new Error("invalid imageTag: must match /^[a-zA-Z0-9._:/-]+$/");
+  }
+  if (!opts.containerName || !containerNameRe.test(opts.containerName)) {
+    throw new Error("invalid containerName: must match /^[a-zA-Z0-9._-]+$/");
+  }
+  if (!opts.hubBaseUrl) {
+    throw new Error("invalid hubBaseUrl: required");
+  }
+  // hubBaseUrl must be a valid http/https URL
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(opts.hubBaseUrl);
+  } catch {
+    throw new Error("invalid hubBaseUrl: not a valid URL");
+  }
+  if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+    throw new Error("invalid hubBaseUrl: protocol must be http or https");
+  }
+  // tarName is derived from imageTag (imageTag + ".tar"), so validate the
+  // derived form too — strip the ".tar" suffix is already covered by the
+  // imageTag regex, but we check the full tar name for safety.
+  const tarName = `${opts.imageTag}.tar`;
+  if (!tarNameRe.test(tarName)) {
+    throw new Error(`invalid tarName derived from imageTag: ${tarName}`);
   }
 }

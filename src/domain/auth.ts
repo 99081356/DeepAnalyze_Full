@@ -57,8 +57,12 @@ export function verifyAccessToken(
     if (decoded.header.alg === "RS256") {
       return verifyAccessTokenRs256(token);
     }
-    // 兼容期 HS256
+    // 兼容期 HS256 — enforce transition deadline if configured
     if (decoded.header.alg === "HS256") {
+      const deadline = HUB_CONFIG.auth.hs256TransitionUntil;
+      if (deadline && new Date(deadline).getTime() < Date.now()) {
+        return null; // transition window expired — reject HS256
+      }
       const payload = jwt.verify(token, ACCESS_SECRET) as {
         sub: string;
         type: string;

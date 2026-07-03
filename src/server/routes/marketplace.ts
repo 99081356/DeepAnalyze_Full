@@ -257,9 +257,16 @@ export function createMarketplaceRoutes(): Hono {
       return c.json({ error: "only author or admin can withdraw" }, 403);
     }
 
+    // Scope UPDATE by submitter_id of the found row so we only withdraw the
+    // specific skill version, not ALL rows sharing the same slug. When a
+    // super-admin performs the withdraw, use the actual submitter_id from
+    // the found row so the UPDATE still matches.
+    const targetSubmitterId = isSuperAdmin
+      ? (found.rows[0].submitter_id ?? "system")
+      : userId;
     await query(
-      `UPDATE marketplace_skills SET review_status = 'withdrawn', updated_at = now() WHERE slug = $1`,
-      [slug],
+      `UPDATE marketplace_skills SET review_status = 'withdrawn', updated_at = now() WHERE slug = $1 AND submitter_id = $2`,
+      [slug, targetSubmitterId],
     );
     return c.json({ ok: true, slug });
   });

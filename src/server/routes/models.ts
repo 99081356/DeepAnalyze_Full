@@ -51,6 +51,13 @@ export function createModelRoutes(): Hono {
     if (!name || !version || !category) {
       return c.json({ error: "name, version, category required" }, 400);
     }
+    // Reject path traversal attempts in name/version — these are
+    // interpolated into filesystem paths by uploadModelArtifact.
+    if (typeof name !== "string" || typeof version !== "string" ||
+        /[\/\\]/.test(name) || /[\/\\]/.test(version) ||
+        name.includes("..") || version.includes("..")) {
+      return c.json({ error: "invalid name or version" }, 400);
+    }
 
     const files: Array<{ originalName: string; stream: Readable }> = [];
     formData.forEach((value, key) => {
@@ -102,6 +109,12 @@ export function createModelRoutes(): Hono {
   app.delete("/:name/:version", jwtAuth, requirePermission("model:upload"), async (c) => {
     const name = c.req.param("name");
     const version = c.req.param("version");
+    // Reject path traversal — name/version go into filesystem paths.
+    if (typeof name !== "string" || typeof version !== "string" ||
+        /[\/\\]/.test(name) || /[\/\\]/.test(version) ||
+        name.includes("..") || version.includes("..")) {
+      return c.json({ error: "invalid name or version" }, 400);
+    }
     const ok = await deleteModelVersion(name, version);
     if (!ok) return c.json({ error: "version not found" }, 404);
     return c.json({ ok: true });

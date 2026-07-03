@@ -26,6 +26,7 @@ Self-check items:
 """
 import json
 import time
+import subprocess
 import urllib.request
 import urllib.error
 import base64
@@ -103,6 +104,32 @@ old_token = pyjwt.encode(
 )
 code, data = api("GET", "/api/v1/auth/me", token=old_token)
 test("legacy HS256 token still accepted", code == 200, f"{code}: {str(data)[:100]}")
+
+# --- T_A2b: HS256 time-gate enforcement (Critical fix) ---
+# Verify that when HUB_HS256_TRANSITION_UNTIL is set to a past date,
+# HS256 tokens are rejected by verifyAccessToken.
+print("\n--- T_A2b: HS256 time-gate enforcement ---")
+hs256_gate_test = """
+const oldToken = process.argv[2];
+process.env.HUB_HS256_TRANSITION_UNTIL = '2020-01-01T00:00:00Z';
+// Re-import config so the env var takes effect
+const { HUB_CONFIG } = await import('./src/core/config.ts');
+const { verifyAccessToken } = await import('./src/domain/auth.ts');
+const result = verifyAccessToken(oldToken);
+console.log(JSON.stringify({ rejected: result === null }));
+"""
+r = subprocess.run(
+    ["bun", "-e", hs256_gate_test, old_token],
+    capture_output=True, text=True, cwd="/mnt/d/code/deepanalyze/deepanalyze-hub",
+)
+try:
+    gate_info = json.loads(r.stdout.strip().split("\n")[-1])
+    test("HS256 token rejected after deadline",
+         gate_info.get("rejected") is True,
+         f"stdout={r.stdout.strip()[:120]} stderr={r.stderr.strip()[:80]}")
+except Exception as e:
+    test("HS256 token rejected after deadline", False,
+         f"parse error: {e}; stdout={r.stdout[:120]} stderr={r.stderr[:120]}")
 
 # --- T_B1: workers 表新字段存在 ---
 print("\n--- T_B1: workers distribution columns ---")
