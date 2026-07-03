@@ -18,6 +18,7 @@ import { workerAuth } from "../middleware/worker-auth.js";
 import { jwtAuth } from "../middleware/jwt-auth.js";
 import { requirePermission } from "../middleware/require-permission.js";
 import { generateInstructions, recordSyncAck } from "../../domain/skill-sync-service.js";
+import { createJoinToken, listJoinTokens, consumeJoinToken } from "../../domain/join-token.js";
 import type {
   WorkerRegisterRequest,
   WorkerRegisterResponse,
@@ -34,6 +35,21 @@ export function createWorkerRoutes(): Hono {
 
   app.post("/register", async (c) => {
     const body = await c.req.json();
+
+    // ── join_token 路径：消费 token，提取 org/user 绑定 ──
+    const joinToken: string | undefined = body.join_token;
+    let assignedUserId: string | null = null;
+    let organizationIdFromJoin: string | null = null;
+
+    if (joinToken) {
+      const consumed = await consumeJoinToken(joinToken);
+      if (!consumed.valid) {
+        return c.json({ error: consumed.reason || "invalid join_token" }, 400);
+      }
+      organizationIdFromJoin = consumed.meta!.organizationId;
+      assignedUserId = consumed.meta!.assignedUserId;
+    }
+
     // 支持两种字段命名：camelCase (v1 DA) 和 snake_case (v2)
     const workerIdParam = body.workerId ?? body.worker_id;
     const hostname = body.hostname ?? "unknown";
@@ -92,13 +108,34 @@ export function createWorkerRoutes(): Hono {
     const workerId = workerIdParam ?? `wkr_${randomUUID().replace(/-/g, "")}`;
     const workerToken = `wkt_${randomUUID().replace(/-/g, "")}`;
 
+    const finalOrgId = organizationIdFromJoin ?? orgIdParam ?? null;
+    const finalUserId = assignedUserId ?? body.user_id ?? null;
+    const initialStatus = joinToken ? "approved" : "pending";
+
     await query(
-      `INSERT INTO workers (id, name, hostname, endpoint, version, capabilities, worker_token, status, protocol_version, applied_at, organization_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, NOW(), $9)`,
-      [workerId, workerName, hostname, endpoint, version, JSON.stringify(capabilities), workerToken, protocolVersion, orgIdParam ?? null],
+      `INSERT INTO workers (id, name, hostname, endpoint, version, capabilities, worker_token,
+                            status, protocol_version, applied_at, organization_id, user_id,
+                            approved_at, approved_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), $10, $11,
+               CASE WHEN $12 THEN NOW() ELSE NULL END,
+               CASE WHEN $12 THEN 'join_token' ELSE NULL END)`,
+      [workerId, workerName, hostname, endpoint, version, JSON.stringify(capabilities), workerToken,
+       initialStatus, protocolVersion, finalOrgId, finalUserId, joinToken ? true : false],
     );
 
     await logWorkerEvent(workerId, "apply", `Worker applied: ${workerName} (proto v${protocolVersion})`);
+
+    // join_token 路径：已经 auto-approved，直接返回 token
+    if (joinToken) {
+      await logWorkerEvent(workerId, "approve", "Auto-approved via join_token");
+      return c.json({
+        worker_id: workerId,
+        worker_token: workerToken,
+        status: "approved",
+        server_version: HUB_CONFIG.version,
+        protocol_version: protocolVersion,
+      });
+    }
 
     // v1 协议（现有 DA）：自动审批保持兼容
     if (protocolVersion === 1) {
@@ -232,6 +269,42 @@ export function createWorkerRoutes(): Hono {
        FROM workers WHERE status = 'pending' ORDER BY applied_at DESC`,
     );
     return c.json({ workers: rows });
+  });
+
+  // ─── Join-token management (admin) ─────────────────────────────────────
+
+  app.post("/join-tokens", jwtAuth, requirePermission("worker:approve"), async (c) => {
+    const body = await c.req.json();
+    const count = Math.min(body.count || 1, 50);
+    const orgId = body.organization_id;
+    if (!orgId) return c.json({ error: "organization_id required" }, 400);
+
+    const creatorId = c.get("userId") as string;
+    const tokens: string[] = [];
+    for (let i = 0; i < count; i++) {
+      const created = await createJoinToken({
+        organizationId: orgId,
+        assignedUserId: body.assigned_user_id,
+        createdBy: creatorId,
+        expiresInHours: body.expires_in_hours ?? 24,
+        maxUses: body.max_uses ?? 1,
+        notes: body.notes,
+      });
+      tokens.push(created.token);
+    }
+    return c.json({ tokens }, 201);
+  });
+
+  app.get("/join-tokens", jwtAuth, requirePermission("worker:approve"), async (c) => {
+    const orgId = c.req.query("organization_id");
+    const rows = await listJoinTokens(orgId);
+    return c.json({ tokens: rows });
+  });
+
+  app.delete("/join-tokens/:id", jwtAuth, requirePermission("worker:approve"), async (c) => {
+    const id = c.req.param("id");
+    await query(`DELETE FROM join_tokens WHERE id = $1`, [id]);
+    return c.json({ ok: true });
   });
 
   // ─── Get worker details ────────────────────────────────────────────────
