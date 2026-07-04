@@ -306,7 +306,7 @@ export function Skills({ user }: { user: MeResponse }) {
                     onDetail={() => handleDetail(pkg.id)}
                     onSubscribe={() => handleSubscribe(pkg.id)}
                   />
-                  {user.is_super_admin && !pkg.is_kill_switched && (
+                  {user.is_super_admin && !pkg.is_kill_switched && pkg.active_version_id && (
                     <Button
                       size="sm"
                       variant="primary"

@@ -481,6 +481,7 @@ export interface SkillPackageV2 {
   trust_level: string;
   author_name?: string;
   active_version?: string;
+  active_version_id?: string | null;
   stats: { downloads: number; subscriptions: number; rating_avg: number };
   is_kill_switched: boolean;
   created_at: string;

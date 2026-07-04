@@ -44,7 +44,8 @@ test.describe("Cross-system promote", () => {
 
     await page.goto("/skills", { waitUntil: "networkidle" });
 
-    // Find any promote button (only visible to super admin)
+    // Skills.tsx renders promote buttons ONLY on packages with active_version_id
+    // set, so any visible promote button targets a promotable package.
     const promoteBtn = page.getByRole("button", { name: "推广到 Worker 市场" }).first();
     await expect(promoteBtn).toBeVisible({ timeout: 5_000 });
 
@@ -75,18 +76,19 @@ test.describe("Cross-system promote", () => {
 
     // DB: row exists with source_package_id matching the package we actually promoted
     expect(promotedPackageId, "captured packageId from promote request").toBeTruthy();
-    const rows = await sqlExec<{ id: string; slug: string }>(
-      `SELECT id, slug FROM marketplace_skills WHERE source_package_id = $1`,
+    const rows = await sqlExec<{ id: string; slug: string; name: string }>(
+      `SELECT id, slug, name FROM marketplace_skills WHERE source_package_id = $1`,
       [promotedPackageId!]
     );
     expect(rows.length, "promoted skill row should be present in DB").toBeGreaterThan(0);
 
-    // Verify in /worker-skills approved tab — promoted skill with source badge
+    // Verify in /worker-skills approved tab — promoted skill with source badge.
+    // The card renders the skill NAME (not the slug), so we look up name from the row.
     await page.goto("/worker-skills", { waitUntil: "networkidle" });
     await page.getByRole("button", { name: /^已批准/ }).click();
-    await expect(page.getByText(rows[0].slug)).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByText(rows[0].name).first()).toBeVisible({ timeout: 5_000 });
     await expect(
-      page.getByText(rows[0].slug).locator("xpath=..").getByText("🔗 源自企业包")
+      page.getByText(rows[0].name).first().locator("xpath=..").getByText("🔗 源自企业包")
     ).toBeVisible();
     await captureScreenshot(page, "promote", "p1-promoted-in-marketplace");
 
