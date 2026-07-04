@@ -15,6 +15,9 @@ import { Sharings } from "./pages/Sharings.js";
 import { Security } from "./pages/Security.js";
 import { WorkerSkills } from "./pages/WorkerSkills.js";
 import { Models } from "./pages/Models.js";
+import { HostServersPage } from "./pages/HostServersPage.js";
+import { HostServerDetail } from "./pages/HostServerDetail.js";
+import { HostServerForm } from "./pages/HostServerForm.js";
 import { ConfirmDialog } from "./components/ui/ConfirmDialog.js";
 import { ToastContainer } from "./components/ui/Toast.js";
 
@@ -31,6 +34,7 @@ const NAV_ITEMS = [
   { to: "/submissions", label: "Skill 提交审核", icon: "📋" },
   { to: "/sharings", label: "跨组织共享", icon: "🔄" },
   { to: "/workers", label: "Worker 审批", icon: "🖥️" },
+  { to: "/host-servers", label: "物理机", icon: "🏭" },
   { to: "/models", label: "模型仓库", icon: "🧠" },
   { to: "/security", label: "安全网关", icon: "🛡️" },
 ] as const;
@@ -546,6 +550,10 @@ export default function App() {
       <Route path="/orgs" element={<ProtectedRoute user={user} setUser={setUser}><OrgTree /></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute user={user} setUser={setUser}><UserList /></ProtectedRoute>} />
       <Route path="/workers" element={<ProtectedRoute user={user} setUser={setUser}><WorkerApproval /></ProtectedRoute>} />
+      <Route path="/host-servers" element={<ProtectedRoute user={user} setUser={setUser}><HostServersPage /></ProtectedRoute>} />
+      <Route path="/host-servers/new" element={<ProtectedRoute user={user} setUser={setUser}><HostServerForm /></ProtectedRoute>} />
+      <Route path="/host-servers/:id" element={<ProtectedRoute user={user} setUser={setUser}><HostServerDetail /></ProtectedRoute>} />
+      <Route path="/host-servers/:id/edit" element={<ProtectedRoute user={user} setUser={setUser}><HostServerForm /></ProtectedRoute>} />
       <Route path="/skills" element={<ProtectedRoute user={user} setUser={setUser}><Skills user={user!} /></ProtectedRoute>} />
       <Route path="/worker-skills" element={<ProtectedRoute user={user} setUser={setUser}><WorkerSkills /></ProtectedRoute>} />
       <Route path="/skills/:id" element={<ProtectedRoute user={user} setUser={setUser}><SkillDetail user={user!} /></ProtectedRoute>} />

@@ -443,6 +443,20 @@ export const api = {
       };
     },
   },
+
+  // ─── Phase 2 T06: Host servers (物理机管理) ───────────────────────────
+  getHostServers: () =>
+    request<{ items: HostServer[] }>("GET", "/host-servers"),
+  getHostServer: (id: string) =>
+    request<HostServer>("GET", `/host-servers/${id}`),
+  createHostServer: (input: CreateHostServerInput) =>
+    request<HostServer>("POST", "/host-servers", input),
+  updateHostServer: (id: string, patch: Partial<CreateHostServerInput>) =>
+    request<HostServer>("PATCH", `/host-servers/${id}`, patch),
+  deleteHostServer: (id: string) =>
+    request<void>("DELETE", `/host-servers/${id}`),
+  getHostServerPortUsage: (id: string) =>
+    request<PortUsageResponse>("GET", `/host-servers/${id}/port-usage`),
 };
 
 export interface ModelArtifact {
@@ -581,4 +595,56 @@ export interface AdminSkillMutationResponse {
 export interface PromoteResponse {
   success: true;
   skill: { id: string; slug: string; name: string; version: string };
+}
+
+// ─── Phase 2 T06: Host servers (物理机管理) ───────────────────────────────
+
+export interface HostServer {
+  id: string;
+  hostname: string;
+  ssh_target_host: string;
+  ssh_target_port: number;
+  ssh_user: string;
+  port_range_start: number;
+  port_range_end: number;
+  port_block_size: number;
+  cpu_cores: number | null;
+  memory_gb: number | null;
+  gpu_count: number;
+  gpu_vram_mb: number | null;
+  gpu_model: string | null;
+  status: "active" | "maintenance" | "retired";
+  labels: Record<string, unknown>;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateHostServerInput {
+  hostname: string;
+  ssh_target_host: string;
+  ssh_target_port?: number;
+  ssh_user?: string;
+  port_range_start?: number;
+  port_range_end?: number;
+  port_block_size?: number;
+  cpu_cores?: number;
+  memory_gb?: number;
+  gpu_count?: number;
+  gpu_vram_mb?: number;
+  gpu_model?: string;
+  notes?: string;
+}
+
+export interface PortUsageEntry {
+  base_port: number;
+  worker_id: string | null;
+  status: string | null;
+}
+
+export interface PortUsageResponse {
+  host_server_id: string;
+  range: [number, number];
+  block_size: number;
+  allocated: PortUsageEntry[];
 }
