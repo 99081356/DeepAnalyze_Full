@@ -408,3 +408,61 @@ function validateDeployInputs(opts: DeployOpts): void {
     throw new Error(`invalid tarName derived from imageTag: ${tarName}`);
   }
 }
+
+// =============================================================================
+// Host Server SSH Resolver (T04)
+// =============================================================================
+// Translates a host_server_id into the SSH connection parameters needed by
+// deployWorker(). Caller (T07 DeployWorkerModal backend route) combines this
+// with allocatePortBlock() (T03) and passes the resolved params into the
+// existing deployWorker() — T04 does NOT rewrite deployWorker().
+//
+// Returns null when:
+//   - host_server not found
+//   - host_server.status !== 'active'
+//   - host_server has no ssh_key_encrypted configured
+// =============================================================================
+
+export interface ResolvedHostServerSsh {
+  hostServerId: string;
+  sshHost: string;
+  sshPort: number;
+  sshUser: string;
+  sshKeyPem: string;  // decrypted PEM (caller is responsible for zeroing)
+  portRangeStart: number;
+  portRangeEnd: number;
+  portBlockSize: number;
+}
+
+export async function resolveHostServerSsh(
+  hostServerId: string,
+): Promise<ResolvedHostServerSsh | null> {
+  const { rows } = await query<{
+    id: string; ssh_target_host: string; ssh_target_port: number; ssh_user: string;
+    ssh_key_encrypted: string | null;
+    status: string; port_range_start: number; port_range_end: number; port_block_size: number;
+  }>(
+    `SELECT id, ssh_target_host, ssh_target_port, ssh_user, ssh_key_encrypted,
+            status, port_range_start, port_range_end, port_block_size
+     FROM host_servers WHERE id = $1`,
+    [hostServerId],
+  );
+  const hs = rows[0];
+  if (!hs) return null;
+  if (hs.status !== "active") return null;
+  if (!hs.ssh_key_encrypted) return null;
+
+  // Decrypt using existing crypto helper (already imported at top of file)
+  const sshKeyPem = decryptString(hs.ssh_key_encrypted);
+
+  return {
+    hostServerId: hs.id,
+    sshHost: hs.ssh_target_host,
+    sshPort: hs.ssh_target_port,
+    sshUser: hs.ssh_user,
+    sshKeyPem,
+    portRangeStart: hs.port_range_start,
+    portRangeEnd: hs.port_range_end,
+    portBlockSize: hs.port_block_size,
+  };
+}
