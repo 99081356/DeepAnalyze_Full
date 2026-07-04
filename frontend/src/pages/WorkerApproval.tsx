@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback, type CSSProperties } from "react";
 import { Plus } from "lucide-react";
+import { Link } from "react-router-dom";
 import { api, type PendingWorker } from "../api/client.js";
 import { Badge } from "../components/ui/Badge.js";
 import { Button } from "../components/ui/Button.js";
@@ -333,7 +334,11 @@ export function WorkerApproval() {
           <tbody>
             {all.map((w) => (
               <tr key={w.id}>
-                <td style={tdStyle}>{w.name}</td>
+                <td style={tdStyle}>
+                  <Link to={`/workers/${w.id}`} style={{ color: "var(--brand-primary)", textDecoration: "none" }}>
+                    {w.name}
+                  </Link>
+                </td>
                 <td style={tdStyle}>{w.hostname}</td>
                 <td style={tdStyle}>v{w.protocol_version}</td>
                 <td style={tdStyle}>

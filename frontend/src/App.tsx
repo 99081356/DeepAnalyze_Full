@@ -8,6 +8,7 @@ import { Dashboard } from "./pages/Dashboard.js";
 import { OrgTree } from "./pages/OrgTree.js";
 import { UserList } from "./pages/UserList.js";
 import { WorkerApproval } from "./pages/WorkerApproval.js";
+import { WorkerDetailPage } from "./pages/WorkerDetail.js";
 import { Skills } from "./pages/Skills.js";
 import { SkillDetail } from "./pages/SkillDetail.js";
 import { SkillSubmissions } from "./pages/SkillSubmissions.js";
@@ -554,6 +555,7 @@ export default function App() {
       <Route path="/orgs" element={<ProtectedRoute user={user} setUser={setUser}><OrgTree /></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute user={user} setUser={setUser}><UserList /></ProtectedRoute>} />
       <Route path="/workers" element={<ProtectedRoute user={user} setUser={setUser}><WorkerApproval /></ProtectedRoute>} />
+      <Route path="/workers/:id" element={<ProtectedRoute user={user} setUser={setUser}><WorkerDetailPage /></ProtectedRoute>} />
       <Route path="/host-servers" element={<ProtectedRoute user={user} setUser={setUser}><HostServersPage /></ProtectedRoute>} />
       <Route path="/host-servers/new" element={<ProtectedRoute user={user} setUser={setUser}><HostServerForm /></ProtectedRoute>} />
       <Route path="/host-servers/:id" element={<ProtectedRoute user={user} setUser={setUser}><HostServerDetail /></ProtectedRoute>} />

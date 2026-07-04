@@ -232,7 +232,12 @@ export const api = {
     upgrade: async (
       workerId: string,
       imageTag: string,
-    ): Promise<{ success: boolean; error?: string }> => {
+    ): Promise<{
+      success: boolean;
+      jobId?: string;
+      backupId?: string;
+      error?: string;
+    }> => {
       return request("POST", `/workers/${workerId}/upgrade`, {
         image_tag: imageTag,
       });
@@ -248,9 +253,55 @@ export const api = {
       return request("POST", `/workers/${workerId}/restart`);
     },
 
-    /** Rollback a worker to its previously deployed image tag. */
-    rollback: async (workerId: string): Promise<{ success: boolean }> => {
-      return request("POST", `/workers/${workerId}/rollback`);
+    /** Rollback a worker to its previously deployed image tag.
+     *  T19 backend supports optional backup_id for explicit rollback target. */
+    rollback: async (
+      workerId: string,
+      backupId?: string,
+    ): Promise<{ success: boolean; backupId?: string; error?: string }> => {
+      return request(
+        "POST",
+        `/workers/${workerId}/rollback`,
+        backupId ? { backup_id: backupId } : {},
+      );
+    },
+
+    /** T20: Get a single worker's full detail (includes image_tag, host info). */
+    getWorker: async (workerId: string): Promise<WorkerDetail> => {
+      return request<WorkerDetail>("GET", `/workers/${workerId}`);
+    },
+
+    /** T20: List worker backups. */
+    listBackups: async (
+      workerId: string,
+    ): Promise<{ items: WorkerBackup[] }> => {
+      return request<{ items: WorkerBackup[] }>(
+        "GET",
+        `/workers/${workerId}/backups`,
+      );
+    },
+
+    /** T20: Create a manual backup record. */
+    createBackup: async (
+      workerId: string,
+      backupType?: "manual" | "scheduled",
+    ): Promise<WorkerBackup> => {
+      return request<WorkerBackup>(
+        "POST",
+        `/workers/${workerId}/backups`,
+        backupType ? { backup_type: backupType } : {},
+      );
+    },
+
+    /** T20: Delete a backup record. */
+    deleteBackup: async (
+      workerId: string,
+      backupId: string,
+    ): Promise<{ ok: boolean }> => {
+      return request<{ ok: boolean }>(
+        "DELETE",
+        `/workers/${workerId}/backups/${backupId}`,
+      );
     },
   },
 
@@ -787,4 +838,51 @@ export interface HealthHistoryEntry {
   module_health: unknown;
   resource_usage: unknown;
   da_version: string | null;
+}
+
+// ─── Phase 6 T20: Worker detail + backup management ─────────────────────────
+
+export interface WorkerDetail {
+  id: string;
+  name: string;
+  hostname: string;
+  endpoint: string;
+  version: string;
+  capabilities: string[];
+  status: string;
+  last_heartbeat: string | null;
+  active_sessions: number;
+  active_tasks: number;
+  resource_usage: unknown;
+  applied_at: string;
+  approved_at: string | null;
+  approved_by: string | null;
+  user_id: string | null;
+  organization_id: string | null;
+  protocol_version: number;
+  // T20-added fields
+  current_image_tag: string | null;
+  host_id: string | null;
+  host_port: number | null;
+  last_heartbeat_at: string | null;
+  last_heartbeat_ok: boolean | null;
+  da_version: string | null;
+  ssh_target_host: string | null;
+  host_name: string | null;
+}
+
+export interface WorkerBackup {
+  id: string;
+  worker_id: string;
+  backup_type: "pre_upgrade" | "manual" | "scheduled";
+  from_tag: string | null;
+  to_tag: string | null;
+  pg_dump_path: string | null;
+  data_archive_path: string | null;
+  size_bytes: number | null;
+  status: "created" | "verified" | "restored" | "failed" | "expired";
+  deploy_job_id: string | null;
+  created_by: string;
+  created_at: string;
+  expires_at: string;
 }
