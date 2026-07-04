@@ -56,6 +56,10 @@ export async function createApp(): Promise<Hono> {
   const { createAuthAdapterRoutes } = await import("./routes/auth-adapters.js");
   app.route("/api/v1/auth", createAuthAdapterRoutes());
 
+  // SSO (Hub → DA ticket 签发 + 兑换)
+  const { createSsoRoutes } = await import("./routes/sso.js");
+  app.route("/api/v1/auth/sso", createSsoRoutes());
+
   // Organizations
   const { createOrgRoutes } = await import("./routes/orgs.js");
   app.route("/api/v1/orgs", createOrgRoutes());
