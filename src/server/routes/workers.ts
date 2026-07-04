@@ -26,6 +26,13 @@ import { generateInstructions, recordSyncAck } from "../../domain/skill-sync-ser
 import { createJoinToken, listJoinTokens, consumeJoinToken } from "../../domain/join-token.js";
 // T18: heartbeat domain — records audit history + updates the 4 worker columns
 import { recordHeartbeat } from "../../domain/worker-heartbeat.js";
+// T19: worker backup domain — metadata-only backup records
+import {
+  createBackupRecord,
+  listBackups,
+  getBackup,
+  deleteBackup,
+} from "../../domain/worker-backup.js";
 import type {
   WorkerRegisterRequest,
   WorkerRegisterResponse,
@@ -544,10 +551,31 @@ export function createWorkerRoutes(): Hono {
 
   app.post("/:id/upgrade", jwtAuth, requirePermission("worker:deploy"), async (c) => {
     const workerId = c.req.param("id");
-    const body = await c.req.json();
-    if (!body.image_tag) return c.json({ error: "image_tag required" }, 400);
-    const result = await upgradeWorker(workerId, body.image_tag, c.get("userId"));
-    return c.json(result, result.success ? 200 : 500);
+    const body = await c.req.json<{ to_tag?: string; image_tag?: string; dry_run?: boolean }>().catch(() => ({} as any));
+    // T19: 接受 to_tag（新规范）或 image_tag（向后兼容）
+    const newTag = body.to_tag ?? body.image_tag;
+    if (!newTag) return c.json({ error: "to_tag (or image_tag) required" }, 400);
+
+    if (body.dry_run) {
+      // 预检：worker 存在 + host_id 非空 + image_tag 不同
+      const { rows } = await getPool().query(
+        `SELECT id, current_image_tag, host_id FROM workers WHERE id = $1`,
+        [workerId],
+      );
+      if (rows.length === 0) return c.json({ error: "worker not found" }, 404);
+      if (!rows[0].host_id) return c.json({ error: "worker has no host_id (legacy deploy)" }, 400);
+      if (rows[0].current_image_tag === newTag) {
+        return c.json({ error: "already on this tag" }, 400);
+      }
+      return c.json({ ok: true, dry_run: true, from_tag: rows[0].current_image_tag, to_tag: newTag });
+    }
+
+    try {
+      const result = await upgradeWorker(workerId, newTag, c.get("userId"));
+      return c.json(result, result.success ? 200 : 500);
+    } catch (e) {
+      return c.json({ error: (e as Error).message }, 400);
+    }
   });
 
   app.post("/:id/stop", jwtAuth, requirePermission("worker:deploy"), async (c) => {
@@ -564,8 +592,58 @@ export function createWorkerRoutes(): Hono {
 
   app.post("/:id/rollback", jwtAuth, requirePermission("worker:deploy"), async (c) => {
     const workerId = c.req.param("id");
-    const result = await rollbackWorker(workerId, c.get("userId"));
-    return c.json(result, result.success ? 200 : 500);
+    const body = await c.req.json<{ backup_id?: string }>().catch(() => ({} as any));
+
+    try {
+      const result = await rollbackWorker(workerId, c.get("userId"), body.backup_id);
+      return c.json(result, result.success ? 200 : 500);
+    } catch (e) {
+      return c.json({ error: (e as Error).message }, 400);
+    }
+  });
+
+  // ─── T19: Worker backup management ─────────────────────────────────────
+
+  app.get("/:id/backups", jwtAuth, requirePermission("worker:deploy"), async (c) => {
+    const items = await listBackups(getPool, c.req.param("id"));
+    return c.json({ items });
+  });
+
+  app.post("/:id/backups", jwtAuth, requirePermission("worker:deploy"), async (c) => {
+    const workerId = c.req.param("id");
+    const userId = c.get("userId");
+    const body = await c.req.json<{ backup_type?: "manual" | "scheduled" }>().catch(() => ({} as any));
+
+    // Look up worker for from_tag
+    const { rows } = await getPool().query(
+      `SELECT current_image_tag FROM workers WHERE id = $1`,
+      [workerId],
+    );
+    if (rows.length === 0) return c.json({ error: "worker not found" }, 404);
+
+    const ts = new Date().toISOString().replace(/[:.]/g, "-");
+    const backup = await createBackupRecord(getPool, {
+      workerId,
+      backupType: body.backup_type ?? "manual",
+      fromTag: rows[0].current_image_tag,
+      pgDumpPath: `/opt/da/${workerId}/backups/${ts}.dump`,
+      dataArchivePath: `/opt/da/${workerId}/backups/${ts}-data.tar.gz`,
+      createdBy: userId,
+    });
+    return c.json(backup, 201);
+  });
+
+  app.delete("/:id/backups/:backupId", jwtAuth, requirePermission("worker:deploy"), async (c) => {
+    const workerId = c.req.param("id");
+    const backupId = c.req.param("backupId");
+
+    // Verify backup belongs to this worker
+    const backup = await getBackup(getPool, backupId);
+    if (!backup) return c.json({ error: "backup not found" }, 404);
+    if (backup.worker_id !== workerId) return c.json({ error: "backup does not belong to this worker" }, 403);
+
+    const ok = await deleteBackup(getPool, backupId);
+    return c.json({ ok });
   });
 
   return app;

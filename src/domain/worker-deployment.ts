@@ -8,9 +8,14 @@
 import { Client } from "ssh2";
 import type { ClientChannel } from "ssh2";
 import { randomUUID } from "node:crypto";
-import { query } from "../store/pg.js";
+import { query, getPool } from "../store/pg.js";
 import { resolveImageTar } from "./bundle.js";
 import { decryptString } from "../core/crypto.js";
+import {
+  createBackupRecord,
+  updateBackupStatus,
+  getBackup,
+} from "./worker-backup.js";
 
 export interface DeployOpts {
   workerId: string;
@@ -251,7 +256,11 @@ async function pollHealth(conn: Client, port: number, timeoutSec: number): Promi
 
 export async function upgradeWorker(
   workerId: string, newTag: string, initiatedBy: string,
-): Promise<DeployResult> {
+): Promise<DeployResult & { backupId: string }> {
+  // 注意：domain 函数签名是 pool: () => Pool，所以这里赋函数引用
+  const pool = getPool;
+
+  // ─── 1. 预检：worker 存在 + SSH 凭据 ───
   const w = await query<{
     ssh_target_host: string; ssh_target_port: number; ssh_user: string;
     ssh_key_encrypted: string | null; current_image_tag: string;
@@ -262,26 +271,70 @@ export async function upgradeWorker(
   if (!row.ssh_target_host || !row.ssh_key_encrypted) {
     throw new Error("worker missing ssh credentials");
   }
+  const fromTag = row.current_image_tag;
 
-  // 解密私钥（AES）— 见 Task F3
+  // ─── 2. 创建 backup 记录（pre_upgrade, deploy_job_id=NULL 先占位） ───
+  const ts = new Date().toISOString().replace(/[:.]/g, "-");
+  const backup = await createBackupRecord(pool, {
+    workerId,
+    backupType: "pre_upgrade",
+    fromTag,
+    toTag: newTag,
+    pgDumpPath: `/opt/da/${workerId}/backups/${ts}.dump`,
+    dataArchivePath: `/opt/da/${workerId}/backups/${ts}-data.tar.gz`,
+    deployJobId: null,
+    createdBy: initiatedBy,
+  });
+
+  // ─── 3. 解密私钥（AES）— 见 Task F3 ───
   const privateKey = await decryptSshKey(row.ssh_key_encrypted);
 
-  // 复用 deployWorker（覆盖 imageTag）
-  return deployWorker({
-    workerId,
-    sshHost: row.ssh_target_host,
-    sshPort: row.ssh_target_port,
-    sshUser: row.ssh_user,
-    sshPrivateKeyPem: privateKey,
-    imageTag: newTag,
-    source: "hub_stream",
-    hubBaseUrl: process.env.HUB_EXTERNAL_URL || "http://localhost:22000",
-    containerName: `da-${workerId.slice(0, 12)}`,
-    containerPort: 21000,
-    envVars: {},  // 已有的容器配置在 workers 表，按需补充
-    volumeMounts: [`da-data-${workerId.slice(0, 12)}:/app/data`],
-    initiatedBy,
-  });
+  // ─── 4. 调用现有 deployWorker（保留原有行为） ───
+  // deployWorker 内部 catch 所有错误并返回 { success: false, ... }，不 throw。
+  // 我们需要在 success=false 时标记 backup=failed，在 success=true 时关联+verified。
+  let result: DeployResult;
+  try {
+    result = await deployWorker({
+      workerId,
+      sshHost: row.ssh_target_host,
+      sshPort: row.ssh_target_port,
+      sshUser: row.ssh_user,
+      sshPrivateKeyPem: privateKey,
+      imageTag: newTag,
+      source: "hub_stream",
+      hubBaseUrl: process.env.HUB_EXTERNAL_URL || "http://localhost:22000",
+      containerName: `da-${workerId.slice(0, 12)}`,
+      containerPort: 21000,
+      envVars: {},  // 已有的容器配置在 workers 表，按需补充
+      volumeMounts: [`da-data-${workerId.slice(0, 12)}:/app/data`],
+      initiatedBy,
+    });
+  } catch (e) {
+    // deployWorker 内部不应抛出（有自己的 catch），但为安全起见
+    await updateBackupStatus(pool, backup.id, "failed");
+    throw e;
+  }
+
+  // ─── 5. 根据 deploy 结果链接 backup ↔ deploy_job ───
+  if (result.success && result.jobId) {
+    // 链接 deploy_jobs.backup_id → backup
+    await pool().query(
+      `UPDATE deploy_jobs SET backup_id = $1 WHERE id = $2`,
+      [backup.id, result.jobId],
+    );
+    // 反向链接 worker_backups.deploy_job_id → deploy_job
+    await pool().query(
+      `UPDATE worker_backups SET deploy_job_id = $1 WHERE id = $2`,
+      [result.jobId, backup.id],
+    );
+    // 标记 backup 为 verified
+    await updateBackupStatus(pool, backup.id, "verified");
+  } else {
+    // 部署失败：标记 backup 为 failed
+    await updateBackupStatus(pool, backup.id, "failed");
+  }
+
+  return { ...result, backupId: backup.id };
 }
 
 export async function stopWorker(workerId: string, initiatedBy: string): Promise<DeployResult> {
@@ -349,16 +402,48 @@ export async function restartWorker(workerId: string, initiatedBy: string): Prom
 // intent: rollback means "redeploy the currently-known-good image", which
 // is exactly workers.current_image_tag (updated only on successful deploys
 // by deployWorker above). Simplified to query workers directly.
-export async function rollbackWorker(workerId: string, initiatedBy: string): Promise<DeployResult> {
-  const w = await query<{ current_image_tag: string | null }>(
-    `SELECT current_image_tag FROM workers WHERE id = $1`,
-    [workerId],
-  );
-  if (w.rows.length === 0) throw new Error("worker not found");
-  if (!w.rows[0].current_image_tag) {
-    throw new Error("no current image tag — nothing to rollback to");
+export async function rollbackWorker(
+  workerId: string,
+  initiatedBy: string,
+  backupId?: string,
+): Promise<DeployResult & { backupId?: string }> {
+  // 注意：domain 函数签名是 pool: () => Pool，所以这里赋函数引用
+  const pool = getPool;
+
+  let rollbackTag: string | null = null;
+  let linkedBackupId: string | undefined;
+
+  if (backupId) {
+    // 显式指定 backup：从 backup.from_tag 回滚
+    const backup = await getBackup(pool, backupId);
+    if (!backup) throw new Error(`backup ${backupId} not found`);
+    if (backup.worker_id !== workerId) {
+      throw new Error(`backup ${backupId} does not belong to worker ${workerId}`);
+    }
+    rollbackTag = backup.from_tag;
+    linkedBackupId = backup.id;
+  } else {
+    // Fallback：使用 workers.current_image_tag（保留原有行为）
+    const w = await query<{ current_image_tag: string | null }>(
+      `SELECT current_image_tag FROM workers WHERE id = $1`,
+      [workerId],
+    );
+    if (w.rows.length === 0) throw new Error("worker not found");
+    rollbackTag = w.rows[0].current_image_tag;
   }
-  return upgradeWorker(workerId, w.rows[0].current_image_tag, initiatedBy);
+
+  if (!rollbackTag) {
+    throw new Error("no rollback target: provide backup_id or ensure worker has current_image_tag");
+  }
+
+  const result = await upgradeWorker(workerId, rollbackTag, initiatedBy);
+
+  // 标记 backup 为 restored（如果指定了 backupId）
+  if (linkedBackupId) {
+    await updateBackupStatus(pool, linkedBackupId, "restored");
+  }
+
+  return { ...result, backupId: linkedBackupId };
 }
 
 // --- AES-256-GCM decryption for stored SSH keys ---
