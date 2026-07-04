@@ -62,6 +62,8 @@ export interface MeResponse {
   organization_id: string | null;
   roles: Array<{ id: string; name: string }>;
   permissions: string[];
+  da_url: string | null;
+  da_worker_id: string | null;
 }
 
 export interface LoginResponse {
@@ -134,6 +136,12 @@ export const api = {
   login: (username: string, password: string) =>
     request<LoginResponse>("POST", "/auth/login", { username, password }),
   me: () => request<MeResponse>("GET", "/auth/me"),
+  createSsoTicket: (workerId: string) =>
+    request<{ ticket: string; redirect_url: string; expires_in: number }>(
+      "POST",
+      "/auth/sso/ticket",
+      { da_worker_id: workerId },
+    ),
   logout: () => {
     setToken(null);
     return request<void>("POST", "/auth/logout");

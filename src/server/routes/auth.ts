@@ -20,6 +20,7 @@ import {
 } from "../../domain/user.js";
 import { jwtAuth } from "../middleware/jwt-auth.js";
 import { getJwks } from "../../domain/jwks.js";
+import { getPool } from "../../store/pg.js";
 
 export function createAuthRoutes() {
   const router = new Hono();
@@ -122,6 +123,15 @@ export function createAuthRoutes() {
       getUserRoleIds(userId),
     ]);
 
+    // Look up the user's assigned DA worker (if any) — for "Open my DA" button
+    const workerResult = await getPool().query(
+      `SELECT id, da_url FROM workers
+       WHERE assigned_user_id = $1 AND status = 'approved'
+       ORDER BY registered_at DESC LIMIT 1`,
+      [userId],
+    );
+    const daWorker = workerResult.rows[0] ?? null;
+
     return c.json({
       id: user.id,
       username: user.username,
@@ -132,6 +142,8 @@ export function createAuthRoutes() {
       organization_id: user.organization_id,
       roles: roleIds,
       permissions,
+      da_url: daWorker?.da_url ?? null,
+      da_worker_id: daWorker?.id ?? null,
     });
   });
 

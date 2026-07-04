@@ -14,6 +14,7 @@ import {
 import { api, type MeResponse } from "../api/client.js";
 import { Button } from "../components/ui/Button.js";
 import { Badge } from "../components/ui/Badge.js";
+import { OpenMyDAButton } from "../components/hub/OpenMyDAButton.js";
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                     */
@@ -248,6 +249,24 @@ export function Dashboard() {
       <h2 style={headerStyle}>
         欢迎{data.me ? `, ${data.me.display_name || data.me.username}` : ""}
       </h2>
+
+      {/* Open my DA — primary user action */}
+      {data.me && (
+        <div style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          alignItems: "center",
+          padding: "var(--space-3) var(--space-5)",
+          background: "var(--bg-card)",
+          borderRadius: "var(--radius-md)",
+          marginBottom: "var(--space-4)",
+        }}>
+          <OpenMyDAButton
+            workerId={data.me.da_worker_id}
+            daUrl={data.me.da_url}
+          />
+        </div>
+      )}
 
       {/* Pending worker alert */}
       {data.pendingCount > 0 && (
