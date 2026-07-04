@@ -256,7 +256,9 @@ async function pollHealth(conn: Client, port: number, timeoutSec: number): Promi
 
 export async function upgradeWorker(
   workerId: string, newTag: string, initiatedBy: string,
-): Promise<DeployResult & { backupId: string }> {
+  opts?: { skipBackup?: boolean },
+): Promise<DeployResult & { backupId?: string }> {
+  const skipBackup = opts?.skipBackup ?? false;
   // 注意：domain 函数签名是 pool: () => Pool，所以这里赋函数引用
   const pool = getPool;
 
@@ -274,17 +276,23 @@ export async function upgradeWorker(
   const fromTag = row.current_image_tag;
 
   // ─── 2. 创建 backup 记录（pre_upgrade, deploy_job_id=NULL 先占位） ───
-  const ts = new Date().toISOString().replace(/[:.]/g, "-");
-  const backup = await createBackupRecord(pool, {
-    workerId,
-    backupType: "pre_upgrade",
-    fromTag,
-    toTag: newTag,
-    pgDumpPath: `/opt/da/${workerId}/backups/${ts}.dump`,
-    dataArchivePath: `/opt/da/${workerId}/backups/${ts}-data.tar.gz`,
-    deployJobId: null,
-    createdBy: initiatedBy,
-  });
+  // skipBackup=true（如 restartWorker）时跳过备份记录创建，避免 from_tag==to_tag
+  // 的无意义备份污染 worker_backups 表。
+  let backupId: string | undefined;
+  if (!skipBackup) {
+    const ts = new Date().toISOString().replace(/[:.]/g, "-");
+    const backup = await createBackupRecord(pool, {
+      workerId,
+      backupType: "pre_upgrade",
+      fromTag,
+      toTag: newTag,
+      pgDumpPath: `/opt/da/${workerId}/backups/${ts}.dump`,
+      dataArchivePath: `/opt/da/${workerId}/backups/${ts}-data.tar.gz`,
+      deployJobId: null,
+      createdBy: initiatedBy,
+    });
+    backupId = backup.id;
+  }
 
   // ─── 3. 解密私钥（AES）— 见 Task F3 ───
   const privateKey = await decryptSshKey(row.ssh_key_encrypted);
@@ -311,30 +319,34 @@ export async function upgradeWorker(
     });
   } catch (e) {
     // deployWorker 内部不应抛出（有自己的 catch），但为安全起见
-    await updateBackupStatus(pool, backup.id, "failed");
+    if (backupId) {
+      await updateBackupStatus(pool, backupId, "failed");
+    }
     throw e;
   }
 
   // ─── 5. 根据 deploy 结果链接 backup ↔ deploy_job ───
-  if (result.success && result.jobId) {
-    // 链接 deploy_jobs.backup_id → backup
-    await pool().query(
-      `UPDATE deploy_jobs SET backup_id = $1 WHERE id = $2`,
-      [backup.id, result.jobId],
-    );
-    // 反向链接 worker_backups.deploy_job_id → deploy_job
-    await pool().query(
-      `UPDATE worker_backups SET deploy_job_id = $1 WHERE id = $2`,
-      [result.jobId, backup.id],
-    );
-    // 标记 backup 为 verified
-    await updateBackupStatus(pool, backup.id, "verified");
-  } else {
-    // 部署失败：标记 backup 为 failed
-    await updateBackupStatus(pool, backup.id, "failed");
+  if (backupId) {
+    if (result.success && result.jobId) {
+      // 链接 deploy_jobs.backup_id → backup
+      await pool().query(
+        `UPDATE deploy_jobs SET backup_id = $1 WHERE id = $2`,
+        [backupId, result.jobId],
+      );
+      // 反向链接 worker_backups.deploy_job_id → deploy_job
+      await pool().query(
+        `UPDATE worker_backups SET deploy_job_id = $1 WHERE id = $2`,
+        [result.jobId, backupId],
+      );
+      // 标记 backup 为 verified
+      await updateBackupStatus(pool, backupId, "verified");
+    } else {
+      // 部署失败：标记 backup 为 failed
+      await updateBackupStatus(pool, backupId, "failed");
+    }
   }
 
-  return { ...result, backupId: backup.id };
+  return backupId ? { ...result, backupId } : result;
 }
 
 export async function stopWorker(workerId: string, initiatedBy: string): Promise<DeployResult> {
@@ -392,7 +404,7 @@ export async function restartWorker(workerId: string, initiatedBy: string): Prom
   if (!stop.success) return stop;
   const w = await query<{ current_image_tag: string }>(
     `SELECT current_image_tag FROM workers WHERE id = $1`, [workerId]);
-  return upgradeWorker(workerId, w.rows[0].current_image_tag, initiatedBy);
+  return upgradeWorker(workerId, w.rows[0].current_image_tag, initiatedBy, { skipBackup: true });
 }
 
 // FIX #4: rollbackWorker type mismatch. The original brief queried
