@@ -86,26 +86,41 @@ export async function upsertGlobalTemplate(
   input: UpsertGlobalInput,
 ): Promise<void> {
   const id = "tmpl_global";
-  await pool().query(
-    `INSERT INTO config_templates (id, org_id, scope, content, version, updated_by, updated_at)
-     VALUES ($1, NULL, 'global', $2::jsonb, 1, $3, now())
-     ON CONFLICT (id) DO UPDATE
-       SET content = $2::jsonb,
-           version = config_templates.version + 1,
-           updated_by = $3,
-           updated_at = now()`,
-    [id, JSON.stringify(input.content), input.updatedBy],
-  );
-  // Record history (read version after upsert to capture the post-increment value)
-  const { rows } = await pool().query(
-    `SELECT version FROM config_templates WHERE id = $1`,
-    [id],
-  );
-  await pool().query(
-    `INSERT INTO config_template_history (template_id, org_id, scope, content, version, updated_by, updated_at)
-     VALUES ($1, NULL, 'global', $2::jsonb, $3, $4, now())`,
-    [id, JSON.stringify(input.content), rows[0].version, input.updatedBy],
-  );
+  // Wrap upsert + version-select + history-insert in a single transaction so
+  // the audit-trail row is written iff the upsert commits. Without this, a
+  // crash between the upsert and the history INSERT would leave a gap in
+  // config_template_history (defeating the table's purpose).
+  const client = await pool().connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(
+      `INSERT INTO config_templates (id, org_id, scope, content, version, updated_by, updated_at)
+       VALUES ($1, NULL, 'global', $2::jsonb, 1, $3, now())
+       ON CONFLICT (id) DO UPDATE
+         SET content = $2::jsonb,
+             version = config_templates.version + 1,
+             updated_by = $3,
+             updated_at = now()`,
+      [id, JSON.stringify(input.content), input.updatedBy],
+    );
+    // Read version after upsert to capture the post-increment value (same
+    // connection, so this sees the uncommitted write above).
+    const { rows } = await client.query(
+      `SELECT version FROM config_templates WHERE id = $1`,
+      [id],
+    );
+    await client.query(
+      `INSERT INTO config_template_history (template_id, org_id, scope, content, version, updated_by, updated_at)
+       VALUES ($1, NULL, 'global', $2::jsonb, $3, $4, now())`,
+      [id, JSON.stringify(input.content), rows[0].version, input.updatedBy],
+    );
+    await client.query("COMMIT");
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw e;
+  } finally {
+    client.release();
+  }
 }
 
 export interface UpsertOrgInput {
@@ -119,25 +134,38 @@ export async function upsertOrgTemplate(
   input: UpsertOrgInput,
 ): Promise<void> {
   const id = `tmpl_org_${input.orgId}`;
-  await pool().query(
-    `INSERT INTO config_templates (id, org_id, scope, content, version, updated_by, updated_at)
-     VALUES ($1, $2, 'org', $3::jsonb, 1, $4, now())
-     ON CONFLICT (id) DO UPDATE
-       SET content = $3::jsonb,
-           version = config_templates.version + 1,
-           updated_by = $4,
-           updated_at = now()`,
-    [id, input.orgId, JSON.stringify(input.content), input.updatedBy],
-  );
-  const { rows } = await pool().query(
-    `SELECT version FROM config_templates WHERE id = $1`,
-    [id],
-  );
-  await pool().query(
-    `INSERT INTO config_template_history (template_id, org_id, scope, content, version, updated_by, updated_at)
-     VALUES ($1, $2, 'org', $3::jsonb, $4, $5, now())`,
-    [id, input.orgId, JSON.stringify(input.content), rows[0].version, input.updatedBy],
-  );
+  // Same transactional guarantee as upsertGlobalTemplate: the upsert, version
+  // select, and history insert must be atomic to preserve audit-trail
+  // completeness (history.version must match the row's current version).
+  const client = await pool().connect();
+  try {
+    await client.query("BEGIN");
+    await client.query(
+      `INSERT INTO config_templates (id, org_id, scope, content, version, updated_by, updated_at)
+       VALUES ($1, $2, 'org', $3::jsonb, 1, $4, now())
+       ON CONFLICT (id) DO UPDATE
+         SET content = $3::jsonb,
+             version = config_templates.version + 1,
+             updated_by = $4,
+             updated_at = now()`,
+      [id, input.orgId, JSON.stringify(input.content), input.updatedBy],
+    );
+    const { rows } = await client.query(
+      `SELECT version FROM config_templates WHERE id = $1`,
+      [id],
+    );
+    await client.query(
+      `INSERT INTO config_template_history (template_id, org_id, scope, content, version, updated_by, updated_at)
+       VALUES ($1, $2, 'org', $3::jsonb, $4, $5, now())`,
+      [id, input.orgId, JSON.stringify(input.content), rows[0].version, input.updatedBy],
+    );
+    await client.query("COMMIT");
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw e;
+  } finally {
+    client.release();
+  }
 }
 
 export interface GetMergedInput {
