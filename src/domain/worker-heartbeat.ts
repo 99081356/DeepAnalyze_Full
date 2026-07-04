@@ -23,6 +23,7 @@ export interface HeartbeatPayload {
   uptime?: number;
   daVersion?: string;
   moduleHealth?: Record<string, unknown>;
+  currentTask?: string;
 }
 
 export type WorkerHealthStatus = "healthy" | "degraded" | "down";
@@ -47,8 +48,10 @@ export function computeStatus(
 
 /**
  * Record a heartbeat: insert history row + update workers current columns.
- * The 4 columns (last_heartbeat_at, last_heartbeat_ok, da_version, uptime_seconds)
- * already exist from migration 029; last_heartbeat is from migration 001 (backward compat).
+ * Health columns (last_heartbeat_at, last_heartbeat_ok, da_version, uptime_seconds)
+ * come from migration 029; last_heartbeat is from migration 001 (backward compat).
+ * Runtime state columns (status, active_sessions, active_tasks, resource_usage,
+ * current_task) come from migration 001 and must stay fresh for GET / and GET /:id.
  */
 export async function recordHeartbeat(
   pool: () => Pool,
@@ -72,13 +75,23 @@ export async function recordHeartbeat(
       last_heartbeat_ok = $2,
       da_version = $3,
       uptime_seconds = $4,
-      last_heartbeat = now()
+      last_heartbeat = now(),
+      status = $5,
+      active_sessions = $6,
+      active_tasks = $7,
+      resource_usage = $8,
+      current_task = $9
     WHERE id = $1`,
     [
       payload.workerId,
       status === "healthy",
       payload.daVersion ?? null,
       payload.uptime ?? 0,
+      payload.status ?? "online",
+      payload.activeSessions ?? 0,
+      payload.activeTasks ?? 0,
+      JSON.stringify(payload.resourceUsage ?? {}),
+      payload.currentTask ?? null,
     ],
   );
 }
@@ -142,7 +155,7 @@ export async function getOverview(pool: () => Pool): Promise<MonitoringOverview>
     FROM workers w
     LEFT JOIN users u ON u.id = w.assigned_user_id
     LEFT JOIN host_servers h ON h.id = w.host_id
-    WHERE w.status = 'approved'
+    WHERE w.status IN ('approved', 'online', 'offline')
   `);
   const now = Date.now();
   let online = 0,

@@ -201,6 +201,7 @@ export function createWorkerRoutes(): Hono {
         uptime: body.uptime,
         daVersion: body.daVersion,
         moduleHealth: body.moduleHealth,
+        currentTask: body.current_task,
       });
 
       // v2 SkillSync: compute diff between expected and cached skills

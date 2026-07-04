@@ -108,6 +108,35 @@ describe("recordHeartbeat + getHealthHistory", () => {
     );
     expect(rows[0].last_heartbeat_ok).toBe(false);
   });
+
+  // Important #1 regression: recordHeartbeat 必须更新 5 个运行时状态列
+  // (status/active_sessions/active_tasks/resource_usage/current_task)，
+  // 否则 GET / 与 GET /:id 等下游读取方会显示陈旧数据。
+  test("updates status, active_sessions, active_tasks, resource_usage, current_task", async () => {
+    await recordHeartbeat(getPool, {
+      workerId: TEST_WORKER_ID,
+      status: "online",
+      activeSessions: 3,
+      activeTasks: 1,
+      resourceUsage: { cpuPercent: 42 },
+      currentTask: "analyzing",
+      moduleHealth: { pg: { status: "healthy" } },
+    });
+    const { rows } = await getPool().query(
+      `SELECT status, active_sessions, active_tasks, resource_usage, current_task
+       FROM workers WHERE id = $1`,
+      [TEST_WORKER_ID],
+    );
+    expect(rows[0].status).toBe("online");
+    expect(rows[0].active_sessions).toBe(3);
+    expect(rows[0].active_tasks).toBe(1);
+    const ru =
+      typeof rows[0].resource_usage === "string"
+        ? JSON.parse(rows[0].resource_usage)
+        : rows[0].resource_usage;
+    expect(ru).toEqual({ cpuPercent: 42 });
+    expect(rows[0].current_task).toBe("analyzing");
+  });
 });
 
 // ─── getOverview (DB-backed) ──────────────────────────────────────────────
