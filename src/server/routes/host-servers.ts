@@ -1,6 +1,7 @@
 // deepanalyze-hub/src/server/routes/host-servers.ts
 import { Hono } from "hono";
 import { HostServerRepo, CreateHostServerInput } from "../../domain/host-server";
+import { getPortUsage } from "../../domain/port-allocation";
 import { getPool } from "../../store/pg";
 import { requirePermission } from "../middleware/require-permission";
 
@@ -53,8 +54,13 @@ export function createHostServerRoutes(): Hono {
   router.get("/:id/port-usage", async (c) => {
     const hs = await repo.getById(c.req.param("id"));
     if (!hs) return c.json({ error: "not found" }, 404);
-    // T03 会用 port-allocation 模块返回详细使用情况
-    return c.json({ host_server_id: hs.id, range: [hs.port_range_start, hs.port_range_end], allocated: [] });
+    const usage = await getPortUsage(() => getPool(), hs.id);
+    return c.json({
+      host_server_id: hs.id,
+      range: [hs.port_range_start, hs.port_range_end],
+      block_size: hs.port_block_size,
+      allocated: usage,
+    });
   });
 
   return router;
