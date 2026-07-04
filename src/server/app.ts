@@ -36,6 +36,10 @@ export async function createApp(): Promise<Hono> {
   const { createWorkerRoutes } = await import("./routes/workers.js");
   app.route("/api/v1/workers", createWorkerRoutes());
 
+  // Host servers (企业多租户：物理机管理)
+  const { createHostServerRoutes } = await import("./routes/host-servers.js");
+  app.route("/api/v1/host-servers", createHostServerRoutes());
+
   // Config management
   const { createConfigRoutes } = await import("./routes/config.js");
   app.route("/api/v1/config", createConfigRoutes());
