@@ -18,6 +18,7 @@ import { Models } from "./pages/Models.js";
 import { HostServersPage } from "./pages/HostServersPage.js";
 import { HostServerDetail } from "./pages/HostServerDetail.js";
 import { HostServerForm } from "./pages/HostServerForm.js";
+import { ConfigTemplates } from "./pages/ConfigTemplates.js";
 import { ConfirmDialog } from "./components/ui/ConfirmDialog.js";
 import { ToastContainer } from "./components/ui/Toast.js";
 
@@ -36,6 +37,7 @@ const NAV_ITEMS = [
   { to: "/workers", label: "Worker 审批", icon: "🖥️" },
   { to: "/host-servers", label: "物理机", icon: "🏭" },
   { to: "/models", label: "模型仓库", icon: "🧠" },
+  { to: "/config-templates", label: "配置模板", icon: "⚙️" },
   { to: "/security", label: "安全网关", icon: "🛡️" },
 ] as const;
 
@@ -555,6 +557,7 @@ export default function App() {
       <Route path="/host-servers/:id" element={<ProtectedRoute user={user} setUser={setUser}><HostServerDetail /></ProtectedRoute>} />
       <Route path="/host-servers/:id/edit" element={<ProtectedRoute user={user} setUser={setUser}><HostServerForm /></ProtectedRoute>} />
       <Route path="/skills" element={<ProtectedRoute user={user} setUser={setUser}><Skills user={user!} /></ProtectedRoute>} />
+      <Route path="/config-templates" element={<ProtectedRoute user={user} setUser={setUser}><ConfigTemplates user={user!} /></ProtectedRoute>} />
       <Route path="/worker-skills" element={<ProtectedRoute user={user} setUser={setUser}><WorkerSkills /></ProtectedRoute>} />
       <Route path="/skills/:id" element={<ProtectedRoute user={user} setUser={setUser}><SkillDetail user={user!} /></ProtectedRoute>} />
       <Route path="/submissions" element={<ProtectedRoute user={user} setUser={setUser}><SkillSubmissions /></ProtectedRoute>} />

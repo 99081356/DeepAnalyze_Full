@@ -480,6 +480,49 @@ export const api = {
   // ─── Phase 2 T07: Bundle manifests (for ImageTagSelect) ────────────────
   getBundleManifests: () =>
     request<{ manifests: BundleManifestInfo[] }>("GET", "/bundle/manifests"),
+
+  // ─── Phase 3 T14: Config templates (config-templates editor UI) ────────
+  configTemplates: {
+    /** GET /config-templates/global — super_admin only write, any reader with permission */
+    getGlobal: () =>
+      request<ConfigTemplate>("GET", "/config-templates/global"),
+
+    /** PUT /config-templates/global — super_admin only (backend 403s org_admin) */
+    putGlobal: (content: unknown) =>
+      request<{ ok: boolean }>("PUT", "/config-templates/global", { content }),
+
+    /** GET /config-templates/orgs/:orgId */
+    getOrg: (orgId: string) =>
+      request<ConfigTemplate>("GET", `/config-templates/orgs/${orgId}`),
+
+    /** PUT /config-templates/orgs/:orgId — super_admin OR same-org user */
+    putOrg: (orgId: string, content: unknown) =>
+      request<{ ok: boolean }>("PUT", `/config-templates/orgs/${orgId}`, {
+        content,
+      }),
+
+    /** GET /config-templates/merged?workerId=X&orgId=Y */
+    getMerged: (params?: { workerId?: string; orgId?: string }) => {
+      const qs = new URLSearchParams();
+      if (params?.workerId) qs.set("workerId", params.workerId);
+      if (params?.orgId) qs.set("orgId", params.orgId);
+      const suffix = qs.toString() ? `?${qs}` : "";
+      return request<{ content: unknown }>(
+        "GET",
+        `/config-templates/merged${suffix}`,
+      );
+    },
+
+    /** GET /config-templates/history?scope=global|org&orgId=X */
+    getHistory: (params: { scope: "global" | "org"; orgId?: string }) => {
+      const qs = new URLSearchParams({ scope: params.scope });
+      if (params.orgId) qs.set("orgId", params.orgId);
+      return request<{ items: ConfigTemplateHistoryEntry[] }>(
+        "GET",
+        `/config-templates/history?${qs}`,
+      );
+    },
+  },
 };
 
 export interface ModelArtifact {
@@ -685,4 +728,19 @@ export interface BundleManifestInfo {
   image_name: string;
   uploaded_at: string;
   created_at: string;
+}
+
+// ─── Phase 3 T14: Config templates (config-templates editor UI) ─────────────
+
+export interface ConfigTemplate {
+  content: unknown | null;
+  version: number | null;
+  updated_at: string | null;
+}
+
+export interface ConfigTemplateHistoryEntry {
+  version: number;
+  content: unknown;
+  updated_at: string;
+  updated_by: string;
 }
