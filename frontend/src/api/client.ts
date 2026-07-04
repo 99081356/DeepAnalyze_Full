@@ -523,6 +523,20 @@ export const api = {
       );
     },
   },
+
+  // ─── Phase 5 T18: Worker monitoring (overview + per-worker history) ──────
+  monitoring: {
+    /** GET /monitoring/overview — super_admin only */
+    overview: () =>
+      request<MonitoringOverview>("GET", "/monitoring/overview"),
+
+    /** GET /monitoring/workers/:id/history?hours=N */
+    history: (workerId: string, hours = 24) =>
+      request<{ items: HealthHistoryEntry[] }>(
+        "GET",
+        `/monitoring/workers/${encodeURIComponent(workerId)}/history?hours=${hours}`,
+      ),
+  },
 };
 
 export interface ModelArtifact {
@@ -743,4 +757,34 @@ export interface ConfigTemplateHistoryEntry {
   content: unknown;
   updated_at: string;
   updated_by: string;
+}
+
+// ─── Phase 5 T18: Worker monitoring (overview + per-worker history) ─────────
+
+export interface MonitoringOverview {
+  online: number;
+  offline: number;
+  degraded: number;
+  unknown: number;
+  workers: Array<{
+    id: string;
+    hostname: string;
+    last_heartbeat_at: string | null;
+    last_heartbeat_ok: boolean | null;
+    da_version: string | null;
+    assigned_user_id: string | null;
+    user_name: string | null;
+    ssh_target_host: string | null;
+    health_status: "online" | "offline" | "degraded" | "unknown";
+  }>;
+}
+
+export interface HealthHistoryEntry {
+  id: number;
+  worker_id: string;
+  recorded_at: string;
+  status: string;
+  module_health: unknown;
+  resource_usage: unknown;
+  da_version: string | null;
 }

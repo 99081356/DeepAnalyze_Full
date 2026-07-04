@@ -24,6 +24,8 @@ import { jwtAuth } from "../middleware/jwt-auth.js";
 import { requirePermission } from "../middleware/require-permission.js";
 import { generateInstructions, recordSyncAck } from "../../domain/skill-sync-service.js";
 import { createJoinToken, listJoinTokens, consumeJoinToken } from "../../domain/join-token.js";
+// T18: heartbeat domain — records audit history + updates the 4 worker columns
+import { recordHeartbeat } from "../../domain/worker-heartbeat.js";
 import type {
   WorkerRegisterRequest,
   WorkerRegisterResponse,
@@ -178,28 +180,28 @@ export function createWorkerRoutes(): Hono {
       if (!workerId) {
         return c.json({ error: "Worker not authenticated" }, 401);
       }
-      const body = await c.req.json<HeartbeatRequest & { cached_skills?: CachedSkill[]; policy_version?: number; current_task?: string }>();
+      const body = await c.req.json<HeartbeatRequest & {
+        cached_skills?: CachedSkill[];
+        policy_version?: number;
+        current_task?: string;
+        // T18: 模块健康快照 + DA 版本（DA HubClient.heartbeat 会带上这两个字段）
+        moduleHealth?: Record<string, unknown>;
+        daVersion?: string;
+      }>();
 
-      const dbStatus = "online";
-
-      await query(
-        `UPDATE workers SET
-          status = $2,
-          last_heartbeat = now(),
-          active_sessions = $3,
-          active_tasks = $4,
-          resource_usage = $5,
-          current_task = $6
-        WHERE id = $1`,
-        [
-          workerId,
-          dbStatus,
-          body.activeSessions ?? 0,
-          body.activeTasks ?? 0,
-          JSON.stringify(body.resourceUsage ?? {}),
-          body.current_task ?? null,
-        ],
-      );
+      // ── T18: 委托 domain 处理持久化（写入历史审计表 + 更新 workers 4 列） ──
+      // 这取代了原先直接在这里做的 UPDATE workers 语句。
+      // 注意：recordHeartbeat 同时更新 last_heartbeat（migration 001 列）以保持向后兼容。
+      await recordHeartbeat(getPool, {
+        workerId,
+        status: body.status,
+        activeSessions: body.activeSessions,
+        activeTasks: body.activeTasks,
+        resourceUsage: body.resourceUsage,
+        uptime: body.uptime,
+        daVersion: body.daVersion,
+        moduleHealth: body.moduleHealth,
+      });
 
       // v2 SkillSync: compute diff between expected and cached skills
       let instructions: SkillSyncInstruction[] = [];

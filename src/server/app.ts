@@ -110,6 +110,10 @@ export async function createApp(): Promise<Hono> {
   const { createConfigTemplateRoutes } = await import("./routes/config-templates.js");
   app.route("/api/v1/config-templates", createConfigTemplateRoutes());
 
+  // Monitoring (T18: worker health overview + per-worker history)
+  const { createMonitoringRoutes } = await import("./routes/monitoring.js");
+  app.route("/api/v1/monitoring", createMonitoringRoutes());
+
   // ─── Static frontend (admin panel) ───────────────────────────────────
   // Serves built React app from frontend/dist/. Falls back to index.html
   // for client-side routing (SPA).
