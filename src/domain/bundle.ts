@@ -25,6 +25,8 @@ export interface BundleManifestRow {
   file_path: string | null;
   file_size: number | null;
   checksum_sha256: string | null;
+  image_name: string;          // added by T05 migration 030
+  uploaded_at: Date;           // added by T05 migration 030
   created_at: Date;
 }
 
@@ -33,6 +35,17 @@ export async function getLatestBundleManifest(): Promise<BundleManifestRow | nul
     `SELECT * FROM bundle_manifests ORDER BY created_at DESC LIMIT 1`,
   );
   return result.rows.length > 0 ? result.rows[0] : null;
+}
+
+export async function listBundleManifests(): Promise<BundleManifestRow[]> {
+  const result = await query<BundleManifestRow>(
+    `SELECT id, version, da_image_tag, hub_image_tag, platform, models, skills,
+            file_path, file_size, checksum_sha256, image_name, uploaded_at, created_at
+     FROM bundle_manifests
+     WHERE file_path IS NOT NULL
+     ORDER BY uploaded_at DESC NULLS LAST`,
+  );
+  return result.rows;
 }
 
 export function resolveImageTar(imageName: string): {

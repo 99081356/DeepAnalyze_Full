@@ -191,16 +191,27 @@ export const api = {
      *  SSH connectivity and Docker availability without persisting the job. */
     create: async (params: {
       organization_id: string;
-      ssh_host: string;
+      host_server_id?: string;
+      ssh_host?: string;
       ssh_port?: number;
-      ssh_user: string;
-      ssh_private_key: string;
+      ssh_user?: string;
+      ssh_private_key?: string;
       image_tag: string;
       source?: "hub_stream" | "docker_pull";
       assigned_user_id?: string;
       skill_package_ids?: string[];
       dry_run?: boolean;
-    }): Promise<{ job_id: string; status: string }> => {
+      cpu_limit?: number;
+      mem_limit_mb?: number;
+      gpu_device?: number;
+    }): Promise<{
+      job_id: string;
+      status: string;
+      worker_id?: string;
+      join_token?: string;
+      host_server_id?: string | null;
+      host_port?: number | null;
+    }> => {
       return request("POST", "/workers/deploy", params);
     },
 
@@ -457,6 +468,10 @@ export const api = {
     request<void>("DELETE", `/host-servers/${id}`),
   getHostServerPortUsage: (id: string) =>
     request<PortUsageResponse>("GET", `/host-servers/${id}/port-usage`),
+
+  // ─── Phase 2 T07: Bundle manifests (for ImageTagSelect) ────────────────
+  getBundleManifests: () =>
+    request<{ manifests: BundleManifestInfo[] }>("GET", "/bundle/manifests"),
 };
 
 export interface ModelArtifact {
@@ -647,4 +662,19 @@ export interface PortUsageResponse {
   range: [number, number];
   block_size: number;
   allocated: PortUsageEntry[];
+}
+
+// ─── Phase 2 T07: Bundle manifests (for ImageTagSelect) ───────────────────
+
+export interface BundleManifestInfo {
+  id: string;
+  version: string;
+  da_image_tag: string;
+  hub_image_tag: string;
+  platform: string;
+  file_size: number | null;
+  checksum_sha256: string | null;
+  image_name: string;
+  uploaded_at: string;
+  created_at: string;
 }

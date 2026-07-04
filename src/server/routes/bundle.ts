@@ -14,6 +14,7 @@ import { Hono } from "hono";
 import {
   getLatestBundleManifest,
   listAvailableImages,
+  listBundleManifests,
 } from "../../domain/bundle.js";
 import { query as dbQuery } from "../../store/pg.js";
 
@@ -30,6 +31,12 @@ export function createBundleRoutes(): Hono {
   // GET /images — list of available image tars (without .tar extension)
   app.get("/images", (c) => {
     return c.json({ images: listAvailableImages() });
+  });
+
+  // GET /manifests — list all bundle manifests (for ImageTagSelect dropdown)
+  app.get("/manifests", async (c) => {
+    const manifests = await listBundleManifests();
+    return c.json({ manifests });
   });
 
   // GET /images/:version/download — 流式下载 tar.gz（公开，见 T05 Correction 3）

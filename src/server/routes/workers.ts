@@ -16,7 +16,9 @@ import * as crypto from "node:crypto";
 import { query } from "../../store/pg.js";
 import { HUB_CONFIG } from "../../core/config.js";
 import { encryptString } from "../../core/crypto.js";
-import { deployWorker, upgradeWorker, stopWorker, restartWorker, rollbackWorker } from "../../domain/worker-deployment.js";
+import { deployWorker, upgradeWorker, stopWorker, restartWorker, rollbackWorker, resolveHostServerSsh } from "../../domain/worker-deployment.js";
+import { allocatePortBlock } from "../../domain/port-allocation.js";
+import { getPool } from "../../store/pg.js";
 import { workerAuth } from "../middleware/worker-auth.js";
 import { jwtAuth } from "../middleware/jwt-auth.js";
 import { requirePermission } from "../middleware/require-permission.js";
@@ -336,25 +338,70 @@ export function createWorkerRoutes(): Hono {
 
   app.post("/deploy", jwtAuth, requirePermission("worker:deploy"), async (c) => {
     const body = await c.req.json();
-    const required = ["organization_id", "ssh_host", "ssh_user", "ssh_private_key", "image_tag"];
-    for (const f of required) {
-      if (!body[f]) return c.json({ error: `${f} required` }, 400);
+
+    // ── 1. Resolve SSH details ────────────────────────────────────────────
+    let sshHost: string;
+    let sshPort: number;
+    let sshUser: string;
+    let sshKeyPem: string;
+    let hostServerId: string | null = null;
+    let hostPort: number | null = null;
+
+    if (body.host_server_id) {
+      // New path: resolve via host_servers table
+      const resolved = await resolveHostServerSsh(body.host_server_id);
+      if (!resolved) {
+        return c.json({ error: "host_server not found, inactive, or missing SSH key" }, 400);
+      }
+      sshHost = resolved.sshHost;
+      sshPort = resolved.sshPort;
+      sshUser = resolved.sshUser;
+      sshKeyPem = resolved.sshKeyPem;
+      hostServerId = resolved.hostServerId;
+
+      // Allocate port block (T03 helper)
+      const pool = getPool();
+      const allocated = await allocatePortBlock(() => pool, hostServerId);
+      if (allocated === null) {
+        return c.json({ error: "port range exhausted on this host_server" }, 409);
+      }
+      hostPort = allocated;
+    } else {
+      // Legacy path: raw SSH fields in body (must all be present)
+      const required = ["organization_id", "ssh_host", "ssh_user", "ssh_private_key", "image_tag"];
+      for (const f of required) {
+        if (!body[f]) return c.json({ error: `${f} required (or provide host_server_id)` }, 400);
+      }
+      sshHost = body.ssh_host;
+      sshPort = body.ssh_port || 22;
+      sshUser = body.ssh_user;
+      sshKeyPem = body.ssh_private_key;
     }
 
-    // Dry-run: only validate parameters, no SSH, no side effects
+    // organization_id is always required
+    if (!body.organization_id) {
+      return c.json({ error: "organization_id required" }, 400);
+    }
+    if (!body.image_tag) {
+      return c.json({ error: "image_tag required" }, 400);
+    }
+
+    // ── 2. Dry-run preview ─────────────────────────────────────────────────
     if (body.dry_run) {
       return c.json({
         job_id: `dpl_preview_${Date.now()}`,
         status: "preview",
         summary: {
-          target: `${body.ssh_user}@${body.ssh_host}:${body.ssh_port || 22}`,
+          target: `${sshUser}@${sshHost}:${sshPort}`,
+          host_server_id: hostServerId,
+          host_port: hostPort,
           image_tag: body.image_tag,
           source: body.source || "hub_stream",
         },
       });
     }
 
-    // Real deploy: create join_token, pre-create worker record, then async SSH
+    // ── 3. Create join token ──────────────────────────────────────────────
     const joinToken = await createJoinToken({
       organizationId: body.organization_id,
       assignedUserId: body.assigned_user_id,
@@ -362,31 +409,37 @@ export function createWorkerRoutes(): Hono {
       expiresInHours: 24,
     });
 
-    // Pre-create worker record (status=pending; deploy success flips to approved)
+    // ── 4. Pre-create worker record (extend INSERT with host_id/host_port) ─
     const workerId = `wkr_${crypto.randomUUID().replace(/-/g, "")}`;
     await query(
       `INSERT INTO workers (id, name, hostname, endpoint, version, capabilities,
                             worker_token, status, protocol_version, applied_at,
                             organization_id, user_id, ssh_target_host, ssh_target_port,
-                            ssh_user, ssh_key_encrypted, current_image_tag)
+                            ssh_user, ssh_key_encrypted, current_image_tag,
+                            host_id, host_port, gpu_device)
        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', 2, NOW(),
-               $8, $9, $10, $11, $12, $13, $14)`,
+               $8, $9, $10, $11, $12, $13, $14,
+               $15, $16, $17)`,
       [workerId, body.container_name || `da-${body.assigned_user_id || "default"}`,
-       body.ssh_host, `http://${body.ssh_host}:21000`, body.image_tag, JSON.stringify({}),
+       sshHost, `http://${sshHost}:21000`, body.image_tag, JSON.stringify({}),
        `wkt_${crypto.randomUUID().replace(/-/g, "")}`,
        body.organization_id, body.assigned_user_id || null,
-       body.ssh_host, body.ssh_port || 22, body.ssh_user,
-       encryptString(body.ssh_private_key), body.image_tag],
+       sshHost, sshPort, sshUser,
+       encryptString(sshKeyPem), body.image_tag,
+       hostServerId,                              // host_id (nullable)
+       hostPort,                                  // host_port (nullable)
+       body.gpu_device ?? null,                   // gpu_device (nullable)
+      ],
     );
 
-    // Async trigger deploy (non-blocking — fire and forget)
+    // ── 5. Async trigger deployWorker ──────────────────────────────────────
     const hubBaseUrl = process.env.HUB_EXTERNAL_URL || `http://localhost:${HUB_CONFIG.port}`;
     deployWorker({
       workerId,
-      sshHost: body.ssh_host,
-      sshPort: body.ssh_port || 22,
-      sshUser: body.ssh_user,
-      sshPrivateKeyPem: body.ssh_private_key,
+      sshHost,
+      sshPort,
+      sshUser,
+      sshPrivateKeyPem: sshKeyPem,
       imageTag: body.image_tag,
       source: body.source || "hub_stream",
       hubBaseUrl,
@@ -397,17 +450,21 @@ export function createWorkerRoutes(): Hono {
         DA_HUB_URL: hubBaseUrl,
         DA_JOIN_TOKEN: joinToken.token,
         DA_ORG_ID: body.organization_id,
+        ...(body.cpu_limit != null ? { DA_CPU_LIMIT: String(body.cpu_limit) } : {}),
+        ...(body.mem_limit_mb != null ? { DA_MEM_LIMIT_MB: String(body.mem_limit_mb) } : {}),
         ...(body.env_vars || {}),
       },
       volumeMounts: body.volume_mounts || [`da-data-${workerId.slice(0, 12)}:/app/data`],
       initiatedBy: c.get("userId"),
-    }).catch(err => console.error("[deploy] async error:", err));
+    }).catch((err) => console.error("[deploy] async error:", err));
 
     return c.json({
       job_id: workerId,
       worker_id: workerId,
       status: "deploying",
       join_token: joinToken.token,
+      host_server_id: hostServerId,
+      host_port: hostPort,
     }, 202);
   });
 
