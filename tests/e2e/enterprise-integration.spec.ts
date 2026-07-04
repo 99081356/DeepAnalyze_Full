@@ -76,7 +76,9 @@ test.describe("T21: Hub enterprise integration", () => {
     });
     expect(res.ok()).toBe(true);
     const body = await res.json();
-    expect(Array.isArray(body)).toBe(true);
+    // Actual API returns { workers: [...] } (verified in src/server/routes/workers.ts:292)
+    const workers = body.workers ?? body;
+    expect(Array.isArray(workers)).toBe(true);
   });
 
   test("worker backups endpoint returns 200 for existing worker", async ({ request }) => {
@@ -85,8 +87,9 @@ test.describe("T21: Hub enterprise integration", () => {
     const workersRes = await request.get(`${API_BASE}/workers`, {
       headers: { Authorization: `Bearer ${adminToken}` },
     });
-    const workers = await workersRes.json();
-    test.skip(workers.length === 0, "no workers in DB to test backups against");
+    const workersBody = await workersRes.json();
+    const workers = workersBody.workers ?? workersBody;
+    test.skip(!Array.isArray(workers) || workers.length === 0, "no workers in DB to test backups against");
     const workerId = workers[0].id;
 
     const backupsRes = await request.get(`${API_BASE}/workers/${workerId}/backups`, {
