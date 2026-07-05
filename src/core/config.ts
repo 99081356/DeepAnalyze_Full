@@ -7,7 +7,7 @@ export const HUB_CONFIG = {
   appName: "DeepAnalyze Hub",
 
   /** Semantic version */
-  version: "0.8.0",
+  version: "0.7.7",
 
   /** HTTP server port */
   port: parseInt(process.env.PORT || "22000", 10),

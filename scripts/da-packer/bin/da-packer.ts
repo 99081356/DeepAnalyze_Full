@@ -14,7 +14,7 @@ const program = new Command();
 program
   .name("da-packer")
   .description("Build offline deployment bundles for DeepAnalyze")
-  .version("0.7.6");
+  .version("0.7.7");
 
 program
   .command("build")
