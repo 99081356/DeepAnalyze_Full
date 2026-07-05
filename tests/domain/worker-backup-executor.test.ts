@@ -166,6 +166,51 @@ describe("executeWorkerBackup", () => {
     }
   });
 
+  test("workerId 含非法字符 → 立即抛错（与 ensurePgContainer 防御一致，M-3）", async () => {
+    const ssh = new MockSshExecutor();
+    // 不注册任何 mock — 输入校验应在任何 SSH 命令前抛错
+    await expect(
+      executeWorkerBackup(
+        ssh,
+        // 注入 shell 元字符的恶意 workerId
+        makeOpts("bad;worker", "bkp_x"),
+        {
+          pgContainerExists: async () => true,
+          loadPgCredentials: async () => ({
+            database: "deepanalyze", username: "da", password: "x",
+          }),
+        },
+      ),
+    ).rejects.toThrow(/invalid workerId/i);
+
+    // 同时验证带其他非法字符的 case
+    await expect(
+      executeWorkerBackup(
+        ssh,
+        makeOpts("worker`whoami", "bkp_y"),
+        {
+          pgContainerExists: async () => true,
+          loadPgCredentials: async () => ({
+            database: "deepanalyze", username: "da", password: "x",
+          }),
+        },
+      ),
+    ).rejects.toThrow(/invalid workerId/i);
+  });
+
+  test("creds.password 含单引号 → 抛错（与 ensurePgContainer 防御一致，M-2）", async () => {
+    const ssh = new MockSshExecutor();
+    // A-mode 不走 loadCreds，所以必须先确保是 B-mode 才能触发 password check
+    await expect(
+      executeWorkerBackup(ssh, makeOpts("w-quote", "bkp_z"), {
+        pgContainerExists: async () => true,
+        loadPgCredentials: async () => ({
+          database: "deepanalyze", username: "da", password: "has'quote",
+        }),
+      }),
+    ).rejects.toThrow(/single quote|shell safety/i);
+  });
+
   test("pgVersion 提取失败（非零 exit）→ pgVersion=null 但备份仍成功", async () => {
     const ssh = new MockSshExecutor();
     ssh.when(/pg_dump/).resolve({ stdout: "", stderr: "", exitCode: 0 });

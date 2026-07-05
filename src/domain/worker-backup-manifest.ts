@@ -12,7 +12,7 @@
 
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { stat, readdir, readFile, writeFile } from "node:fs/promises";
+import { stat, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 export interface BackupManifest {
@@ -30,7 +30,6 @@ export interface BackupManifest {
 }
 
 const FILE_KEYS = ["pg.dump", "app-data.tar.gz"] as const;
-type FileKey = (typeof FILE_KEYS)[number];
 
 async function sha256OfFile(path: string): Promise<string> {
   return new Promise((resolve, reject) => {

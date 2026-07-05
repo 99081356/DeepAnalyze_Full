@@ -3,7 +3,7 @@ import { mkdtemp, rm, writeFile, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
-  buildManifest, writeManifest, readManifest, type BackupManifest,
+  buildManifest, writeManifest, readManifest,
 } from "../../src/domain/worker-backup-manifest";
 
 let tempDir: string;

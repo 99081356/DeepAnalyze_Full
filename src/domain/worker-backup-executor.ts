@@ -72,6 +72,12 @@ export async function executeWorkerBackup(
   opts: BackupExecutorOpts,
   deps: BackupExecutorDeps = {},
 ): Promise<BackupExecutorResult> {
+  // ─── 0a. 输入校验（与 ensurePgContainer:38 防御一致，M-3）─────────────
+  // workerId 直接拼到容器名 / 路径 / docker 命令中，必须严格白名单
+  if (!/^[a-zA-Z0-9_-]+$/.test(opts.workerId)) {
+    throw new Error(`invalid workerId: ${opts.workerId}`);
+  }
+
   const pgExists = deps.pgContainerExists ?? realPgContainerExists;
   const loadCreds = deps.loadPgCredentials ?? realLoadPgCredentials;
   const build = deps.buildManifest ?? realBuildManifest;
@@ -94,6 +100,14 @@ export async function executeWorkerBackup(
   }
 
   const creds = await loadCreds(opts.workerId);
+
+  // ─── 0b. password 校验（与 ensurePgContainer:48 防御一致，M-2）─────────
+  // 即使用 -e PGPASSWORD= 包装，单引号仍可能在某些 shell 解析路径下泄漏
+  // （Hub 生成的 base64 密码不含 '，此 check 是 defense-in-depth）
+  if (creds.password.includes("'")) {
+    throw new Error("password contains single quote — refused for shell safety");
+  }
+
   const pgContainer = pgContainerName(opts.workerId);
   const remoteDump = `/tmp/${opts.backupId}.dump`;
   const remoteTar = `/tmp/${opts.backupId}-data.tar.gz`;
