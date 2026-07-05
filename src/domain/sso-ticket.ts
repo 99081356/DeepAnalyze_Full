@@ -50,7 +50,7 @@ const TICKET_TTL_SECONDS = 10; // 短命 + 单次使用
 
 /**
  * 签发 SSO ticket。
- * - 校验 worker 属于该 user + status='approved'
+ * - 校验 worker 属于该 user + status IN ('approved','online','offline')
  * - 校验 worker 有 host_port（T07 deploy 后保证）
  * - 写入 sso_tickets 表（consumed_at = NULL）
  * - 返回 redirect_url：DA 容器的 /api/auth/sso/callback?hub_ticket=...
@@ -68,11 +68,11 @@ export async function createTicket(
     host_id: string | null;
   }>(
     `SELECT host_port, host_id FROM workers
-     WHERE id = $1 AND assigned_user_id = $2 AND status = 'approved'`,
+     WHERE id = $1 AND assigned_user_id = $2 AND status IN ('approved', 'online', 'offline')`,
     [input.workerId, input.userId],
   );
   if (wRows.length === 0) {
-    throw new Error("worker not assigned to user or not approved");
+    throw new Error("worker not assigned to user or not in active lifecycle (approved/online/offline)");
   }
   const worker = wRows[0];
   if (!worker.host_port) {
@@ -114,7 +114,7 @@ export async function createTicket(
 
 /**
  * 兑换 SSO ticket 为 Hub access_token。
- * - 用 daWorkerToken 找 worker（status='approved'）
+ * - 用 daWorkerToken 找 worker（status IN ('approved','online','offline')）
  * - 用 ticket 找 sso_tickets 行（FOR UPDATE 防并发兑换）
  * - 校验未消费、未过期、worker 匹配
  * - 标记 consumed_at = now()
@@ -129,7 +129,7 @@ export async function exchangeTicket(
     // 1. 用 da_worker_token 找对应 worker
     const { rows: wRows } = await client.query<{ id: string; assigned_user_id: string }>(
       `SELECT id, assigned_user_id FROM workers
-       WHERE worker_token = $1 AND status = 'approved'`,
+       WHERE worker_token = $1 AND status IN ('approved', 'online', 'offline')`,
       [input.daWorkerToken],
     );
     if (wRows.length === 0) throw new Error("invalid da_worker_token");

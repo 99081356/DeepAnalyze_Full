@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { HostServerRepo, CreateHostServerInput } from "../../domain/host-server";
 import { getPortUsage } from "../../domain/port-allocation";
 import { getPool } from "../../store/pg";
+import { jwtAuth } from "../middleware/jwt-auth.js";
 import { requirePermission } from "../middleware/require-permission";
 
 export function createHostServerRoutes(): Hono {
@@ -10,7 +11,9 @@ export function createHostServerRoutes(): Hono {
   const repo = new HostServerRepo(() => getPool());
 
   // 所有 host-server 操作都要 super_admin（或显式 host_server:manage 权限）
-  router.use("*", requirePermission("host_server:manage"));
+  // 必须先经过 jwtAuth 设置 c.get("isSuperAdmin") / c.get("userPermissions")，
+  // 否则 requirePermission 内部 matchPermission 会因 permissions=undefined 抛 TypeError
+  router.use("*", jwtAuth, requirePermission("host_server:manage"));
 
   router.post("/", async (c) => {
     const body = await c.req.json<CreateHostServerInput>();

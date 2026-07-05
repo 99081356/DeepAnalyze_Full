@@ -126,7 +126,7 @@ export function createAuthRoutes() {
     // Look up the user's assigned DA worker (if any) — for "Open my DA" button
     const workerResult = await getPool().query(
       `SELECT id, da_url FROM workers
-       WHERE assigned_user_id = $1 AND status = 'approved'
+       WHERE assigned_user_id = $1 AND status IN ('approved', 'online', 'offline')
        ORDER BY registered_at DESC LIMIT 1`,
       [userId],
     );
