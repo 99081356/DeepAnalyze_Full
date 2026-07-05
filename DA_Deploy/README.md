@@ -165,6 +165,7 @@ docker compose -f docker-compose.prod.yml up -d   # 默认挂 docker.sock，hub 
 | `HUB_DOCKER_REGISTRY` | — | 空 | 自建 registry 地址 |
 | `HUB_DA_IMAGE` | — | `deepanalyze/da:latest` | local 模式 worker 应用镜像（需先 docker load）|
 | `HUB_DA_PG_IMAGE` | — | `pgvector/pgvector:pg16` | local 模式 worker 的 PG 镜像（含 pgvector）|
+| `HUB_DA_HOST` | — | `localhost` | worker 容器对外可达的宿主机地址（跨容器/跨机访问用，必须真实 IP）|
 
 完整字段见 [`.env.production.example`](./.env.production.example)。`generate-secrets.sh` 一键生成所有「必填」密钥。
 

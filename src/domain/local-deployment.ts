@@ -14,6 +14,9 @@ import { execSync, exec } from "node:child_process";
 
 const DA_IMAGE = process.env.HUB_DA_IMAGE ?? "deepanalyze/da:latest";
 const PG_IMAGE = process.env.HUB_DA_PG_IMAGE ?? "pgvector/pgvector:pg16";
+// Worker 容器对外可达的宿主机地址（用于跨容器/跨机访问 worker，如 nanobot SSO 回跳）。
+// 留空则 fallback 到 localhost（仅适合浏览器同机场景）。
+const DA_HOST = process.env.HUB_DA_HOST ?? "localhost";
 const PORT_RANGE_START = 21000;
 const PORT_RANGE_END = 21099;
 
@@ -216,7 +219,7 @@ export async function deployLocalWorker(opts: LocalDeployOpts): Promise<LocalDep
     pgContainerName: pgName,
     networkName: netName,
     port,
-    daUrl: `http://localhost:${port}`,
+    daUrl: `http://${DA_HOST}:${port}`,
   };
 }
 

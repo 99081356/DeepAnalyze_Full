@@ -91,6 +91,10 @@ services:
       # 必须已 docker load 到本机（默认 deepanalyze/da:latest + pgvector/pgvector:pg16）
       HUB_DA_IMAGE: ${HUB_DA_IMAGE:-deepanalyze/da:latest}
       HUB_DA_PG_IMAGE: ${HUB_DA_PG_IMAGE:-pgvector/pgvector:pg16}
+      # Worker 容器对外可达的宿主机地址（写 workers.da_url 用）。
+      # 跨容器/跨机访问 worker 必须用真实 IP（如 192.168.1.6），不能用 localhost。
+      # 留空 fallback localhost（仅浏览器同机场景）。
+      HUB_DA_HOST: ${HUB_DA_HOST:-localhost}
       # ── 存储 / 备份 ────────────────────────────────────────
       HUB_MODEL_REPO_DIR: /app/data/model-repo
       HUB_MODEL_MAX_SIZE: ${HUB_MODEL_MAX_SIZE:-5368709120}
