@@ -7,7 +7,7 @@ export const HUB_CONFIG = {
   appName: "DeepAnalyze Hub",
 
   /** Semantic version */
-  version: "0.7.6",
+  version: "0.7.7",
 
   /** HTTP server port */
   port: parseInt(process.env.PORT || "22000", 10),
@@ -64,6 +64,11 @@ export const HUB_CONFIG = {
   bundle: {
     imagesDir: process.env.HUB_BUNDLE_IMAGES_DIR || "./data/bundle/images",
     bundlesDir: process.env.HUB_BUNDLE_DIR || "./data/bundle",
+  },
+
+  /** Docker registry for worker-side images (da-postgres etc.) */
+  docker: {
+    registry: process.env.HUB_DOCKER_REGISTRY ?? "",
   },
 } as const;
 

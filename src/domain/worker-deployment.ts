@@ -16,6 +16,11 @@ import {
   updateBackupStatus,
   getBackup,
 } from "./worker-backup.js";
+import { ensureWorkerNetwork } from "./worker-network.js";
+import { ensurePgContainer, pgContainerName } from "./worker-pg-container.js";
+import { ensurePgCredentials } from "./worker-pg-credentials.js";
+import { connectRealSsh } from "./ssh-executor.js";
+import type { SshExecutor } from "./ssh-executor.js";
 
 // Re-export SshExecutor abstraction (T2). New code should use connectRealSsh +
 // RealSshExecutor (or MockSshExecutor in tests) instead of the legacy
@@ -571,4 +576,168 @@ export async function resolveHostServerSsh(
     portRangeEnd: hs.port_range_end,
     portBlockSize: hs.port_block_size,
   };
+}
+
+// =============================================================================
+// deployWorkerStack — Spec 2.1 B 模式编排入口 (T6)
+// =============================================================================
+// 高层 orchestrator: 建网络 → 建 PG 凭据/容器 → 调底层 deployWorker(含 PG env)
+//
+// 与 deployWorker 的关系:
+//   - deployWorker 是底层「跑 DA 容器」函数，保留不动
+//   - deployWorkerStack 包装出整个 stack: da-net + da-pg + da-app
+//   - 后续 routes/workers.ts 切换到 deployWorkerStack (T9 完成后)
+//
+// 依赖注入 (deps 参数):
+//   生产代码不传 deps — 用真实模块绑定 (connectRealSsh / ensurePgCredentials /
+//   ensurePgContainer / ensureWorkerNetwork / deployWorker / decryptSshKey / query)。
+//   测试传 mock deps 验证编排序列 — 这避免了 bun:test mock.module 的限制,
+//   brief 明确允许这种偏离 ("可以重构 deployWorkerStack 接受可选的依赖注入参数").
+// =============================================================================
+
+export interface WorkerStackOpts {
+  workerId: string;
+  imageTag: string;
+  initiatedBy: string;
+  hostServerId?: string;     // 优先用 host_server 凭据；fallback worker.ssh_*
+  healthTimeout?: number;
+  skipBackup?: boolean;
+}
+
+/** 依赖注入容器 — 生产用默认值，测试传 mock。 */
+export interface WorkerStackDeps {
+  ssh?: SshExecutor;                                   // 测试预构造的 mock ssh
+  deployWorker?: typeof deployWorker;                  // 测试用 mock
+  // `query` 在测试中返回精简的 {rows: [...]} 形态，所以这里用更宽松的类型
+  // (生产代码传真实 query, 测试传任何返回 {rows: T[]} 的函数)。
+  query?: <T extends Record<string, unknown> = Record<string, unknown>>(
+    text: string,
+    params?: unknown[],
+  ) => Promise<{ rows: T[] }>;
+  decryptSshKey?: (encrypted: string) => Promise<string>;
+  connectRealSsh?: (opts: {
+    host: string; port: number; username: string; privateKey: string;
+  }) => Promise<SshExecutor>;
+  ensurePgCredentials?: (workerId: string) => Promise<{
+    database: string; username: string; password: string;
+  }>;
+}
+
+export async function deployWorkerStack(
+  opts: WorkerStackOpts,
+  deps: WorkerStackDeps = {},
+): Promise<DeployResult> {
+  const q = deps.query ?? query;
+  const decryptKey = deps.decryptSshKey ?? decryptSshKey;
+  const ensureCreds = deps.ensurePgCredentials ?? ensurePgCredentials;
+  const deploy = deps.deployWorker ?? deployWorker;
+
+  const logs: DeployResult["logs"] = [];
+  const addLog = (level: string, msg: string) =>
+    logs.push({ ts: new Date().toISOString(), level, msg });
+
+  // ─── 1. 取 worker + (可选) host_server 凭据 ───────────────────────────
+  const w = await q<{
+    ssh_target_host: string; ssh_target_port: number; ssh_user: string;
+    ssh_key_encrypted: string | null; host_id: string | null;
+  }>(
+    `SELECT ssh_target_host, ssh_target_port, ssh_user, ssh_key_encrypted, host_id
+     FROM workers WHERE id = $1`,
+    [opts.workerId],
+  );
+  const worker = w.rows[0];
+  if (!worker) throw new Error(`worker ${opts.workerId} not found`);
+
+  // host_server 凭据优先 (spec 1 后的标准模型)
+  let sshHost = worker.ssh_target_host;
+  let sshPort = worker.ssh_target_port;
+  let sshUser = worker.ssh_user;
+  let sshKeyEncrypted = worker.ssh_key_encrypted;
+
+  const hsId = opts.hostServerId ?? worker.host_id;
+  if (hsId) {
+    const hsRes = await q<{
+      ssh_target_host: string; ssh_target_port: number; ssh_user: string;
+      ssh_key_encrypted: string | null;
+    }>(
+      `SELECT ssh_target_host, ssh_target_port, ssh_user, ssh_key_encrypted
+       FROM host_servers WHERE id = $1`,
+      [hsId],
+    );
+    const hs = hsRes.rows[0];
+    if (hs && hs.ssh_key_encrypted) {
+      sshHost = hs.ssh_target_host;
+      sshPort = hs.ssh_target_port;
+      sshUser = hs.ssh_user;
+      sshKeyEncrypted = hs.ssh_key_encrypted;
+    }
+  }
+
+  if (!sshHost || !sshKeyEncrypted) {
+    throw new Error(`no SSH credentials for worker ${opts.workerId}`);
+  }
+
+  const privateKey = await decryptKey(sshKeyEncrypted);
+
+  // ─── 2. SSH 连接 (生产 connectRealSsh / 测试用注入的 ssh) ─────────────
+  let ssh: SshExecutor;
+  let ownsSsh = false;  // 是否需要 stack 负责关闭
+  if (deps.ssh) {
+    ssh = deps.ssh;
+  } else if (deps.connectRealSsh) {
+    ssh = await deps.connectRealSsh({
+      host: sshHost, port: sshPort, username: sshUser, privateKey,
+    });
+    ownsSsh = true;
+  } else {
+    ssh = await connectRealSsh({
+      host: sshHost, port: sshPort, username: sshUser, privateKey,
+    });
+    ownsSsh = true;
+  }
+
+  try {
+    // ─── 3. ensure network ─────────────────────────────────────────────
+    addLog("info", `ensuring network da-net-${opts.workerId}`);
+    await ensureWorkerNetwork(ssh, opts.workerId);
+
+    // ─── 4. ensure PG credentials + container ──────────────────────────
+    addLog("info", `ensuring PG credentials for ${opts.workerId}`);
+    const pgCreds = await ensureCreds(opts.workerId);
+
+    addLog("info", `ensuring PG container da-pg-${opts.workerId}`);
+    await ensurePgContainer(ssh, opts.workerId, pgCreds);
+
+    // ─── 5. 构造 envVars (含 PG_*) + 调底层 deployWorker ───────────────
+    const pgHost = pgContainerName(opts.workerId);
+    const envVars: Record<string, string> = {
+      PG_HOST: pgHost,
+      PG_PORT: "5432",
+      PG_USER: pgCreds.username,
+      PG_PASSWORD: pgCreds.password,
+      PG_DATABASE: pgCreds.database,
+      // 其他 DA_* env (DA_AUTH_MODE / DA_JOIN_TOKEN / DA_HUB_URL 等) 由
+      // caller 在切到 deployWorkerStack 后补充 — T9 迁移脚本处理
+    };
+
+    addLog("info", `calling deployWorker for da-app-${opts.workerId}`);
+    return await deploy({
+      workerId: opts.workerId,
+      sshHost, sshPort, sshUser,
+      sshPrivateKeyPem: privateKey,
+      imageTag: opts.imageTag,
+      source: "docker_pull",  // 默认 docker pull；hub_stream 由 caller 包装
+      hubBaseUrl: process.env.HUB_EXTERNAL_URL ?? "http://localhost:22000",
+      containerName: `da-app-${opts.workerId}`,
+      containerPort: 21000,  // TODO: 从 host_server 端口分配读 (T03)
+      envVars,
+      volumeMounts: [`da-app-data-${opts.workerId}:/app/data`],
+      initiatedBy: opts.initiatedBy,
+      healthTimeout: opts.healthTimeout,
+    });
+  } finally {
+    if (ownsSsh) {
+      try { ssh.close(); } catch {}
+    }
+  }
 }
