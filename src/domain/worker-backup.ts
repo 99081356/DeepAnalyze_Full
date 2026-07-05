@@ -37,6 +37,13 @@ export interface CreateBackupInput {
   sizeBytes?: number | null;
   deployJobId?: string | null;
   createdBy: string;
+  /**
+   * Backup retention in days. Defaults to 30 if omitted (backward compat).
+   * Production code should pass HUB_CONFIG.backup.retentionDays so the DB
+   * expires_at column matches the manifest's retention field written by the
+   * backup executor. Spec §7.3 / §13 acceptance checklist.
+   */
+  retentionDays?: number;
 }
 
 /**
@@ -76,7 +83,8 @@ export async function createBackupRecord(
   input: CreateBackupInput,
 ): Promise<WorkerBackup> {
   const id = `bkp_${randomUUID().replace(/-/g, "")}`;
-  const expires = new Date(Date.now() + 30 * 24 * 3600 * 1000);
+  const days = input.retentionDays ?? 30;
+  const expires = new Date(Date.now() + days * 24 * 3600 * 1000);
   const { rows } = await pool().query(
     `INSERT INTO worker_backups
        (id, worker_id, backup_type, from_tag, to_tag, pg_dump_path,

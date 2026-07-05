@@ -178,4 +178,51 @@ describe("upgradeWorker with backup", () => {
 
     expect(executorCallCount).toBe(0);
   });
+
+  test("retentionDays 从 backupConfig 流到 createBackupRecord.expires_at", async () => {
+    // 验证 HUB_BACKUP_RETENTION_DAYS=7 产生 7 天 expiry（而非硬编码 30 天）。
+    // 捕获 INSERT INTO worker_backups 调用参数，断言 expires_at ≈ now + 7d（±1 分钟）。
+    const q = makeMockQuery(fakeWorker);
+    const poolObj = makeMockPool();
+    const before = Date.now();
+
+    // 重写 pool().query 以捕获 INSERT 参数（包括 expires_at）
+    const insertCalls: Array<{ params?: unknown[] }> = [];
+    const origPool = poolObj.pool;
+    const wrappedPool = () => ({
+      query: async (text: string, params?: unknown[]) => {
+        if (/INSERT INTO worker_backups/.test(text)) {
+          insertCalls.push({ params });
+        }
+        return origPool().query(text, params);
+      },
+    });
+
+    const fakeBackupResult: BackupExecutorResult = {
+      success: true,
+      pgDumpPath: "w1/bkp1/pg.dump",
+      dataArchivePath: "w1/bkp1/app-data.tar.gz",
+      manifestPath: "w1/bkp1/manifest.json",
+      sizeBytes: 100,
+      pgVersion: "16.4",
+    };
+
+    await upgradeWorker("w5", "v2", "test-user", { skipBackup: false }, {
+      query: q.fn, pool: wrappedPool as any,
+      decryptSshKey: async () => "PEM",
+      connectRealSsh: async () => fakeSsh,
+      executeWorkerBackup: async () => fakeBackupResult,
+      deployWorker: async () => ({ jobId: "dpl_x", success: true, logs: [] }),
+      backupConfig: { storageDir: "/tmp/bk", retentionDays: 7, cleanupIntervalHours: 24 },
+    });
+
+    expect(insertCalls.length).toBe(1);
+    const expiresArg = insertCalls[0].params?.[10];  // 第 11 个参数 = expires_at
+    expect(expiresArg).toBeInstanceOf(Date);
+    const expiresMs = (expiresArg as Date).getTime();
+    const expectedLo = before + 7 * 24 * 3600 * 1000 - 60_000;  // 7d - 1min
+    const expectedHi = Date.now() + 7 * 24 * 3600 * 1000 + 60_000;  // 7d + 1min
+    expect(expiresMs).toBeGreaterThanOrEqual(expectedLo);
+    expect(expiresMs).toBeLessThanOrEqual(expectedHi);
+  });
 });

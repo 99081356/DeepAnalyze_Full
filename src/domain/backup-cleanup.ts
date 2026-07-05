@@ -1,11 +1,11 @@
 // 过期备份清理 cron（Spec §7）
 //
-// 选择条件：expires_at < NOW() AND status IN ('verified', 'failed')
+// 选择条件：expires_at < NOW() AND status IN ('verified', 'failed', 'deletion_failed')
 // 对每行：
 //   1. 从 manifest_path 或 pg_dump_path 推导 backup 目录（<worker>/<backup>/）
 //   2. rm 整个目录（recursive force）
 //   3. 成功 → UPDATE status='expired'
-//   4. 失败 → UPDATE status='deletion_failed'，记 errors[]，下次 cron 重试
+//   4. 失败 → status='deletion_failed'，下次 cron 重试（WHERE 包含 deletion_failed）
 //
 // path=null 的 metadata-only 记录（旧 T19 数据）：跳过 rm，仍标记 expired。
 
@@ -67,7 +67,7 @@ export async function cleanupExpiredBackups(
     `SELECT id, worker_id, pg_dump_path, data_archive_path, manifest_path
      FROM worker_backups
      WHERE expires_at < NOW()
-       AND status IN ('verified', 'failed')`,
+       AND status IN ('verified', 'failed', 'deletion_failed')`,
   );
 
   const result: CleanupResult = {

@@ -132,10 +132,11 @@ describe("cleanupExpiredBackups", () => {
   });
 
   test("status='expired' 的 backup 不被 SELECT（已过期但已删的不重复处理）", async () => {
-    // 验证 SQL WHERE 子句只选 verified/failed，不选 expired/deletion_failed
+    // 验证 SQL WHERE 子句只选 verified/failed/deletion_failed，不选 expired
+    // （deletion_failed 包含在内以便下次 cron 重试）
     const q = mock(async (text: string) => {
       // 简单断言 SQL 文本
-      expect(text).toMatch(/status IN \('verified', 'failed'\)/);
+      expect(text).toMatch(/status IN \('verified', 'failed', 'deletion_failed'\)/);
       expect(text).toMatch(/expires_at < NOW\(\)/);
       return { rows: [] };
     });

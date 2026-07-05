@@ -343,6 +343,7 @@ export async function upgradeWorker(
       dataArchivePath: null,
       deployJobId: null,
       createdBy: initiatedBy,
+      retentionDays: backupCfg.retentionDays,
     });
     backupId = backup.id;
   }
