@@ -272,7 +272,8 @@ async function migrateWorker(
     const portFlag = `-p 21000:21000`;  // TODO: 从老容器读 port mapping
 
     const runCmd = `docker run -d --name ${newName} ${netFlag} ${label} ${inheritedEnvs.join(" ")} ${envVars} ${volFlag} ${portFlag} --restart unless-stopped ${worker.current_image_tag}`;
-    console.log(`[migrate] starting new container: ${runCmd}`);
+    const safeCmd = runCmd.replace(/(-e PG_PASSWORD=)'[^']*'/, "$1'***REDACTED***'");
+    console.log(`[migrate] starting new container: ${safeCmd}`);
     const runR = await ssh.exec(runCmd);
     if (runR.exitCode !== 0) {
       // 回滚：启动老容器
