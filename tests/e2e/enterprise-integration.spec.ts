@@ -13,6 +13,7 @@
  * - At least 1 approved worker in DB (manual seed if missing)
  */
 import { test, expect } from "@playwright/test";
+import { loginFast } from "./fixtures";
 
 const API_BASE = "http://localhost:22000/api/v1";
 
@@ -101,14 +102,16 @@ test.describe("T21: Hub enterprise integration", () => {
     expect(Array.isArray(body.items)).toBe(true);
   });
 
-  test("Frontend Monitoring page loads", async ({ page }) => {
+  test("Frontend Monitoring page loads", async ({ page, request }) => {
     test.skip(!adminToken, "no admin token");
-    await page.goto("/monitoring");
+    await loginFast(page, request, "admin", "admin123");
+    await page.goto("/monitoring", { waitUntil: "networkidle" });
     await expect(page.locator("text=Worker 监控").first()).toBeVisible({ timeout: 10_000 });
   });
 
-  test("Frontend WorkerDetail page handles unknown id", async ({ page }) => {
+  test("Frontend WorkerDetail page handles unknown id", async ({ page, request }) => {
     test.skip(!adminToken, "no admin token");
+    await loginFast(page, request, "admin", "admin123");
     await page.goto("/workers/nonexistent-id");
     // Should show error state, not crash
     await expect(page.locator("text=Worker 不存在").first()).toBeVisible({ timeout: 10_000 });
