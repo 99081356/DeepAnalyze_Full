@@ -557,7 +557,8 @@ export function createWorkerRoutes(): Hono {
 
   app.post("/:id/upgrade", jwtAuth, requirePermission("worker:deploy"), async (c) => {
     const workerId = c.req.param("id");
-    const body = await c.req.json<{ to_tag?: string; image_tag?: string; dry_run?: boolean }>().catch(() => ({} as any));
+    const body: { to_tag?: string; image_tag?: string; dry_run?: boolean } =
+      await c.req.json().catch(() => ({}));
     // T19: 接受 to_tag（新规范）或 image_tag（向后兼容）
     const newTag = body.to_tag ?? body.image_tag;
     if (!newTag) return c.json({ error: "to_tag (or image_tag) required" }, 400);
@@ -598,7 +599,7 @@ export function createWorkerRoutes(): Hono {
 
   app.post("/:id/rollback", jwtAuth, requirePermission("worker:deploy"), async (c) => {
     const workerId = c.req.param("id");
-    const body = await c.req.json<{ backup_id?: string }>().catch(() => ({} as any));
+    const body: { backup_id?: string } = await c.req.json().catch(() => ({}));
 
     try {
       const result = await rollbackWorker(workerId, c.get("userId"), body.backup_id);
@@ -618,7 +619,8 @@ export function createWorkerRoutes(): Hono {
   app.post("/:id/backups", jwtAuth, requirePermission("worker:deploy"), async (c) => {
     const workerId = c.req.param("id");
     const userId = c.get("userId");
-    const body = await c.req.json<{ backup_type?: "manual" | "scheduled" }>().catch(() => ({} as any));
+    const body: { backup_type?: "manual" | "scheduled" } =
+      await c.req.json().catch(() => ({}));
 
     // Look up worker for from_tag
     const { rows } = await getPool().query(

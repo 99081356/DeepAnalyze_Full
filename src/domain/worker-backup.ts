@@ -46,8 +46,19 @@ export interface CreateBackupInput {
 function mapRow(row: unknown): WorkerBackup {
   const r = row as Record<string, unknown>;
   return {
-    ...(r as unknown as WorkerBackup),
+    id: r.id as string,
+    worker_id: r.worker_id as string,
+    backup_type: r.backup_type as WorkerBackup["backup_type"],
+    from_tag: (r.from_tag as string | null) ?? null,
+    to_tag: (r.to_tag as string | null) ?? null,
+    pg_dump_path: (r.pg_dump_path as string | null) ?? null,
+    data_archive_path: (r.data_archive_path as string | null) ?? null,
     size_bytes: r.size_bytes != null ? Number(r.size_bytes) : null,
+    status: r.status as WorkerBackup["status"],
+    deploy_job_id: (r.deploy_job_id as string | null) ?? null,
+    created_by: r.created_by as string,
+    created_at: r.created_at as string,
+    expires_at: r.expires_at as string,
   };
 }
 

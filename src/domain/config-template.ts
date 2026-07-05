@@ -33,6 +33,13 @@ export function deepMerge<T extends Record<string, unknown>>(
   base: T,
   override: Record<string, unknown>,
 ): T {
+  // FIXME: deepMerge's signature requires T extends Record<string, unknown>,
+  // but this branch handles the case where base is somehow an array at runtime
+  // (T13 latent bug — callers shouldn't pass arrays, but defensive copy kept
+  // to preserve existing behavior). The cast is necessary because an array
+  // cannot be cleanly typed as Record<string, unknown>; fixing requires
+  // narrowing deepMerge's input type or adding array overload, which is out
+  // of scope for T3 cleanup. Tracked for follow-up.
   const result: Record<string, unknown> = Array.isArray(base)
     ? [...(base as unknown[])] as unknown as Record<string, unknown>
     : { ...base };
