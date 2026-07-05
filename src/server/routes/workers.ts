@@ -490,7 +490,7 @@ export function createWorkerRoutes(): Hono {
 
   // ─── Get worker details ────────────────────────────────────────────────
 
-  app.get("/:id", async (c) => {
+  app.get("/:id", jwtAuth, requirePermission("worker:read"), async (c) => {
     const { id } = c.req.param();
     const { rows } = await query(
       `SELECT w.id, w.name, w.hostname, w.endpoint, w.version, w.capabilities, w.status,
@@ -499,7 +499,7 @@ export function createWorkerRoutes(): Hono {
               w.protocol_version,
               w.current_image_tag, w.host_id, w.host_port,
               w.last_heartbeat_at, w.last_heartbeat_ok, w.da_version,
-              h.ssh_target_host, h.name AS host_name
+              h.ssh_target_host, h.hostname AS host_name
        FROM workers w
        LEFT JOIN host_servers h ON h.id = w.host_id
        WHERE w.id = $1`,
