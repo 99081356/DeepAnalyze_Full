@@ -1,0 +1,12 @@
+# 强制脚本与配置文件用 LF 换行（跨平台一致性，避免 Windows CRLF 导致 Linux 上 bad interpreter）
+*.sh           text eol=lf
+*.service      text eol=lf
+*.timer        text eol=lf
+*.yml          text eol=lf
+*.yaml         text eol=lf
+Dockerfile*    text eol=lf
+docker-entrypoint.sh text eol=lf
+
+# Windows 批处理保留 CRLF
+*.bat          text eol=crlf
+*.cmd          text eol=crlf

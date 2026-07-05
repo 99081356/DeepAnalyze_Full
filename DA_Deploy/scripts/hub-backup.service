@@ -1,0 +1,14 @@
+[Unit]
+Description=DeepAnalyze Hub daily backup
+Wants=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+# 改为实际部署路径与用户
+User=root
+WorkingDirectory=/opt/da-hub/DA_Deploy
+ExecStart=/opt/da-hub/DA_Deploy/scripts/backup.sh
+# 保留 30 天
+Environment=RETENTION_DAYS=30
+Environment=BACKUP_DIR=/opt/da-hub/backups

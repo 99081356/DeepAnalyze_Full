@@ -1,5 +1,9 @@
 /**
- * Migration 008: seed admin 用户（admin/admin123）
+ * Migration 008: seed admin 用户
+ *
+ * 初始密码来源（按优先级）：
+ *   1. ADMIN_INIT_PASSWORD 环境变量（生产部署必须设置强密码）
+ *   2. 未设置时回退到默认 dev 密码（仅本地开发用）
  */
 
 import type { QueryResultRow } from "pg";
@@ -24,7 +28,14 @@ export async function up(query: QueryFn): Promise<void> {
     return;
   }
 
-  const passwordHash = await bcrypt.hash('admin123', 10);
+  const initPassword = process.env.ADMIN_INIT_PASSWORD;
+  if (!initPassword) {
+    console.warn(
+      '[migration 008] ADMIN_INIT_PASSWORD 未设置，使用默认 dev 密码。' +
+      ' 生产环境务必通过环境变量注入强密码。',
+    );
+  }
+  const passwordHash = await bcrypt.hash(initPassword || 'admin123', 10);
   await query(
     `INSERT INTO users (id, username, display_name, password_hash, auth_source, is_super_admin, role)
      VALUES ('admin', 'admin', 'Super Admin', $1, 'local', TRUE, 'admin')`,

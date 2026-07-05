@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api, type MeResponse } from "../api/client.js";
 
 export function Login({ onLogin }: { onLogin: (u: MeResponse) => void }) {
-  const [username, setUsername] = useState("admin");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -102,9 +102,6 @@ export function Login({ onLogin }: { onLogin: (u: MeResponse) => void }) {
             {loading ? "登录中..." : "登录"}
           </button>
         </form>
-        <p style={{ fontSize: 12, color: "#9ca3af", textAlign: "center", marginTop: 16 }}>
-          默认管理员: admin / admin123
-        </p>
       </div>
     </div>
   );
