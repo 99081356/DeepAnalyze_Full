@@ -38,6 +38,30 @@ async function main() {
   }
 
   console.log(`[Hub] Server running on http://localhost:${port}`);
+
+  // ─── Backup cleanup cron (Spec §7) ────────────────────────────────
+  // 启动后 1 分钟跑一次（清理 Hub 重启期间积累的过期 backup）
+  // 周期 24h（默认；可配 HUB_BACKUP_CLEANUP_INTERVAL_HOURS）
+  const { cleanupExpiredBackups } = await import("./domain/backup-cleanup.js");
+  const CLEANUP_INTERVAL_MS =
+    HUB_CONFIG.backup.cleanupIntervalHours * 3600_000;
+
+  setTimeout(() => {
+    cleanupExpiredBackups().catch(err =>
+      console.error("[backup-cleanup] initial run failed:", err),
+    );
+  }, 60_000);
+
+  setInterval(() => {
+    cleanupExpiredBackups().catch(err =>
+      console.error("[backup-cleanup] periodic run failed:", err),
+    );
+  }, CLEANUP_INTERVAL_MS);
+
+  console.log(
+    `[Hub] Backup cleanup cron registered: every ${HUB_CONFIG.backup.cleanupIntervalHours}h`,
+  );
+
   console.log(`[Hub] API endpoints:`);
   console.log(`  GET  /api/health                     — Health check`);
   console.log(`  POST /api/v1/workers/register         — Worker registration`);
