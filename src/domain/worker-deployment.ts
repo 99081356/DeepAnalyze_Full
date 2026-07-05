@@ -16,8 +16,15 @@ import {
   updateBackupStatus,
   getBackup,
 } from "./worker-backup.js";
-import { ensureWorkerNetwork } from "./worker-network.js";
-import { ensurePgContainer, pgContainerName } from "./worker-pg-container.js";
+import {
+  ensureWorkerNetwork,
+  removeWorkerNetwork,
+} from "./worker-network.js";
+import {
+  ensurePgContainer,
+  pgContainerName,
+  removePgContainer,
+} from "./worker-pg-container.js";
 import { ensurePgCredentials } from "./worker-pg-credentials.js";
 import { connectRealSsh } from "./ssh-executor.js";
 import type { SshExecutor } from "./ssh-executor.js";
@@ -621,6 +628,13 @@ export interface WorkerStackDeps {
   ensurePgCredentials?: (workerId: string) => Promise<{
     database: string; username: string; password: string;
   }>;
+  // T7: cleanup function DI surface — included so tests can verify call
+  // sequence and arguments. (T6's deferred Minor was about ensure* not
+  // being in the DI surface; for deleteWorkerStack we DO include the
+  // remove* functions because call-sequence verification is the whole
+  // point of the cleanup tests.)
+  removePgContainer?: typeof removePgContainer;
+  removeWorkerNetwork?: typeof removeWorkerNetwork;
 }
 
 export async function deployWorkerStack(
@@ -735,6 +749,163 @@ export async function deployWorkerStack(
       initiatedBy: opts.initiatedBy,
       healthTimeout: opts.healthTimeout,
     });
+  } finally {
+    if (ownsSsh) {
+      try { ssh.close(); } catch {}
+    }
+  }
+}
+
+// =============================================================================
+// deleteWorkerStack — 彻底清理 worker 全部 docker 资源 (T7)
+// =============================================================================
+// 清理顺序: da-app 容器 → da-pg 容器(+volume?) → da-app volume(?) → network
+//           → workers.status='decommissioned'
+//
+// 与 stopWorker 的关系:
+//   - stopWorker 仅 docker stop da-<slice12>（用于 draining，restartWorker 还会起）
+//   - deleteWorkerStack 彻底清理整个 stack，包括 PG 容器/数据卷/网络
+//
+// HUB_DELETE_WORKER_KEEP_VOLUMES env:
+//   - "false" 显式删 volumes（da-pg-data-* + da-app-data-*）
+//   - 其他/未设置/true 保留 volumes（生产默认 — 安全第一，便于应急/取证）
+//
+// 旧命名兼容: T6 之前容器名为 da-<slice12>，T6 起改为 da-app-<fullId>。
+// 这里同时清两种命名，使函数在 T9 迁移边界两侧都幂等。
+// =============================================================================
+
+export interface DeleteStackOpts {
+  keepVolumes?: boolean;  // 默认按 HUB_DELETE_WORKER_KEEP_VOLUMES env
+}
+
+export async function deleteWorkerStack(
+  workerId: string,
+  initiatedBy: string,
+  opts?: DeleteStackOpts,
+  deps: WorkerStackDeps = {},
+): Promise<DeployResult> {
+  const q = deps.query ?? query;
+  const decryptKey = deps.decryptSshKey ?? decryptSshKey;
+  const removePg = deps.removePgContainer ?? removePgContainer;
+  const removeNet = deps.removeWorkerNetwork ?? removeWorkerNetwork;
+
+  const jobId = `dpl_${randomUUID().replace(/-/g, "")}`;
+  const logs: DeployResult["logs"] = [];
+  const addLog = (level: string, msg: string) =>
+    logs.push({ ts: new Date().toISOString(), level, msg });
+
+  // HUB_DELETE_WORKER_KEEP_VOLUMES default = "true" (keep volumes for safety)
+  const keepVolumes = opts?.keepVolumes ??
+    (process.env.HUB_DELETE_WORKER_KEEP_VOLUMES ?? "true") !== "false";
+
+  await q(
+    `INSERT INTO deploy_jobs (id, worker_id, action, status, started_at, initiated_by, logs)
+     VALUES ($1, $2, 'delete', 'running', NOW(), $3, '[]'::jsonb)`,
+    [jobId, workerId, initiatedBy],
+  );
+
+  // ─── 1. 取 worker + (可选) host_server 凭据（同 deployWorkerStack）──────
+  const w = await q<{
+    ssh_target_host: string; ssh_target_port: number; ssh_user: string;
+    ssh_key_encrypted: string | null; host_id: string | null;
+  }>(
+    `SELECT ssh_target_host, ssh_target_port, ssh_user, ssh_key_encrypted, host_id
+     FROM workers WHERE id = $1`,
+    [workerId],
+  );
+  if (w.rows.length === 0) throw new Error(`worker ${workerId} not found`);
+  const worker = w.rows[0];
+
+  let sshHost = worker.ssh_target_host;
+  let sshPort = worker.ssh_target_port;
+  let sshUser = worker.ssh_user;
+  let sshKeyEncrypted = worker.ssh_key_encrypted;
+
+  if (worker.host_id) {
+    const hs = await q<{
+      ssh_target_host: string; ssh_target_port: number; ssh_user: string;
+      ssh_key_encrypted: string | null;
+    }>(
+      `SELECT ssh_target_host, ssh_target_port, ssh_user, ssh_key_encrypted
+       FROM host_servers WHERE id = $1`,
+      [worker.host_id],
+    );
+    if (hs.rows.length > 0 && hs.rows[0].ssh_key_encrypted) {
+      sshHost = hs.rows[0].ssh_target_host;
+      sshPort = hs.rows[0].ssh_target_port;
+      sshUser = hs.rows[0].ssh_user;
+      sshKeyEncrypted = hs.rows[0].ssh_key_encrypted;
+    }
+  }
+
+  if (!sshHost || !sshKeyEncrypted) {
+    throw new Error(`no SSH credentials for worker ${workerId}`);
+  }
+
+  const privateKey = await decryptKey(sshKeyEncrypted);
+
+  // ─── 2. SSH 连接（生产 connectRealSsh / 测试用注入的 ssh）─────────────
+  let ssh: SshExecutor;
+  let ownsSsh = false;
+  if (deps.ssh) {
+    ssh = deps.ssh;
+  } else if (deps.connectRealSsh) {
+    ssh = await deps.connectRealSsh({
+      host: sshHost, port: sshPort, username: sshUser, privateKey,
+    });
+    ownsSsh = true;
+  } else {
+    ssh = await connectRealSsh({
+      host: sshHost, port: sshPort, username: sshUser, privateKey,
+    });
+    ownsSsh = true;
+  }
+
+  try {
+    // 1. 停并删 da-app 容器
+    addLog("info", `removing da-app-${workerId}`);
+    await ssh.exec(`docker rm -f da-app-${workerId} 2>/dev/null || true`);
+    // 兼容 T6 之前的旧命名 da-<slice12>
+    await ssh.exec(`docker rm -f da-${workerId.slice(0, 12)} 2>/dev/null || true`);
+
+    // 2. 停并删 da-pg 容器（removePgContainer 内部已含 docker rm -f da-pg-<id>）
+    //    当 removeVolume:true 时，removePgContainer 也会清 da-pg-data-<id> 卷
+    addLog("info", `removing da-pg-${workerId} (removeVolume=${!keepVolumes})`);
+    await removePg(ssh, workerId, { removeVolume: !keepVolumes });
+
+    // 3. 删 da-app 数据卷（仅当配置允许；da-pg-data-* 由 removePgContainer 处理）
+    if (!keepVolumes) {
+      addLog("info", `removing volume da-app-data-${workerId}`);
+      await ssh.exec(`docker volume rm da-app-data-${workerId} 2>/dev/null || true`);
+    }
+
+    // 4. 删 network
+    addLog("info", `removing network da-net-${workerId}`);
+    await removeNet(ssh, workerId);
+
+    // 5. 更新 worker status -> decommissioned
+    addLog("info", `marking worker ${workerId} as decommissioned`);
+    await q(
+      `UPDATE workers SET status = 'decommissioned', decommissioned_at = NOW()
+       WHERE id = $1`,
+      [workerId],
+    );
+
+    await q(
+      `UPDATE deploy_jobs SET status = 'success', completed_at = NOW(), logs = $2::jsonb
+       WHERE id = $1`,
+      [jobId, JSON.stringify(logs)],
+    );
+    return { jobId, success: true, logs };
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    addLog("error", errMsg);
+    await q(
+      `UPDATE deploy_jobs SET status = 'failed', completed_at = NOW(), error = $2, logs = $3::jsonb
+       WHERE id = $1`,
+      [jobId, errMsg, JSON.stringify(logs)],
+    );
+    return { jobId, success: false, error: errMsg, logs };
   } finally {
     if (ownsSsh) {
       try { ssh.close(); } catch {}
