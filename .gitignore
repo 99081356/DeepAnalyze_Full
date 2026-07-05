@@ -10,8 +10,12 @@ test-results/
 playwright-report/
 playwright/.cache/
 
-# DA_Deploy runtime artifacts (含密钥/备份/证书，绝不入库)
+# DA_Deploy runtime artifacts (含密钥/备份/证书/大镜像，绝不入库)
 DA_Deploy/.env
 DA_Deploy/backups/
 DA_Deploy/secrets/
 DA_Deploy/dist/
+# 镜像 tar 太大（合计 ~2GB），不入库；用 offline/export-images.sh 或 build-bundle.sh 现场生成
+DA_Deploy/images/*.tar
+DA_Deploy/images/*.tar.gz
+DA_Deploy/images/*.log

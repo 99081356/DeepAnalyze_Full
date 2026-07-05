@@ -418,5 +418,6 @@ if (typeof window !== "undefined") {
       }
     }
   }, WATCHDOG_INTERVAL_MS);
-  if (watchdog.unref) watchdog.unref();
+  // 注：原代码 if (watchdog.unref) watchdog.unref() 是从 Node 移植的，
+  // 但浏览器 setInterval 返回 number，TS 报 TS2339。浏览器定时器无需 unref，删除即可。
 }

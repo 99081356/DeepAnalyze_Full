@@ -8,6 +8,8 @@
 
 ## 架构
 
+**部署模式：local Docker（Hub 与 Worker 同机）**
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                       目标机（生产服务器）                        │
@@ -15,18 +17,31 @@
 │   ┌───────────────┐         ┌──────────────────────────────┐   │
 │   │  PostgreSQL 16 │ <────── │  Hub (port 22000)            │   │
 │   │  (da-hub-pg)   │         │  - Hono + Bun                │   │
-│   │                │         │  - 40 migrations 自动执行     │   │
-│   └───────────────┘          │  - 内置 docker CLI (本地模式) │   │
+│   │  postgres:16-  │         │  - 40 migrations 自动执行     │   │
+│   │  alpine        │         │  - 内置 docker CLI            │   │
+│   └───────────────┘          │  - 挂载 docker.sock           │   │
 │                              └──────────────┬───────────────┘   │
-│                                             │                    │
-│   命名卷: da-hub-pgdata, da-hub-data         │ SSH / docker.sock  │
-│                                             ▼                    │
-│                              ┌──────────────────────────────┐   │
-│                              │  远程 Worker (DA 实例)        │   │
-│                              │  ← Hub 自动部署                │   │
-│                              └──────────────────────────────┘   │
+│   命名卷: da-hub-pgdata,                     │ docker.sock       │
+│           da-hub-data                        ▼                   │
+│   ┌─────────────────────────────────────────────────────────┐  │
+│   │  控制台部署时 Hub 在本机拉起 Worker 容器栈                  │  │
+│   │   da-app-<workerId> ← deepanalyze/da:latest             │  │
+│   │   da-pg-<workerId>  ← pgvector/pgvector:pg16 (含向量扩展)│  │
+│   │   da-net-<workerId> ← 容器网络                            │  │
+│   └─────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+**4 个必需镜像**（部署前必须 `docker load` 到目标机）：
+
+| 镜像 | 用途 |
+|---|---|
+| `deepanalyze-hub:latest` | Hub 控制面 |
+| `postgres:16-alpine` | Hub 的 PG（关系数据，无 pgvector） |
+| `deepanalyze/da:latest` | DA Worker 单体（前后端 + 模型） |
+| `pgvector/pgvector:pg16` | Worker 的 PG（**含 pgvector**，向量检索必需）|
+
+> Hub 与 Worker 的 PG 是**两个不同镜像**，不可合并：Hub 不需要向量扩展，Worker 必须有。
 
 ---
 
@@ -89,39 +104,37 @@ curl http://localhost:22000/api/health
 
 ## 流程 B：离线部署（目标机无外网）
 
-`build-bundle.sh` 一次打包 **Hub + Worker 全栈**共 6 个必需镜像（+ 可选 GPU 镜像），完整流程见 [`offline/README.md`](./offline/README.md)：
+`build-bundle.sh` 一次打包 **4 个必需镜像**（Hub + Worker 全栈），完整流程见 [`offline/README.md`](./offline/README.md)：
 
 ```bash
 # 构建机（有外网）
 cd DeepAnalyze-Hub/
-DA_Deploy/offline/build-bundle.sh                # 6 必需镜像（含 embedding）
-# DA_Deploy/offline/build-bundle.sh v0.7.8 --with-gpu   # GPU 节点额外打 3 个 AI 镜像
+DA_Deploy/offline/build-bundle.sh                # 4 必需镜像
+# DA_Deploy/offline/build-bundle.sh v0.7.8       # 显式指定版本
 # → 产出 dist/da-hub-deploy-<ver>.tar.gz
 
 # 拷贝 tar.gz 到目标机后
 tar xzf da-hub-deploy-<ver>.tar.gz
 cd da-hub-deploy-<ver>/
 sha256sum -c SHA256SUMS                           # 校验完整性
-bash DA_Deploy/offline/load-images.sh images/     # 加载全部镜像
+bash DA_Deploy/offline/load-images.sh images/     # 加载 4 个镜像
 
 cd DA_Deploy
 ./scripts/generate-secrets.sh
 $EDITOR .env                                      # 确认 HUB_IMAGE + HUB_EXTERNAL_URL
-docker compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml up -d   # 默认挂 docker.sock，hub 起来后能拉起 worker
 ```
 
-打包的镜像（默认 6 个，全部必需）：
+打包的镜像（4 个，全部必需）：
 
 | 镜像 | 用途 |
 |---|---|
 | `deepanalyze-hub:<ver>` | Hub 控制面 |
 | `postgres:16-alpine` | Hub 元数据库 |
-| `da-postgres:16-tuned` | Worker 专用调优 PG（SSH stack 模式） |
-| `deepanalyze-backend:<ver>` | DA Worker 应用 |
-| `deepanalyze-frontend:<ver>` | DA Worker nginx 前端 |
-| `deepanalyze-embedding:<ver>` | BGE-M3 语义搜索（`--no-embedding` 可去掉）|
+| `deepanalyze/da:<ver>` | DA Worker 单体（前后端 + 模型） |
+| `pgvector/pgvector:pg16` | Worker 的 PG（含 pgvector，向量检索必需）|
 
-GPU AI 子服务（`--with-gpu`，仅 GPU 节点需要）：`glm-ocr` / `mineru` / `paddleocr-vl`
+> 没有可选镜像。本 kit 走 local Docker 模式，Worker 用 `deepanalyze/da` 单体镜像（已含 embedding/whisper/docling 等全部能力）。
 
 ---
 
@@ -150,6 +163,8 @@ GPU AI 子服务（`--with-gpu`，仅 GPU 节点需要）：`glm-ocr` / `mineru`
 | `JWT_EXPIRY` | — | `7d` | access token 过期 |
 | `HUB_BACKUP_RETENTION_DAYS` | — | `30` | 控制台备份保留期 |
 | `HUB_DOCKER_REGISTRY` | — | 空 | 自建 registry 地址 |
+| `HUB_DA_IMAGE` | — | `deepanalyze/da:latest` | local 模式 worker 应用镜像（需先 docker load）|
+| `HUB_DA_PG_IMAGE` | — | `pgvector/pgvector:pg16` | local 模式 worker 的 PG 镜像（含 pgvector）|
 
 完整字段见 [`.env.production.example`](./.env.production.example)。`generate-secrets.sh` 一键生成所有「必填」密钥。
 
@@ -219,12 +234,13 @@ docker compose -f docker-compose.prod.yml logs --tail=100 hub
 ### Worker 无法连 Hub（SSO 失败 / bundle 拉不到）
 `HUB_EXTERNAL_URL` 必须是 Worker 能访问到的地址。`localhost` 仅适用于本机部署，远程 Worker 必须用 Hub 的内网 IP / 域名。
 
-### 启用本地 Docker 部署模式后 Hub 容器内 `docker: not found`
-Hub 镜像已内置 docker CLI，需要挂载宿主 socket。编辑 `docker-compose.prod.yml`，取消注释：
-```yaml
-- /var/run/docker.sock:/var/run/docker.sock
-```
-⚠ 这等同于把宿主 root 权限授予 Hub 容器，仅在受控内网且 Hub 已隔离时启用。
+### Hub 控制台部署 Worker 时 `Cannot connect to the Docker daemon`
+本 kit 走 local Docker 模式，Hub 容器必须挂载 `docker.sock`。检查 `docker-compose.prod.yml` 中 hub 服务 volumes 是否有 `- /var/run/docker.sock:/var/run/docker.sock`（默认已启用，不要注释）。
+
+⚠ 这等同于把宿主 root 权限授予 Hub 容器。本 kit 假设部署在受控内网，Hub 已通过其他手段隔离。
+
+### Hub 控制台部署 Worker 时 `docker: No such image: deepanalyze/da:latest`
+4 个镜像没全 load。检查：`docker images | grep -E 'deepanalyze|pgvector'`，应有 `deepanalyze/da:latest` 和 `pgvector/pgvector:pg16`。缺则重跑 `bash DA_Deploy/offline/load-images.sh images/`。
 
 ### 升级后业务异常 / migration 报错
 `./scripts/upgrade.sh` 自带回滚；若回滚后仍异常，用备份恢复：
@@ -240,7 +256,7 @@ Hub 镜像已内置 docker CLI，需要挂载宿主 socket。编辑 `docker-comp
 - **强制强密码**：生产 compose 用 `${ADMIN_INIT_PASSWORD:?...}` 语法，不设密钥拒绝启动
 - **JWT RS256**：RSA keypair 由 `generate-secrets.sh` 显式生成，存于 `secrets/keys/`（与卷绑定），可备份/迁移
 - **AES-256-GCM**：SSH 私钥等敏感数据由 `HUB_DATA_KEY` 加密存储；**该 key 丢失会导致数据无法解密，务必备份**
-- **docker.sock**：默认不挂载，仅在启用本地 Docker 部署模式时显式打开
+- **docker.sock**：本 kit 走 local 模式，**默认挂载** docker.sock（Hub 需要它拉起 worker 容器）。这等同于把宿主 root 权限授予 Hub 容器，仅适用于受控内网且 Hub 已隔离的场景
 - **TLS**：内网默认 HTTP 直连；如需 HTTPS 走 nginx（见 [`nginx/README.md`](./nginx/README.md)）
 
 ---

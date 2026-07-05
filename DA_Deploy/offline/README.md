@@ -1,57 +1,48 @@
-# 离线部署流程
+# 离线部署流程（local Docker 模式）
 
 适用于目标机**无法访问公网**的内网/隔离环境。整体流程：构建机（有外网）打包 → 拷贝 → 目标机（无外网）加载部署。
 
-## 架构
+## 架构（Hub + Worker 同机）
 
 ```
-┌──────────────────┐   tar.gz (镜像+kit)   ┌──────────────────┐
-│  构建机（有外网） │ ────────────────────> │  目标机（无外网） │
-│  build-bundle.sh │   U 盘 / scp / 内网   │  load-images.sh  │
-└──────────────────┘                        └──────────────────┘
+┌──────────────────┐   tar.gz (4 镜像+kit)  ┌──────────────────────────────────┐
+│  构建机（有外网） │ ─────────────────────> │  目标机（无外网）                  │
+│  build-bundle.sh │   U 盘 / scp / 内网    │  load-images.sh → docker compose  │
+└──────────────────┘                        │  → Hub 起来后控制台部署 Worker     │
+                                            └──────────────────────────────────┘
 ```
 
-## 打包的镜像
+部署模式：**Hub 与 Worker 同机**。Hub 容器挂载宿主 `docker.sock`，通过控制台 `/api/v1/deploy` 在本机拉起 worker 容器（`da-app-*` + `da-pg-*`）。
 
-`build-bundle.sh` 默认打 **6 个必需镜像**（Hub + Worker 全栈）：
+## 打包的镜像（4 个必需，无可选）
 
 | 镜像 tar | Tag | 用途 |
 |---|---|---|
 | `hub.tar` | `deepanalyze-hub:<ver>` | Hub 控制面 |
-| `postgres.tar` | `postgres:16-alpine` | Hub 自己的元数据库 |
-| `da-postgres.tar` | `da-postgres:16-tuned` | Worker 专用调优 PG（SSH stack 模式） |
-| `da-backend.tar` | `deepanalyze-backend:<ver>` | DA Worker 应用 |
-| `da-frontend.tar` | `deepanalyze-frontend:<ver>` | DA Worker nginx 前端 |
-| `da-embedding.tar` | `deepanalyze-embedding:<ver>` | BGE-M3 语义搜索（默认含，可 `--no-embedding` 去掉）|
+| `postgres.tar` | `postgres:16-alpine` | Hub 的 PG（关系数据，无 pgvector） |
+| `worker.tar` | `deepanalyze/da:<ver>` | DA Worker 单体（前后端 + 模型，你 worker 容器实际用的） |
+| `worker-pg.tar` | `pgvector/pgvector:pg16` | Worker 的 PG（**含 pgvector**，DA 向量检索必需）|
 
-可选 GPU AI 子服务（`--with-gpu` 显式打开，仅 GPU 节点需要）：
-`glm-ocr.tar` / `mineru.tar` / `paddleocr-vl.tar`
+> `postgres.tar` 与 `worker-pg.tar` **不能合并**：Hub 的 PG 不需要向量扩展，Worker 的 PG 必须有 pgvector，分开是对的。
 
 ## 在构建机（有外网）执行
 
 ```bash
 cd <repo-root>     # 即 DeepAnalyze-Hub/
 
-# 默认：含 6 个必需镜像（含 embedding），不含 GPU
+# 默认从 package.json 取版本号
 DA_Deploy/offline/build-bundle.sh
-
-# 显式指定版本号
+# 或显式指定版本号
 DA_Deploy/offline/build-bundle.sh v0.7.8
-
-# GPU 节点：额外打 3 个 GPU 镜像
-DA_Deploy/offline/build-bundle.sh v0.7.8 --with-gpu
-
-# 无语义搜索需求时去掉 embedding（包更小）
-DA_Deploy/offline/build-bundle.sh v0.7.8 --no-embedding
 ```
 
 产出 `dist/da-hub-deploy-<ver>.tar.gz`，含：
-- `images/*.tar` — 全部镜像
+- `images/{hub,postgres,worker,worker-pg}.tar` — 4 个镜像
 - `DA_Deploy/` — 完整部署 kit
 - `VERSION` — 版本清单
 - `SHA256SUMS` — 完整性校验
 
-> 构建时间参考：Hub ~3 min、DA Backend ~10 min（含 docling/whisper Python 依赖）、Embedding ~5 min（含 BGE-M3 权重下载）、每个 GPU 镜像 ~10–20 min。总磁盘 ~15–25 GB（GPU 全量更大）。
+> 构建时间参考：Hub ~3 min、Worker ~10 min（含 docling/whisper Python 依赖）。总磁盘 ~2 GB（save 后去重）。
 
 将 tar.gz 拷贝到目标机（U 盘 / scp / 内网文件服务器）。
 
@@ -65,7 +56,7 @@ cd da-hub-deploy-<ver>/
 # 2. 校验完整性（可选但推荐）
 sha256sum -c SHA256SUMS
 
-# 3. 加载所有镜像（hub / postgres / da-postgres / da-backend / da-frontend / da-embedding [/*-gpu */]）
+# 3. 加载 4 个镜像（hub / postgres / worker / worker-pg）
 bash DA_Deploy/offline/load-images.sh images/
 
 # 4. 生成密钥
@@ -76,7 +67,7 @@ cd DA_Deploy
 #    HUB_IMAGE 应等于 build-bundle.sh 输出的 deepanalyze-hub:<ver>
 $EDITOR .env
 
-# 6. 启动 Hub
+# 6. 启动 Hub（compose 默认挂 docker.sock，让 Hub 能拉起 worker）
 docker compose -f docker-compose.prod.yml up -d
 
 # 7. 等待就绪并访问
@@ -86,10 +77,12 @@ curl http://localhost:22000/api/health
 
 ## Hub 控制台部署 Worker
 
-Hub 启动后，DA Worker 镜像（`da-backend` / `da-frontend` / `da-postgres` / `da-embedding`）已经 `docker load` 到目标机。在 Hub 控制台添加 Worker 时：
+Hub 启动后，4 个镜像都已 `docker load` 到目标机。在 Hub 控制台添加 Worker 时，Hub 会通过 docker.sock 在**本机**拉起两个容器：
 
-- **SSH 模式**：在 Worker 主机上也跑一遍 `load-images.sh` 加载这 4 个镜像，Hub 通过 SSH 在该主机 `docker run` 启动
-- **本地 Docker 模式**（Hub 与 Worker 同机）：取消 `docker-compose.prod.yml` 中 `docker.sock` 挂载的注释，Hub 直接在本机拉起 Worker
+- `da-app-<workerId>` ← `deepanalyze/da:latest`（worker 应用）
+- `da-pg-<workerId>` ← `pgvector/pgvector:pg16`（worker 的 PG）
+
+不需要再去 worker 主机操作。
 
 ## 故障排查
 
@@ -100,17 +93,15 @@ Hub 启动后，DA Worker 镜像（`da-backend` / `da-frontend` / `da-postgres` 
 - `docker compose -f docker-compose.prod.yml logs hub` 看 migration 输出
 - 常见原因：`.env` 中 `ADMIN_INIT_PASSWORD` 或其他 `${VAR:?...}` 必填项为空 → compose 会拒绝启动
 
-### Hub 容器内 `docker: command not found`（仅本地 Docker 部署模式）
-- Hub 镜像内已内置 docker CLI，但需要挂载宿主 socket。编辑 compose 取消这行注释：
-  ```yaml
-  - /var/run/docker.sock:/var/run/docker.sock
-  ```
-  仅当你要用「本地 Docker 部署模式」时才需要（默认 SSH 部署不需要）。
+### Hub 控制台部署 Worker 时 `docker: No such image: deepanalyze/da:latest`
+- 4 个镜像没全 load。检查：`docker images | grep -E 'deepanalyze|pgvector'`，应有 `deepanalyze/da:latest` 和 `pgvector/pgvector:pg16`
+- 缺则重跑 `bash DA_Deploy/offline/load-images.sh images/`
 
-### Worker 部署时 `ImagePullBackOff` / `docker: No such image`
-- 目标 Worker 主机没有 `da-backend` / `da-frontend` / `da-postgres` / `da-embedding` 之一。把 `images/da-*.tar` 拷过去跑 `docker load -i <file>`。
+### Hub 控制台部署 Worker 时 `Cannot connect to the Docker daemon`
+- compose 没挂 docker.sock。检查 `docker-compose.prod.yml` 中 hub 服务的 volumes 是否有 `- /var/run/docker.sock:/var/run/docker.sock`（默认已启用）
+- Windows Docker Desktop 下确认 Docker Desktop 设置里勾选了「Expose daemon on tcp://localhost:2375」或 default socket 可用
 
-### 构建机 build `da-embedding` 卡住或失败
-- BGE-M3 模型权重 ~2.2 GB，依赖 `huggingface.co` 网络。失败时：
-  - 设 `HF_ENDPOINT=https://hf-mirror.com` 重试（国内镜像）
-  - 或加 `--no-embedding` 跳过，部署后在 Worker 内单独配置 embedding 服务
+### 构建机 build worker 时网络失败
+- docling/torch/whisper 依赖大，pip 拉取可能超时
+- 设镜像源重试：`docker build --network=host -t deepanalyze/da:<ver> -f DeepAnalyze/Dockerfile DeepAnalyze/`
+- 或直接复用现有 worker 镜像（用 `export-images.sh` 而非 `build-bundle.sh`）

@@ -1,10 +1,15 @@
 # =============================================================================
-# DeepAnalyze Hub - 生产环境 Compose
+# DeepAnalyze Hub - 生产环境 Compose（local Docker 部署模式）
 # =============================================================================
+# 部署模式：Hub 与 Worker 同机。Hub 通过挂载的 docker.sock 在本机拉起 worker 容器。
+#
 # 用法：
-#   1. 复制 .env.production.example -> .env，并填入密钥
+#   1. 先 docker load 4 个镜像（hub / postgres / worker / worker-pg）
+#      bash DA_Deploy/offline/load-images.sh DA_Deploy/images/
+#   2. cp .env.production.example .env，填入密钥
 #      （或直接运行 scripts/generate-secrets.sh 自动生成）
-#   2. docker compose -f docker-compose.prod.yml up -d
+#   3. docker compose -f docker-compose.prod.yml up -d
+#   4. 浏览器访问 http://<host>:22000，admin 登录后通过控制台部署 worker
 #
 # 升级 / 备份 / 恢复：见 scripts/ 目录与 README.md
 # =============================================================================
@@ -54,7 +59,7 @@ services:
     environment:
       PORT: 22000
       NODE_ENV: production
-      # ── PostgreSQL ──────────────────────────────────────────
+      # ── PostgreSQL（Hub 自己的关系数据库）──────────────────
       PG_HOST: postgres
       PG_PORT: 5432
       PG_DATABASE: ${PG_DATABASE:-deepanalyze_hub}
@@ -75,12 +80,17 @@ services:
       # 生产环境必须设置强密码；migration 008 用此值 seed admin 账号
       ADMIN_INIT_PASSWORD: ${ADMIN_INIT_PASSWORD:?必须在 .env 中设置 ADMIN_INIT_PASSWORD}
       # ── 外部访问 URL ───────────────────────────────────────
-      # DA Worker 用此 URL 回 Hub 拉 bundle / 验 SSO ticket
+      # DA Worker 用此 URL 回访 Hub（拉 bundle / 验 SSO ticket）
       HUB_EXTERNAL_URL: ${HUB_EXTERNAL_URL:?必须在 .env 中设置 HUB_EXTERNAL_URL}
       # ── 数据加密 / SSH ─────────────────────────────────────
       HUB_DATA_KEY: ${HUB_DATA_KEY:?必须在 .env 中设置 HUB_DATA_KEY}
       HUB_SSH_DEFAULT_PORT: ${HUB_SSH_DEFAULT_PORT:-22}
       HUB_SSH_TIMEOUT: ${HUB_SSH_TIMEOUT:-60000}
+      # ── Local Docker 模式：worker 容器镜像 ─────────────────
+      # Hub 通过 docker.sock 在本机拉起 worker 时用的镜像名
+      # 必须已 docker load 到本机（默认 deepanalyze/da:latest + pgvector/pgvector:pg16）
+      HUB_DA_IMAGE: ${HUB_DA_IMAGE:-deepanalyze/da:latest}
+      HUB_DA_PG_IMAGE: ${HUB_DA_PG_IMAGE:-pgvector/pgvector:pg16}
       # ── 存储 / 备份 ────────────────────────────────────────
       HUB_MODEL_REPO_DIR: /app/data/model-repo
       HUB_MODEL_MAX_SIZE: ${HUB_MODEL_MAX_SIZE:-5368709120}
@@ -91,12 +101,10 @@ services:
       HUB_DOCKER_REGISTRY: ${HUB_DOCKER_REGISTRY:-}
     volumes:
       - hub-data:/app/data
-      # ── 本地 Docker 部署模式（Hub 容器内直接管理 worker 容器）──
-      # 默认关闭：Worker 通常通过 SSH 模式部署，Hub 无需访问宿主 Docker。
-      # 启用本地 Docker 部署模式（local-deployment.ts）时取消下行注释。
-      # 注意：挂载 docker.sock 等同于把宿主 root 权限授予 Hub 容器，
-      #       仅在受控内网且 Hub 本身已被隔离的前提下启用。
-      # - /var/run/docker.sock:/var/run/docker.sock
+      # ── Local Docker 部署模式必需：让 hub 容器内 docker CLI 能访问宿主 daemon ──
+      # Hub 通过它在控制台调 /api/v1/deploy，在本机拉起 da-app-* + da-pg-* worker 容器。
+      # 部署前请确保 worker / worker-pg 镜像已 docker load 到本机。
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       postgres:
         condition: service_healthy
