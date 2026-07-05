@@ -1,0 +1,43 @@
+{
+  "timestamp": "2026-06-04T00:30:59.748Z",
+  "avgScore": "100.0",
+  "perfectScores": 1,
+  "totalTests": 1,
+  "results": [
+    {
+      "testId": "FAct-01",
+      "category": "事实核查-复杂知识",
+      "expectedAnswer": "no",
+      "agentOutput": "待验证答案不正确。正确答案应为 No：只有 Kazuo Ishiguro 从日本移居英国（家人于1960年迁英），而 Yukio Mishima 并未移居英国；且知识中也未提及 Ishiguro 搬迁的原因是\"教育\"。\n\n# 分析与判断结果\n\n## 原始问题\nDid Kazuo Ishiguro and Yukio Mishima both move from Japan to England?\n\n## 待验证答案\nYes, Kazuo Ishiguro and Yukio Mishima both moved to England for their education.\n\n## 知识核查\n\n### 关于 Kazuo Ishiguro\n- 知识原文：\"born in Nagasaki, Japan; his family moved to England in 1960.\"\n- ✅ 确实从日本移居英国。\n- ⚠️ 知识中未提及搬迁原因是\"教育\"。\n\n### 关于 Yukio Mishima\n- 知识原文：1925-1970，日本作家、诗人、剧作家，民族主义者，创立右翼民兵组织。\n- ❌ 知识中**没有任何关于他移居英国的信息**。\n\n## 待验证答案的两处错误\n\n1. **事实性错误**：声称 Yukio Mishima 也搬到了英国。知识中无此记载，且根据历史事实，三岛由纪夫一生主要居住在日本，1970 年在日本切腹自尽，从未移居英国。\n2. **无中生有的细节**：为 Ishiguro 的搬迁添加了\"为了教育\"这一原因。提供的知识原文仅说\"his family moved to England in 1960\"，并未说明搬迁原因。\n\n## 最终结论\n\n**❌ 该答案不正确。**\n\n正确答案：**No.** 根据所提供的知识，只有 Kazuo Ishiguro 一人从日本移居英国（家人于1960年搬到英国），而 Yukio Mishima 并未移居英国。知识中也未提及 Ishiguro 搬迁是因为教育。\n",
+      "score": 100,
+      "scoreDetails": [
+        "+40 答案正确",
+        "+30 正确判断候选答案错误",
+        "+15 有分析过程",
+        "+15 引用了知识中的关键实体 (3/5)"
+      ],
+      "status": "evaluated",
+      "toolCalls": [
+        {
+          "toolName": "write_file",
+          "input": {
+            "path": "tmp/analysis_result.md",
+            "content": "# 分析与判断结果\n\n## 原始问题\nDid Kazuo Ishiguro and Yukio Mishima both move from Japan to England?\n\n## 待验证答案\nYes, Kazuo Ishiguro and Yukio Mishima both moved to England for their education.\n\n## 知识核查\n\n### 关于 Kazuo Ishiguro\n- 知识原文：\"born in Nagasaki, Japan; his family moved to England in 1960.\"\n- ✅ 确实从日本移居英国。\n- ⚠️ 知识中未提及搬迁原因是\"教育\"。\n\n### 关于 Yukio Mishima\n- 知识原文：1925-1970，日本作家、诗人、剧作家，民族主义者，创立右翼民兵组织。\n- ❌ 知识中**没有任何关于他移居英国的信息**。\n\n## 待验证答案的两处错误\n\n1. **事实性错误**：声称 Yukio Mishima 也搬到了英国。知识中无此记载，且根据历史事实，三岛由纪夫一生主要居住在日本，1970 年在日本切腹自尽，从未移居英国。\n2. **无中生有的细节**：为 Ishiguro 的搬迁添加了\"为了教育\"这一原因。提供的知识原文仅说\"his family moved to England in 1960\"，并未说明搬迁原因。\n\n## 最终结论\n\n**❌ 该答案不正确。**\n\n正确答案：**No.** 根据所提供的知识，只有 Kazuo Ishiguro 一人从日本移居英国（家人于1960年搬到英国），而 Yukio Mishima 并未移居英国。知识中也未提及 Ishiguro 搬迁是因为教育。\n"
+          },
+          "output": "{\"success\":true,\"path\":\"sessions/339018d9-17bc-4e45-b11b-e4e97ecabd45/output/main_1780533054071_tmp_analysis_result.md\",\"bytesWritten\":1346}"
+        },
+        {
+          "toolName": "finish",
+          "input": {
+            "summary": "待验证答案不正确。正确答案应为 No：只有 Kazuo Ishiguro 从日本移居英国（家人于1960年迁英），而 Yukio Mishima 并未移居英国；且知识中也未提及 Ishiguro 搬迁的原因是\"教育\"。"
+          },
+          "output": "{\"completed\":true,\"summary\":\"待验证答案不正确。正确答案应为 No：只有 Kazuo Ishiguro 从日本移居英国（家人于1960年迁英），而 Yukio Mishima 并未移居英国；且知识中也未提及 Ishiguro 搬迁的原因是\\\"教育\\\"。\"}"
+        }
+      ],
+      "turnsUsed": 3,
+      "durationMs": 22046,
+      "sessionId": "339018d9-17bc-4e45-b11b-e4e97ecabd45",
+      "error": null
+    }
+  ]
+}

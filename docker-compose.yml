@@ -1,0 +1,61 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: da-hub-postgres
+    environment:
+      POSTGRES_DB: deepanalyze_hub
+      POSTGRES_USER: deepanalyze_hub
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-deepanalyze_hub_dev}
+    volumes:
+      - hub-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U deepanalyze_hub"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5433:5432"
+
+  hub:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: da-hub
+    ports:
+      - "${PORT:-22000}:22000"
+    environment:
+      PORT: 22000
+      NODE_ENV: production
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_DATABASE: deepanalyze_hub
+      PG_USER: deepanalyze_hub
+      PG_PASSWORD: ${PG_PASSWORD:-deepanalyze_hub_dev}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change-me-refresh-in-production}
+      HUB_EXTERNAL_URL: ${HUB_EXTERNAL_URL:-http://localhost:22000}
+      HUB_DATA_KEY: ${HUB_DATA_KEY:-}
+      HUB_MODEL_REPO_DIR: /app/data/model-repo
+      HUB_BUNDLE_IMAGES_DIR: /app/data/bundle/images
+      HUB_BUNDLE_DIR: /app/data/bundle
+      HUB_BACKUP_DIR: /app/data/backups
+      HUB_JWT_PUBLIC_KEY_PATH: /app/data/keys/pub.pem
+      HUB_JWT_PRIVATE_KEY_PATH: /app/data/keys/priv.pem
+    volumes:
+      - hub-data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:22000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  hub-pgdata:
+  hub-data:

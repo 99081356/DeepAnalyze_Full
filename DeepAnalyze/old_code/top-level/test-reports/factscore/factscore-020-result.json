@@ -1,0 +1,46 @@
+{
+  "test_id": "factscore-020",
+  "entity": "Carlos J. Alfonso",
+  "prompt": "Tell me a bio of Carlos J. Alfonso",
+  "evaluation_criteria": "Factual accuracy of biographical details, profession, and achievements. Verify that the entity is correctly disambiguated -- 'Carlos J. Alfonso' and 'Carlos Alfonso' may refer to different people. Ensure claims are about the correct individual and not conflated with similarly named entities.",
+  "output": "Here is a comprehensive biography of **Carlos J. Alfonso**:\n\n---\n\n## Carlos J. Alfonso — Biography\n\n**Carlos Juan Alfonso** (born March 27, 1955, in Havana, Cuba) is a Cuban-American architect, real estate executive, and civic leader. He is best known as the founding principal and CEO of **Alfonso Architects**, a prominent architecture firm based in Ybor City, Florida, and as the former **Chairman of the University of Florida Board of Trustees** (2011–2012).\n\n---\n\n### Early Life\n\nAlfonso was born in Havana, Cuba, in 1955 to **Carlos Ernesto Alfonso**, a Havana-based architect. In 1960, at just five years old, he fled Cuba with his parents and two younger brothers following the Cuban Revolution. He was raised in **Tampa, Florida**, and graduated from **Jesuit High School** in 1973. He went on to earn both his **Bachelor of Design** and **Master of Architecture** from the **University of Florida** in 1981.\n\n---\n\n### Career\n\n#### Alfonso Architects\nIn **1988**, Alfonso founded **Alfonso Architects, Inc.** alongside his father Carlos Ernesto Alfonso, his brother **Alberto Alfonso**, and friend **Angel del Monte**. The firm is headquartered in a beautifully restored **1887 train depot** in Ybor City, Florida, and employs approximately 45 people.\n\nThe firm earned the **Florida A.I.A. Firm of the Year Award** in 2003. Notable projects include:\n- **Streamsong Resort** (Polk County, FL)\n- **Tampa International Airport Airside C**\n- **Nielsen Media Research Global Technology Center**\n- **The Frank and Carol Morsani Center**\n- **The Chihuly Collection at the Morean Arts Center**\n- **University of South Florida** buildings (Medical Office Building, School of Psychology)\n- **Mission of St. Mary Chapel** and **Tampa Covenant Church**\n\nCarlos serves as **CEO**, while his brother Alberto is president and lead designer.\n\n#### Alliant Partners\nIn **2000**, Alfonso founded **Alliant Partners, LLC**, a commercial real estate investment company, where he serves as CEO. Alliant Partners provides a full range of real estate services — from property brokerage and schematic design to permitting, financial underwriting, and construction management. Clients have included **CVS, Walgreens, Publix, The Home Depot, Starbucks Coffee, AT&T Mobility, UF Health & Shands**, and many others.\n\n---\n\n### University of Florida Leadership\n\nAlfonso played a pivotal role in University of Florida governance:\n\n- **2001**: Appointed by **Governor Jeb Bush** as one of the **founding 11 members** of the UF Board of Trustees after a restructuring of higher education governance in Florida.\n- **2009–2011**: Elected **Vice Chair** of the Board.\n- **2011–2012**: Elected **Chairman** of the Board.\n\nUF President **J. Bernard Machen** credited Alfonso with being \"instrumental in many of the university's greatest achievements,\" including increased tuition flexibility, progress in innovation, and rapid growth of campus research infrastructure.\n\nHis tenure ended controversially when **Governor Rick Scott** declined to renominate him after the Florida Senate failed to act on his appointment. Alfonso withdrew his application after being informed Scott would not reappoint him.\n\nHe later served on the **UF Presidential Selection Committee** to find President Machen's replacement and currently chairs the **UF Advisory Board for UF Online** (Florida's online baccalaureate program). He is also a member of the **UF Gator Boosters**.\n\n---\n\n### State of Florida & Civic Engagement\n\nAlfonso has been deeply involved in Florida civic life:\n\n- **Current**: Director of the **Florida Council of 100**; Vice Chair of the **Florida Wildlife Foundation**; advisory board member of **USAmeriBank**; ex-officio trustee member of the **UF Foundation's Board of Directors** (Executive Committee).\n- **Previous**: Member of the **Florida Constitution Revision Commission** (1997–1998); **Florida Communities Trust**; **Super Bowl XLIII Board of Directors**; **Mercantile Bank Board**; **Florida 2012 Board**; **Florida TaxWatch Board**; and **Tampa Bay History Center Board**.\n\n---\n\n### Awards\n\n- **2025**: United States Special Operations Command Medal for Outstanding Contributions to Special Operations\n- **2014**: AIA Florida Design Awards – Award of Excellence for **Streamsong Resort Lodge** and **Clubhouse**\n- **2014**: *Golf, Inc.* — Streamsong Resort, U.S. Golf Clubhouse of the Year (3rd Place)\n- **Distinguished Alumni** — University of Florida College of Architecture\n\n---\n\n### Personal Life\n\nAlfonso is a **commercial multi-engine, instrument-rated pilot**. He married **Dorothy Alfonso** in 1988, and they have three children: **Ariana, Carlos, and Isabella**. He is a practicing **Roman Catholic** and a registered **Republican**.\n\n---\n\n*Source: Wikipedia — \"Carlos J. Alfonso\"* [来源: Wikipedia]",
+  "finish_summary": "",
+  "tool_calls": [
+    {
+      "tool": "think",
+      "input": {
+        "thought": "The user is asking for a biography of Carlos J. Alfonso. Let me first search my knowledge base for any information about this person, and also do a web search to gather comprehensive information."
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Carlos J. Alfonso biography"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "search",
+        "query": "Carlos J. Alfonso"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "title": "Carlos J. Alfonso"
+      }
+    }
+  ],
+  "tools": [
+    "think",
+    "mcp__minimax_websearch__web_search",
+    "wikipedia",
+    "wikipedia"
+  ],
+  "turns": 5,
+  "elapsed": 43.6,
+  "fact_score": 80,
+  "fact_details": "Substantial output (4793 chars) about Carlos J. Alfonso - no specific criteria facts to verify"
+}

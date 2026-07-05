@@ -1,0 +1,51 @@
+# =============================================================================
+# DeepAnalyze - Base Image (~500MB)
+# =============================================================================
+# Slim image: Bun + Python3 + DA backend + frontend dist.
+# Does NOT include torch/onnx/whisper/docling — those are in Dockerfile.full
+# or downloaded at runtime by the setup wizard.
+# =============================================================================
+
+FROM oven/bun:1
+
+WORKDIR /app
+
+# System dependencies (minimal): Python3 + curl (for healthcheck)
+RUN apt-get update -qq && \
+    apt-get install -y -qq --no-install-recommends \
+      python3 python3-pip curl && \
+    rm -rf /var/lib/apt/lists/*
+
+# Python dependencies (minimal: HTTP client utility only)
+RUN pip3 install --no-cache-dir --break-system-packages httpx && \
+    rm -rf /root/.cache/pip
+
+# Backend dependencies (use wildcard for lock file — works with bun.lock or bun.lockb)
+COPY package.json bun.lock* ./
+RUN bun install --frozen-lockfile --production
+
+# Application source (selective copy for better layer caching)
+COPY src/ ./src/
+COPY da-assets/ ./da-assets/
+COPY start.py ./
+
+# Frontend build artifacts (must be pre-built: run `npm run build` in frontend/ first)
+COPY frontend/dist/ ./frontend/dist/
+
+RUN mkdir -p /app/data
+
+ENV NODE_ENV=production
+ENV DA_AUTH_MODE=none
+# Docker mode: skip interactive CLI wizard (use web wizard via /setup instead)
+ENV DA_SKIP_WIZARD=true
+ENV PORT=21000
+ENV DATA_DIR=/app/data
+# Model download mirror (China-friendly, can be overridden)
+ENV HF_ENDPOINT=https://hf-mirror.com
+
+EXPOSE 21000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:21000/api/health || exit 1
+
+CMD ["bun", "run", "src/main.ts"]

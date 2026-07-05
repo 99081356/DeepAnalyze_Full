@@ -1,0 +1,39 @@
+{
+  "test_id": "factscore-009",
+  "entity": "Ylona Garcia",
+  "prompt": "Tell me a bio of Ylona Garcia",
+  "evaluation_criteria": "Factual accuracy of nationality (Filipino/Australian), profession (singer, actress), TV appearances (ASAP, etc.), career milestones, birth date. Specific TV show appearances must be individually verified -- some generated claims about appearances are not supported by Wikipedia.",
+  "output": "Ylona Jade Garcia (born February 28, 2002, in Sydney, Australia) is a Filipino-Australian singer, songwriter, actress, and content creator. She rose to fame in 2015 as the first runner-up of Pinoy Big Brother: 737 at age 13, then launched a successful music and acting career in the Philippines with Star Music, releasing a Gold-certified debut EP \"My Name Is Ylona Garcia\" (2016). She transitioned to the international stage by signing with 88rising's Paradise Rising label in 2021, releasing singles like \"All That,\" \"Don't Go Changing,\" and the VALORANT-collaboration \"Entertain Me\" (2022). She relocated to Los Angeles in 2022, became the first Filipino featured in V Magazine, joined 100 Thieves as a content creator in 2024, and continues releasing music including \"Sick of It\" (2025) and \"Question Mark\"/\"Could've Been\" (2026). Her music spans R&B and pop, and she is widely regarded as a style icon and voice of her generation.",
+  "finish_summary": "Ylona Jade Garcia (born February 28, 2002, in Sydney, Australia) is a Filipino-Australian singer, songwriter, actress, and content creator. She rose to fame in 2015 as the first runner-up of Pinoy Big Brother: 737 at age 13, then launched a successful music and acting career in the Philippines with Star Music, releasing a Gold-certified debut EP \"My Name Is Ylona Garcia\" (2016). She transitioned to the international stage by signing with 88rising's Paradise Rising label in 2021, releasing singles like \"All That,\" \"Don't Go Changing,\" and the VALORANT-collaboration \"Entertain Me\" (2022). She relocated to Los Angeles in 2022, became the first Filipino featured in V Magazine, joined 100 Thieves as a content creator in 2024, and continues releasing music including \"Sick of It\" (2025) and \"Question Mark\"/\"Could've Been\" (2026). Her music spans R&B and pop, and she is widely regarded as a style icon and voice of her generation.",
+  "tool_calls": [
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "search",
+        "query": "Ylona Garcia"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "title": "Ylona Garcia"
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "Ylona Jade Garcia (born February 28, 2002, in Sydney, Australia) is a Filipino-Australian singer, songwriter, actress, and content creator. She rose to fame in 2015 as the first runner-up of Pinoy Big Brother: 737 at age 13, then launched a successful music and acting career in the Philippines with Star Music, releasing a Gold-certified debut EP \"My Name Is Ylona Garcia\" (2016). She transitioned to the international stage by signing with 88rising's Paradise Rising label in 2021, releasing singles like \"All That,\" \"Don't Go Changing,\" and the VALORANT-collaboration \"Entertain Me\" (2022). She relocated to Los Angeles in 2022, became the first Filipino featured in V Magazine, joined 100 Thieves as a content creator in 2024, and continues releasing music including \"Sick of It\" (2025) and \"Question Mark\"/\"Could've Been\" (2026). Her music spans R&B and pop, and she is widely regarded as a style icon and voice of her generation."
+      }
+    }
+  ],
+  "tools": [
+    "wikipedia",
+    "wikipedia",
+    "finish"
+  ],
+  "turns": 3,
+  "elapsed": 65.6,
+  "fact_score": 100,
+  "fact_details": "✓ nationality: australian\n✓ nationality: filipino\n✓ profession: actor (matched 'actress')\n✓ profession: singer (matched 'singer')"
+}

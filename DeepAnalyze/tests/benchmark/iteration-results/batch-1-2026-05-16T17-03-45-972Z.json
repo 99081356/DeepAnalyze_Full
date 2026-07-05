@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-05-16T17:04:08.246Z",
+  "batchIndex": 1,
+  "cases": 1,
+  "passed": 0,
+  "failed": 1,
+  "totalDurationMs": 14063,
+  "results": [
+    {
+      "id": "KB-TEST-001",
+      "category": "DeepAnalyze-KB",
+      "status": "completed",
+      "durationMs": 14063,
+      "toolCallCount": 3,
+      "outputLength": 496,
+      "pushContentCount": 0,
+      "evaluation": {
+        "testCaseId": "KB-TEST-001",
+        "expectedAnswer": "Any accurate statistics based on actual KB data",
+        "criteria": "Must include actual file type counts from KB, format as table, no hallucination",
+        "passed": false,
+        "score": 0,
+        "details": "Expected \"Any accurate statistics based on actual KB data\" not found in output (first 500 chars: 我来查询知识库中文档的类型分布。首先查看数据库表结构，然后执行统计查询。找到了 `file_type` 字段。现在执行统计查询：根据数据库查询结果，知识库中文档类型分布如下：\n\n| 文件类型 | 数量 |\n|---------|------|\n| png | 95 |\n| jpg | 75 |\n| pdf | 46 |\n| webp | 8 |\n| mp3 | 5 |\n| doc | 4 |\n| docx | 3 |\n| mp4 | 3 |\n| jpg@h_1280 | 1 |\n| jpeg | 1 |\n| xlsx | 1 |\n| wav | 1 |\n| **合计** | **243** |\n\n**主要分布特点：**\n- **图片类**（png、jpg、webp、jpeg、jpg@h_1280）占比最高，共 **180 个**，约 74%\n- **文档类**（pdf、doc、docx、xlsx）共 **54 个**，约 22%\n- **音视频类**（mp3、mp4、wav）共 **9 个**，约 4%\n\n注：`jpg@h_1280` 是带尺寸标注的图片变体，单独计为一个类型。)"
+      }
+    }
+  ]
+}

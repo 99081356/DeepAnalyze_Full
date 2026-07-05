@@ -1,0 +1,290 @@
+[
+  {
+    "id": "AEB-D5-001",
+    "difficulty": 5,
+    "category": "multi-step-reasoning",
+    "description": "5-step chain: Extract key data from a document, compute derived values, cross-reference with another document, verify consistency, and produce a final synthesis",
+    "question": "请完成以下多步分析任务：\n1. 在bigtest3知识库中找到关于'剪烛夜行'游戏的文档，列出所有角色的名字\n2. 找出其中死亡的角色及其死因\n3. 找出凶手及其动机\n4. 根据以上信息，总结整个案件的完整时间线（按事件发生顺序）\n5. 最终给出你对整个案件的分析结论",
+    "expected_answer": "应包含：所有角色名单、死亡角色和死因、凶手身份和动机、按时间顺序的事件列表、分析结论",
+    "evaluation_criteria": [
+      "必须列出所有角色名",
+      "死因必须准确（不能混淆不同角色的死因）",
+      "必须正确识别凶手",
+      "时间线必须按事件发生顺序排列",
+      "最终结论必须综合前述所有信息"
+    ],
+    "kb_scope": ["bigtest3"],
+    "min_steps": 5,
+    "tags": ["multi-step", "document-analysis", "temporal-reasoning"]
+  },
+  {
+    "id": "AEB-D5-002",
+    "difficulty": 5,
+    "category": "cross-document-reasoning",
+    "description": "5-step chain: Find financial data across multiple documents, extract specific numbers, compute totals, compare with claims in another document",
+    "question": "请完成以下多步验证任务：\n1. 在lbctest知识库中找到租赁合同相关的文件\n2. 提取合同中的月租金金额和租赁期限\n3. 计算整个租赁期间的总租金\n4. 在起诉书中找到涉案金额的描述\n5. 对比合同金额与起诉书中的金额描述，说明是否一致",
+    "expected_answer": "月租金12万，租期36个月（2025年1月1日至2027年12月31日），总租金432万。应与起诉书中的涉案金额进行对比分析",
+    "evaluation_criteria": [
+      "月租金金额必须精确",
+      "租赁起止日期必须精确到年月日",
+      "总租金计算必须正确",
+      "必须找到起诉书中的金额信息",
+      "必须给出对比结论而非仅罗列数据"
+    ],
+    "kb_scope": ["lbctest"],
+    "min_steps": 5,
+    "tags": ["multi-step", "cross-document", "numerical-reasoning"]
+  },
+  {
+    "id": "AEB-D5-003",
+    "difficulty": 5,
+    "category": "hidden-state-tracking",
+    "description": "5-step chain: Search for evidence, identify connections between people, track evidence chain, build relationship map",
+    "question": "请完成以下证据链分析：\n1. 在lbctest知识库中找到所有与张伟相关的证据文件\n2. 找到所有与李强相关的证据文件\n3. 找到所有与王芳相关的证据文件\n4. 分析三人之间的关联关系（如：资金往来、通讯记录等）\n5. 基于证据链，总结这起案件中的组织结构和各人的角色",
+    "expected_answer": "张伟为主犯（组织卖淫罪），李强为从犯（组织卖淫罪），王芳为从犯（组织卖淫罪，地位最低）。应包含扣押物品、银行流水等证据间的关联",
+    "evaluation_criteria": [
+      "三人均需有对应证据文件",
+      "必须分析出三人之间的关联（非各自独立描述）",
+      "主从犯关系必须正确区分",
+      "必须引用具体证据（如扣押物品清单、搜查证等）",
+      "组织结构分析必须基于证据而非推测"
+    ],
+    "kb_scope": ["lbctest"],
+    "min_steps": 5,
+    "tags": ["multi-step", "evidence-chain", "relationship-analysis"]
+  },
+  {
+    "id": "AEB-D10-001",
+    "difficulty": 10,
+    "category": "multi-step-reasoning",
+    "description": "10-step chain: Complex multi-document analysis requiring tracking multiple entities, their relationships, timeline reconstruction, and cross-validation of claims across documents",
+    "question": "请完成以下复杂的多步分析任务：\n1. 在bigtest3知识库中找到所有游戏剧本（剪烛夜行、自杀派对、追凶手记等）\n2. 对每个游戏，列出所有出场角色\n3. 找出每个游戏中死亡的角色\n4. 找出每个游戏中的凶手\n5. 分析每个游戏的作案动机\n6. 找出每个游戏中关键物证\n7. 对比各游戏案件的共性特征（如作案手法、动机类型等）\n8. 分析bigtest3知识库中是否有跨游戏的隐藏联系\n9. 找到知识库中的音频文件，总结音频内容与案件的关系\n10. 最终给出一份涵盖所有游戏的综合分析报告",
+    "expected_answer": "应包含每个游戏的独立分析（角色、死因、凶手、动机、物证）+ 跨游戏对比分析 + 音频内容关联 + 综合报告",
+    "evaluation_criteria": [
+      "每个游戏都必须单独分析，不能遗漏",
+      "每个游戏的凶手和死因必须准确",
+      "跨游戏对比必须基于实际共性，不能臆造",
+      "音频内容必须引用实际ASR转写",
+      "综合报告必须整合前面所有步骤的发现"
+    ],
+    "kb_scope": ["bigtest3"],
+    "min_steps": 10,
+    "tags": ["multi-step", "cross-game", "comprehensive-analysis"]
+  },
+  {
+    "id": "AEB-D10-002",
+    "difficulty": 10,
+    "category": "hidden-state-tracking",
+    "description": "10-step chain: Deep legal case analysis requiring extraction of specific data points across multiple documents, computation, cross-referencing, and legal reasoning",
+    "question": "请完成以下法律案件深度分析：\n1. 在lbctest知识库中找到起诉书，提取被控罪名和量刑建议\n2. 找到搜查证，提取搜查时间、地点和执行人员\n3. 找到扣押物品清单，分类统计所有扣押物品\n4. 找到银行流水记录，统计涉案资金总额和流向\n5. 找到证人证词，总结各证人的核心证言\n6. 分析扣押物品与犯罪行为的对应关系\n7. 分析资金流向与组织结构的对应关系\n8. 根据量刑建议和法律规定，评估量刑的合理性\n9. 分析本案证据链的完整性，指出可能的证据漏洞\n10. 综合以上分析，给出本案的完整案情总结和证据链报告",
+    "expected_answer": "起诉书（组织卖淫罪，张伟12年+罚金50万，李强10年+罚金40万，王芳5年+罚金20万），搜查证（2025年9月20日22:30），扣押物品（现金85600元等），完整证据链分析",
+    "evaluation_criteria": [
+      "罪名和量刑必须精确匹配各人",
+      "搜查时间和地点必须精确",
+      "扣押物品必须完整分类统计",
+      "资金分析必须引用具体数字",
+      "证据链分析必须指出具体缺失或漏洞",
+      "综合报告必须涵盖前面所有步骤"
+    ],
+    "kb_scope": ["lbctest"],
+    "min_steps": 10,
+    "tags": ["multi-step", "legal-analysis", "evidence-chain"]
+  },
+  {
+    "id": "AEB-D10-003",
+    "difficulty": 10,
+    "category": "intermediate-propagation",
+    "description": "10-step chain: Data analysis task requiring extraction of structured data from documents, aggregation, comparison, and statistical analysis",
+    "question": "请完成以下数据提取和分析任务：\n1. 在DABstep Payment Analytics知识库中探索所有可用的文档和数据文件\n2. 找到包含支付数据的文件，了解数据结构\n3. 提取所有支付记录的金额字段\n4. 按支付类型分类统计各类型的总金额和笔数\n5. 找到包含时间信息的字段，按月份统计支付金额\n6. 计算月均支付金额和标准差\n7. 找到金额最大和最小的支付记录及其详细信息\n8. 检查是否有异常值（金额异常大或异常小的记录）\n9. 如果存在多张数据表，分析各表之间的关联关系\n10. 最终输出一份完整的支付数据分析报告，包含关键统计指标和趋势分析",
+    "expected_answer": "应包含：数据文件列表、支付金额按类型和月份的统计、月均金额和标准差、极值记录、异常值检测、数据表关联分析、完整分析报告",
+    "evaluation_criteria": [
+      "必须实际提取数据而非仅描述数据结构",
+      "统计数字必须基于实际数据计算",
+      "必须按类型和月份分别统计",
+      "异常值分析必须有具体标准和结果",
+      "最终报告必须包含具体数字而非空泛描述"
+    ],
+    "kb_scope": ["dabstep"],
+    "min_steps": 10,
+    "tags": ["multi-step", "data-analysis", "statistical-reasoning"]
+  },
+  {
+    "id": "AEB-D15-001",
+    "difficulty": 15,
+    "category": "multi-step-reasoning",
+    "description": "15-step chain: Cross-knowledge-base analysis requiring information extraction from multiple KBs, synthesis, and meta-analysis",
+    "question": "请完成以下跨知识库深度分析任务：\n\n第一部分 - bigtest3知识库分析：\n1. 列出bigtest3知识库中所有游戏名称\n2. 对每个游戏提取完整角色列表\n3. 对每个游戏提取完整事件时间线\n4. 对每个游戏分析作案手法和工具\n5. 分析各游戏之间的叙事技巧差异\n\n第二部分 - lbctest知识库分析：\n6. 提取本案所有涉案人员的基本信息\n7. 提取所有法律文书及其核心内容\n8. 分析证据链的逻辑结构（物证→书证→证言→指控）\n9. 评估证据的充分性（哪些环节证据充分，哪些环节证据薄弱）\n10. 分析量刑建议的法律依据\n\n第三部分 - 综合分析：\n11. 比较bigtest3游戏案件和lbctest真实案件在证据类型上的差异\n12. 分析虚构案件中推理逻辑的特点\n13. 总结两个知识库文档处理质量的差异（如文档解析完整性、ASR准确度等）\n14. 对bigtest3知识库中的音频和视频内容进行汇总分析\n15. 最终输出一份跨知识库对比分析综合报告",
+    "expected_answer": "应包含bigtest3全游戏分析、lbctest完整案件分析、两者的对比分析、音视频内容分析、以及综合报告",
+    "evaluation_criteria": [
+      "15个步骤必须逐一完成，不可跳过",
+      "bigtest3的每个游戏都需要独立分析",
+      "lbctest的证据链分析必须引用具体证据",
+      "对比分析必须有实质性发现",
+      "音视频内容必须引用实际转写文本",
+      "综合报告必须整合全部15步的发现"
+    ],
+    "kb_scope": ["bigtest3", "lbctest"],
+    "min_steps": 15,
+    "tags": ["multi-step", "cross-kb", "meta-analysis"]
+  },
+  {
+    "id": "AEB-D15-002",
+    "difficulty": 15,
+    "category": "intermediate-propagation",
+    "description": "15-step chain: Deep forensic analysis requiring tracking multiple线索 across documents, building timelines, and cross-validating claims",
+    "question": "请完成以下深度取证分析任务：\n\n阶段一 - 文档发现：\n1. 搜索lbctest知识库中所有包含'张伟'的文档，列出文档名称和出现位置\n2. 搜索所有包含'李强'的文档，列出文档名称和出现位置\n3. 搜索所有包含'王芳'的文档，列出文档名称和出现位置\n4. 搜索所有包含金额数字的文档，提取所有金额信息\n5. 搜索所有包含日期时间的文档，建立完整时间线\n\n阶段二 - 关联分析：\n6. 分析张伟、李强、王芳三人在各文档中的共同出现情况\n7. 分析资金流向：谁控制资金、资金流向何处、涉及金额\n8. 分析各法律文书之间的逻辑关系（搜查证→扣押清单→起诉书）\n9. 找出各证人证词之间的矛盾或一致之处\n10. 分析扣押物品与各嫌疑人之间的对应关系\n\n阶段三 - 深度推理：\n11. 根据时间线推断犯罪组织的发展历程\n12. 分析各嫌疑人在组织中的实际角色（而非仅凭起诉书结论）\n13. 评估本案证据链是否存在断裂或矛盾\n14. 如你是辩护律师，指出本案最薄弱的证据环节\n15. 最终输出完整的取证分析报告，包括：人物关系图、资金流向图、时间线、证据链评估",
+    "expected_answer": "应包含15步的逐步分析、人物关联矩阵、资金流向、完整时间线、法律文书逻辑链、证据链评估（强/弱环节）、辩护角度分析",
+    "evaluation_criteria": [
+      "每个嫌疑人的文档出现情况必须准确统计",
+      "金额必须精确到元",
+      "时间线必须包含所有关键事件的时间点",
+      "资金流向分析必须引用具体记录",
+      "证据链评估必须指出具体强/弱环节",
+      "辩护角度分析必须合理且有依据",
+      "最终报告必须整合所有阶段的分析结果"
+    ],
+    "kb_scope": ["lbctest"],
+    "min_steps": 15,
+    "tags": ["multi-step", "forensic-analysis", "cross-validation"]
+  },
+  {
+    "id": "AEB-D15-003",
+    "difficulty": 15,
+    "category": "hidden-state-tracking",
+    "description": "15-step chain: Complex game analysis requiring tracking of hidden states, character motivations, and plot reveals across multiple game scripts",
+    "question": "请完成以下复杂游戏剧本分析任务：\n\n1. 在bigtest3知识库中找到'剪烛夜行'游戏的完整文档\n2. 列出所有角色及其身份/职业\n3. 绘制角色之间的关系网络\n4. 按时间线梳理所有事件（从最早到最晚）\n5. 找出所有线索/物证及其发现位置\n6. 分析每个线索指向的嫌疑人及推理链\n7. 找出真凶并分析其作案的完整过程（包括准备、实施、伪装）\n8. 找出所有'红鲱鱼'（误导性线索）并分析其设计目的\n9. 分析共犯的角色和参与方式\n10. 找到自杀派对游戏文档，提取其核心谜题\n11. 对比两个游戏在叙事结构上的异同\n12. 分析两个游戏在线索设计上的异同\n13. 分析两个游戏在角色塑造上的异同\n14. 总结两个游戏的推理难度和设计精妙之处\n15. 最终输出一份完整的游戏设计分析报告",
+    "expected_answer": "应包含：角色网络、完整时间线、线索推理链、真凶作案过程还原、红鲱鱼分析、共犯分析、双游戏对比分析、设计评价",
+    "evaluation_criteria": [
+      "角色关系必须准确（不能遗漏或错误连接）",
+      "时间线必须完整且顺序正确",
+      "线索推理链必须逻辑连贯",
+      "作案过程还原必须包含准备/实施/伪装三阶段",
+      "红鲱鱼分析必须解释误导机制",
+      "双游戏对比必须在至少三个维度上展开",
+      "最终报告必须涵盖全部15步要求"
+    ],
+    "kb_scope": ["bigtest3"],
+    "min_steps": 15,
+    "tags": ["multi-step", "game-analysis", "narrative-reasoning"]
+  },
+  {
+    "id": "AEB-D20-001",
+    "difficulty": 20,
+    "category": "multi-step-reasoning",
+    "description": "20-step chain: Full knowledge base deep analysis requiring systematic exploration of all documents, extraction of structured data, cross-document synthesis, and comprehensive reporting",
+    "question": "请完成以下全知识库深度分析任务，这是一个需要严格执行20个步骤的系统化分析：\n\n**步骤1-5：文档普查**\n1. 列出bigtest3知识库中的所有文档（包括文件名、类型、大小/页数）\n2. 列出lbctest知识库中的所有文档\n3. 统计两个知识库的文档类型分布（PDF、图片、音频、视频等）\n4. 检查每个文档的处理状态（是否已成功解析、ASR/VLM是否正常）\n5. 列出处理异常或不完整的文档\n\n**步骤6-10：内容深度提取**\n6. 从bigtest3提取所有游戏的核心剧情摘要（每个游戏一段）\n7. 从lbctest提取所有法律文书的结构化信息（文号、日期、当事人、核心结论）\n8. 提取bigtest3中所有涉及死亡/暴力的场景描述\n9. 提取lbctest中所有涉及金额的段落，标准化为统一格式\n10. 提取bigtest3中所有音频/视频的转写内容摘要\n\n**步骤11-15：交叉验证与深度分析**\n11. 验证bigtest3各游戏剧情描述是否与原文一致（抽样验证3处）\n12. 验证lbctest各文档中的人物信息是否前后一致\n13. 分析bigtest3知识库中是否有遗漏的隐藏文档或隐藏内容\n14. 分析lbctest案件中是否有起诉书未提及的异常细节\n15. 评估两个知识库的文档处理质量（解析完整性、信息保留度）\n\n**步骤16-20：综合报告**\n16. 生成bigtest3知识库的完整内容索引\n17. 生成lbctest知识库的完整内容索引\n18. 输出bigtest3的深度分析报告\n19. 输出lbctest的深度分析报告\n20. 输出跨知识库对比总结报告（包括：内容类型对比、分析难度对比、文档质量对比）",
+    "expected_answer": "应包含20个步骤的逐步执行结果、完整的文档普查数据、结构化的内容提取、交叉验证发现、以及三份最终报告",
+    "evaluation_criteria": [
+      "20个步骤必须逐一完成并报告中间结果",
+      "文档普查必须涵盖所有文档",
+      "内容提取必须引用原文而非概括",
+      "金额必须标准化为统一数字格式",
+      "交叉验证必须指出具体的一致/不一致之处",
+      "三份最终报告必须结构完整、信息丰富",
+      "不得跳过或合并步骤"
+    ],
+    "kb_scope": ["bigtest3", "lbctest"],
+    "min_steps": 20,
+    "tags": ["multi-step", "full-kb-analysis", "cross-validation"]
+  },
+  {
+    "id": "AEB-D20-002",
+    "difficulty": 20,
+    "category": "hidden-state-tracking",
+    "description": "20-step chain: Ultra-complex forensic reconstruction requiring tracking of dozens of entities, building multi-dimensional relationship maps, and synthesizing findings into a coherent narrative",
+    "question": "请完成以下超级复杂的法证重建分析任务：\n\n**阶段一：信息收集（步骤1-7）**\n1. 在lbctest中找到并读取起诉书全文，提取所有事实陈述\n2. 找到搜查证，提取搜查的法律依据和执行细节\n3. 找到扣押清单，逐一核对物品并分类（电子设备、财务资料、生物证据等）\n4. 找到银行流水，按时间顺序列出所有交易记录\n5. 找到所有证人证词，提取每个证人的身份和核心陈述\n6. 找到所有物证（照片、DNA报告等）的描述\n7. 搜索是否有补充侦查材料或二次鉴定报告\n\n**阶段二：时间线重建（步骤8-12）**\n8. 根据银行流水建立资金流动时间线\n9. 根据通讯记录建立人员联络时间线（如有）\n10. 根据搜查扣押记录建立执法行动时间线\n11. 根据证人证词建立犯罪行为时间线\n12. 整合以上四条时间线，建立统一的案件时间轴（标注冲突点）\n\n**阶段三：逻辑推理（步骤13-17）**\n13. 根据资金流向分析犯罪组织的层级结构\n14. 根据扣押物品种类分析犯罪行为的规模和性质\n15. 分析各证人证词的可信度（是否有矛盾、是否可相互印证）\n16. 根据所有证据分析各嫌疑人的实际参与程度\n17. 识别本案中证据链最薄弱的环节\n\n**阶段四：综合报告（步骤18-20）**\n18. 输出完整的案件时间轴（整合所有时间线）\n19. 输出组织结构图（人员层级、资金流向、职责分工）\n20. 输出最终法证分析报告（包括：案件概述、证据链分析、时间线、组织结构、证据充分性评估、潜在疑点、法律适用分析）",
+    "expected_answer": "应包含：所有原始证据的结构化提取、四条独立时间线+统一时间轴、组织结构分析、证人可信度评估、证据链强弱点分析、最终法证报告",
+    "evaluation_criteria": [
+      "20个步骤必须按顺序逐一完成",
+      "起诉书事实陈述必须完整提取",
+      "扣押物品必须按类别分组统计",
+      "银行流水交易必须按时间排列",
+      "四条时间线必须独立构建后整合",
+      "时间线冲突必须明确标注",
+      "证人可信度分析必须有具体依据",
+      "最终报告必须涵盖所有前置步骤的结论"
+    ],
+    "kb_scope": ["lbctest"],
+    "min_steps": 20,
+    "tags": ["multi-step", "forensic-reconstruction", "timeline-analysis"]
+  },
+  {
+    "id": "AEB-D20-003",
+    "difficulty": 20,
+    "category": "intermediate-propagation",
+    "description": "20-step chain: Data engineering task requiring systematic data discovery, extraction, transformation, analysis, and visualization preparation",
+    "question": "请完成以下系统化数据工程分析任务：\n\n**步骤1-5：数据发现**\n1. 探索DABstep知识库中所有可用的文档和数据文件\n2. 识别每个文件的类型、结构和包含的数据字段\n3. 检查数据质量（空值、异常值、格式不一致等）\n4. 找到所有数据表之间的关联字段\n5. 建立数据字典（每个字段的含义、类型、取值范围）\n\n**步骤6-10：数据提取**\n6. 提取所有支付记录并标准化格式\n7. 提取所有客户/商户信息\n8. 提取所有时间维度数据（日期、时间段等）\n9. 提取所有金额数据并验证数值正确性\n10. 提取所有分类/标签数据\n\n**步骤11-15：数据分析**\n11. 按支付类型进行分组统计分析\n12. 按时间维度进行趋势分析\n13. 按金额区间进行分布分析\n14. 计算关键统计指标（均值、中位数、标准差、四分位数）\n15. 识别异常模式和离群值\n\n**步骤16-20：综合报告**\n16. 生成数据质量报告\n17. 生成描述性统计分析报告\n18. 生成异常检测报告\n19. 生成趋势分析报告\n20. 最终输出完整的数据分析项目报告（含方法论、数据概览、关键发现、数据质量问题、分析结论、建议）",
+    "expected_answer": "应包含：数据字典、标准化后的数据摘要、多维统计分析结果、异常检测发现、以及完整的分析项目报告",
+    "evaluation_criteria": [
+      "数据字典必须完整（字段名、类型、含义、取值范围）",
+      "数据提取必须覆盖所有可用数据源",
+      "统计分析必须包含具体数字",
+      "趋势分析必须指出具体趋势方向",
+      "异常检测必须有明确的异常标准",
+      "最终报告必须整合全部20步的产出"
+    ],
+    "kb_scope": ["dabstep"],
+    "min_steps": 20,
+    "tags": ["multi-step", "data-engineering", "statistical-analysis"]
+  },
+  {
+    "id": "AEB-D25-001",
+    "difficulty": 25,
+    "category": "multi-step-reasoning",
+    "description": "25-step chain: Ultimate comprehensive analysis requiring full exploration of all knowledge bases, complete data extraction, multi-dimensional cross-validation, and meta-analysis",
+    "question": "请完成以下终极综合分析任务——这需要你系统地执行25个分析步骤：\n\n**阶段一：全库扫描（步骤1-5）**\n1. 列出所有可用知识库的名称、文档数量和总数据量\n2. 对每个知识库进行文档类型统计（PDF、图片、音频、视频、文本等）\n3. 检查所有文档的处理状态，标记异常文档\n4. 对每个知识库进行关键词索引（提取出现频率最高的20个关键词）\n5. 建立跨知识库的实体索引（人名、地名、机构名、金额等）\n\n**阶段二：深度内容分析（步骤6-12）**\n6. 分析bigtest3每个游戏的完整角色系统（角色关系图、动机、行为模式）\n7. 分析bigtest3每个游戏的推理链（线索→假设→验证→结论）\n8. 分析lbctest案件的完整证据体系（物证、书证、证人证言、鉴定意见）\n9. 分析lbctest案件的法律逻辑（事实认定→法律适用→量刑建议）\n10. 分析DABstep数据的基本统计特征\n11. 分析DABstep数据的时序趋势和异常点\n12. 对比三个知识库的数据类型和分析方法差异\n\n**阶段三：交叉验证（步骤13-18）**\n13. 验证bigtest3文档解析的完整性（比对原文与解析结果）\n14. 验证lbctest法律文书信息的准确性（跨文档一致性检查）\n15. 验证DABstep数据的计算结果（抽样复算）\n16. 检查是否有跨知识库的隐藏关联\n17. 评估各知识库的文档处理质量和信息损失程度\n18. 评估各知识库对DA分析工具的适配程度\n\n**阶段四：元分析（步骤19-22）**\n19. 分析不同类型知识库（文学/法律/数据）对Agent能力的差异化要求\n20. 总结Agent在处理各类任务时的强项和弱项\n21. 分析哪些分析步骤最容易出现信息损失或偏差\n22. 提出改进Agent分析能力的具体建议\n\n**阶段五：终极报告（步骤23-25）**\n23. 输出bigtest3知识库终极分析报告\n24. 输出lbctest知识库终极分析报告（含DABstep数据分析）\n25. 输出跨知识库元分析终极报告（含能力评估和改进建议）",
+    "expected_answer": "应包含：全库扫描结果、深度内容分析、交叉验证发现、元分析洞察、三份终极报告",
+    "evaluation_criteria": [
+      "25个步骤必须逐一完成",
+      "全库扫描必须涵盖所有知识库",
+      "深度分析必须引用具体内容而非概括",
+      "交叉验证必须发现并报告具体问题",
+      "元分析必须有实质性洞察（不能泛泛而谈）",
+      "三份终极报告必须整合所有前置步骤",
+      "最终报告的信息密度必须足够高"
+    ],
+    "kb_scope": ["bigtest3", "lbctest", "dabstep"],
+    "min_steps": 25,
+    "tags": ["multi-step", "ultimate-analysis", "meta-analysis"]
+  },
+  {
+    "id": "AEB-D25-002",
+    "difficulty": 25,
+    "category": "hidden-state-tracking",
+    "description": "25-step chain: Ultimate forensic challenge requiring exhaustive evidence collection, multi-layer timeline reconstruction, causal chain analysis, and adversarial reasoning from both prosecution and defense perspectives",
+    "question": "请完成以下终极法证挑战——你需要同时扮演检察官和辩护律师两个角色：\n\n**检察官视角（步骤1-12）**\n1. 系统梳理lbctest所有证据，建立证据清单（编号、类型、来源、内容摘要）\n2. 将所有物证按证明力分级（直接证据>间接证据>补强证据）\n3. 建立完整的犯罪时间线（从犯罪预备到案发）\n4. 分析主犯张伟的犯罪行为链条（组织→管理→牟利→掩饰）\n5. 分析从犯李强的参与程度和具体行为\n6. 分析从犯王芳的参与程度和具体行为\n7. 计算涉案总金额（包括已扣押和未追回部分）\n8. 分析犯罪持续时间、规模和组织化程度\n9. 论证量刑建议的合理性（对比类似案例的判例）\n10. 指出证据链中最具证明力的关键证据\n11. 指出证据链中潜在的薄弱环节\n12. 撰写一份完整的指控意见书\n\n**辩护律师视角（步骤13-20）**\n13. 分析所有证据中可能存在的程序瑕疵（搜查、扣押、取证程序）\n14. 检查证据保全链是否完整\n15. 分析证人证词中的矛盾和不可靠之处\n16. 为张伟寻找可能的从轻/减轻处罚情节\n17. 为李强分析是否可能构成从犯而非共犯\n18. 为王芳分析是否可能不构成犯罪或情节显著轻微\n19. 检查量刑建议是否过重（对比法律规定和类似判例）\n20. 撰写一份辩护意见书\n\n**法官视角（步骤21-25）**\n21. 对比检察官指控和辩护意见，梳理争议焦点\n22. 对每个争议焦点进行证据评判\n23. 综合分析各被告人的罪责程度\n24. 给出你认为合理的量刑建议（需说明理由）\n25. 撰写最终的案件审理综合报告（包括：案件概述、争议焦点、证据评判、定罪分析、量刑建议、案件启示）",
+    "expected_answer": "应包含：完整证据清单、犯罪时间线、三方视角分析、指控意见书、辩护意见书、争议焦点梳理、量刑建议、综合审理报告",
+    "evaluation_criteria": [
+      "25个步骤必须全部完成",
+      "证据清单必须系统化编号和分类",
+      "检察官和辩护律师必须分别论证，不能混同",
+      "辩护意见必须有合理的法律依据",
+      "法官视角必须平衡检辩双方观点",
+      "量刑建议必须具体到年数和罚金",
+      "综合报告必须体现三方视角的整合"
+    ],
+    "kb_scope": ["lbctest"],
+    "min_steps": 25,
+    "tags": ["multi-step", "adversarial-reasoning", "legal-analysis"]
+  },
+  {
+    "id": "AEB-D25-003",
+    "difficulty": 25,
+    "category": "intermediate-propagation",
+    "description": "25-step chain: Ultimate narrative analysis requiring exhaustive story extraction, character mapping, plot reconstruction, thematic analysis, and comparative literary criticism across multiple game scripts",
+    "question": "请完成以下终极叙事分析挑战——你需要对bigtest3知识库中的所有游戏进行文学级别的深度分析：\n\n**步骤1-5：世界观构建**\n1. 列出bigtest3中所有游戏，为每个游戏建立一个独立的故事世界描述\n2. 为每个游戏提取完整的场景设置（地点、时间、氛围）\n3. 为每个游戏提取规则/背景设定\n4. 识别各游戏之间的元叙事联系（如果存在）\n5. 建立跨游戏的角色迁移/对照表\n\n**步骤6-10：人物深度分析**\n6. 为每个游戏的主要角色创建详细档案（姓名、身份、背景、动机、秘密）\n7. 分析每个角色的行为逻辑（行为是否与性格/动机一致）\n8. 分析角色之间的权力关系和情感纽带\n9. 识别'伪装者'角色（表面身份与真实身份不同的角色）\n10. 分析每个角色的叙事功能（推动情节、提供线索、制造悬念等）\n\n**步骤11-15：情节结构分析**\n11. 为每个游戏绘制完整的情节结构图（开端→发展→转折→高潮→结局）\n12. 分析每个游戏中的悬念设置和揭示节奏\n13. 识别每个游戏中的关键转折点及其叙事效果\n14. 分析红鲱鱼（误导线索）的设计机制和效果\n15. 分析各游戏的结局设计（开放式/封闭式/反转式）\n\n**步骤16-20：推理设计分析**\n16. 分析每个游戏的推理链设计（线索数量、分布、难度）\n17. 评估每个游戏的推理公平性（所有必要线索是否都在前文给出）\n18. 分析信息不对称的设计（读者vs角色知道的信息差异）\n19. 分析谜题设计的独创性和巧妙程度\n20. 对比各游戏的推理难度等级\n\n**步骤21-25：文学批评与综合评价**\n21. 分析各游戏的叙事风格和写作技巧\n22. 分析各游戏在情感操控方面的设计（如何让读者产生特定的情绪反应）\n23. 对各游戏进行综合评分（故事性、推理性、文学性、创新性各1-10分）\n24. 撰写每个游戏的独立评析报告\n25. 撰写跨游戏的比较文学分析报告（包括：叙事手法对比、人物塑造对比、推理设计对比、整体评价和改进建议）",
+    "expected_answer": "应包含：世界观描述、角色档案、情节结构图、推理链分析、文学批评、评分、独立评析和比较文学分析报告",
+    "evaluation_criteria": [
+      "25个步骤必须全部完成",
+      "角色档案必须包含多维信息",
+      "情节结构分析必须覆盖完整叙事弧",
+      "推理公平性评估必须有具体论据",
+      "评分必须合理且有解释",
+      "比较文学分析必须有深度洞察",
+      "不能泛泛而谈，必须引用具体文本内容"
+    ],
+    "kb_scope": ["bigtest3"],
+    "min_steps": 25,
+    "tags": ["multi-step", "literary-analysis", "narrative-theory"]
+  }
+]

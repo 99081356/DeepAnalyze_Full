@@ -1,0 +1,61 @@
+{
+  "timestamp": "2026-05-16T17:54:37.672Z",
+  "batchIndex": 3,
+  "cases": 3,
+  "passed": 3,
+  "failed": 0,
+  "totalDurationMs": 59221,
+  "results": [
+    {
+      "id": "KB-TEST-001",
+      "category": "DeepAnalyze-KB",
+      "status": "completed",
+      "durationMs": 12669,
+      "toolCallCount": 2,
+      "outputLength": 667,
+      "pushContentCount": 0,
+      "evaluation": {
+        "testCaseId": "KB-TEST-001",
+        "expectedAnswer": "Any accurate statistics based on actual KB data",
+        "criteria": "Must include actual file type counts from KB, format as table, no hallucination",
+        "passed": true,
+        "score": 100,
+        "details": "Output quality: 667 chars, 2 tool calls, hasTable=true, hasNumbers=true"
+      }
+    },
+    {
+      "id": "KB-TEST-002",
+      "category": "DeepAnalyze-KB",
+      "status": "completed",
+      "durationMs": 15019,
+      "toolCallCount": 2,
+      "outputLength": 737,
+      "pushContentCount": 0,
+      "evaluation": {
+        "testCaseId": "KB-TEST-002",
+        "expectedAnswer": "List of documents containing \"柯南\"",
+        "criteria": "Must use search tool, must list document titles and IDs, must cite sources",
+        "passed": true,
+        "score": 100,
+        "details": "Output quality: 737 chars, 2 tool calls, hasTable=true, hasNumbers=true"
+      }
+    },
+    {
+      "id": "KB-TEST-003",
+      "category": "DeepAnalyze-KB",
+      "status": "completed",
+      "durationMs": 31533,
+      "toolCallCount": 7,
+      "outputLength": 1011,
+      "pushContentCount": 0,
+      "evaluation": {
+        "testCaseId": "KB-TEST-003",
+        "expectedAnswer": "Comparison of characters between two cases",
+        "criteria": "Must use expand/doc_grep to read actual content, must cite specific documents, no hallucination",
+        "passed": true,
+        "score": 100,
+        "details": "Output quality: 1011 chars, 7 tool calls, hasTable=true, hasNumbers=true"
+      }
+    }
+  ]
+}

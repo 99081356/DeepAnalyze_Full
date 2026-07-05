@@ -1,0 +1,65 @@
+{
+  "test_id": "GV-012",
+  "level": 2,
+  "prompt": "In April of 1977, who was the Prime Minister of the first place mentioned by name in the Book of Esther (in the New International Version)?",
+  "expected": "Morarji Desai",
+  "actual": "The first place mentioned by name in the Book of Esther (NIV) is **India**. Esther 1:1 reads: \"This is what happened during the time of Xerxes, the Xerxes who ruled over 127 provinces stretching from India to Cush.\" India is the first geographic place name in the text.\n\nIn April 1977, the Prime Minister of India was **Morarji Desai**. He took office on March 24, 1977, following the historic general election that ended Indira Gandhi's Emergency rule.",
+  "finish_summary": "The first place mentioned by name in the Book of Esther (NIV) is **India**. Esther 1:1 reads: \"This is what happened during the time of Xerxes, the Xerxes who ruled over 127 provinces stretching from India to Cush.\" India is the first geographic place name in the text.\n\nIn April 1977, the Prime Minister of India was **Morarji Desai**. He took office on March 24, 1977, following the historic general election that ended Indira Gandhi's Emergency rule.",
+  "tool_calls": [
+    {
+      "tool": "think",
+      "input": {
+        "thought": "Let me break this question down step by step:\n\n1. First, I need to find the first place mentioned by name in the Book of Esther (NIV version).\n2. Then, I need to find who was the Prime Minister of that place in April 1977.\n\nLet me start by looking up the Book of Esther to find the first place mentioned."
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "title": "Book of Esther",
+        "section": 1
+      }
+    },
+    {
+      "tool": "web_search",
+      "input": {
+        "query": "Book of Esther chapter 1 verse 1 NIV text"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Book of Esther chapter 1 verse 1 NIV text"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://www.biblegateway.com/passage/?search=Esther+1&version=NIV",
+        "selector": ".passage-text"
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "Let me organize what I know:\n\n1. **First place mentioned by name in the Book of Esther (NIV)**: Esther 1:1 in the NIV reads: \"This is what happened during the time of Xerxes, the Xerxes who ruled over 127 provinces stretching from India to Cush.\" The first proper name of a place mentioned here is **India**.\n\n2. **Prime Minister of India in April 1977**: \n   - The Indian general election of March 1977 resulted in a defeat for Indira Gandhi's Congress party.\n   - Morarji Desai became Prime Minister of India on March 24, 1977.\n   - So in April 1977, the Prime Minister of India was **Morarji Desai**.\n\nThe answer is Morarji Desai."
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "The first place mentioned by name in the Book of Esther (NIV) is **India**. Esther 1:1 reads: \"This is what happened during the time of Xerxes, the Xerxes who ruled over 127 provinces stretching from India to Cush.\" India is the first geographic place name in the text.\n\nIn April 1977, the Prime Minister of India was **Morarji Desai**. He took office on March 24, 1977, following the historic general election that ended Indira Gandhi's Emergency rule."
+      }
+    }
+  ],
+  "tools": [
+    "think",
+    "wikipedia",
+    "web_search",
+    "mcp__minimax_websearch__web_search",
+    "web_fetch",
+    "finish"
+  ],
+  "turns": 7,
+  "elapsed": 37.0
+}

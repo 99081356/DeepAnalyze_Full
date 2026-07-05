@@ -125,6 +125,76 @@ SSH 私钥在 Hub 数据库中以 **AES-256-GCM 密文** 存储（`ssh_key_encry
 
 ---
 
+## 本地 Docker 部署（用户-Worker 一对一绑定）
+
+除 SSH 远程部署外，Hub 还支持**本地 Docker 部署模式**：Hub 容器通过挂载宿主机
+Docker socket + docker CLI 直接管理本机容器，为每个用户自动创建专属 DA Worker 容器栈。
+
+### 适用场景
+
+- 开发/测试环境（Hub 与 Worker 在同一台机器）
+- 小型企业内网部署（不需要多机分发）
+- 用户登录后直接进入主界面（跳过 DA SetupWizard）
+
+### 前置条件
+
+1. Hub 容器挂载 Docker socket：`/var/run/docker.sock:/var/run/docker.sock`
+2. Hub 镜像包含 docker CLI（见 [`Dockerfile`](Dockerfile) 中的静态二进制安装步骤）
+3. 宿主机已拉取 DA 镜像（`deepanalyze/da:latest`）和 PG 镜像（`pgvector/pgvector:pg16`）
+
+### 部署流程
+
+1. **管理员登录 Hub** → 用户列表页
+2. **点击「部署Worker」按钮** → Hub 自动执行：
+   - 分配端口（21000-21099 范围内扫描可用端口）
+   - 创建 Docker 网络 `da-net-<workerId>`
+   - 创建 PG 容器 `da-pg-<workerId>`（带 healthcheck）
+   - 创建 DA 容器 `da-app-<workerId>`（预置配置，跳过 SetupWizard）
+   - 在 `workers` 表创建记录，绑定 `assigned_user_id`
+3. **用户登录 Hub** → `/auth/login` 响应包含 `da_worker_id` 和 `da_url`
+4. **前端自动 SSO 跳转** → DA Worker `/api/auth/sso/callback`
+5. **DA 验证 ticket** → 校验 `ticket.user_id === worker.assigned_user_id`
+6. **签发本地 session cookie** → 用户进入主界面
+
+### 自动跳过 SetupWizard
+
+Hub 部署 Worker 时，在 DA 容器启动后立即写入以下文件：
+
+- `data/setup-complete.flag` — 标记 setup 已完成，前端跳过 wizard
+- `data/config.yaml` — 默认配置（全云端模型策略，跳过本地模型下载）
+
+DA 后端 `/api/setup/state` 返回 `{ complete: true }`，前端 App.tsx 据此跳过
+SetupWizard，用户登录后直接进入主界面。
+
+### 用户-Worker 绑定安全机制
+
+- **SSO ticket 校验**：[`src/domain/sso-ticket.ts`](src/domain/sso-ticket.ts) 的
+  `exchangeTicket` 函数校验 `ticket.user_id === worker.assigned_user_id`，
+  确保用户只能登录自己绑定的 Worker。
+- **Bearer fallback 禁用**：DA 的 auth 中间件
+  ([`DeepAnalyze/src/server/middleware/auth.ts`](DeepAnalyze/src/server/middleware/auth.ts))
+  禁用 Bearer token fallback，强制走 SSO cookie 路径，防止任意 Hub 用户用
+  access_token 访问任意 DA Worker。
+
+### 相关 API
+
+| Method + Path | 说明 |
+|---|---|
+| `POST /api/v1/users/:id/deploy-worker` | 为用户部署专属 DA Worker 容器栈 |
+| `DELETE /api/v1/users/:id/worker` | 删除用户的 Worker 容器栈 |
+
+### 相关代码
+
+| 文件 | 作用 |
+|---|---|
+| [`src/domain/local-deployment.ts`](src/domain/local-deployment.ts) | 本地 Docker 部署核心模块 |
+| [`src/server/routes/users.ts`](src/server/routes/users.ts) | 部署/删除 Worker API 路由 |
+| [`src/domain/sso-ticket.ts`](src/domain/sso-ticket.ts) | SSO ticket 交换 + 用户绑定校验 |
+| [`frontend/src/pages/UserList.tsx`](frontend/src/pages/UserList.tsx) | 用户列表页（部署/删除按钮） |
+| [`src/store/migrations/040_workers_status_deploying.ts`](src/store/migrations/040_workers_status_deploying.ts) | workers 表 status 约束扩展 |
+
+---
+
 ## da-packer — 离线部署打包工具
 
 [`scripts/da-packer/`](scripts/da-packer/) 是独立 CLI，用于构建 DeepAnalyze 离线一体化部署包。

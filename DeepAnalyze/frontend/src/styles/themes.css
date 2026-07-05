@@ -1,0 +1,135 @@
+/* =============================================================================
+   DeepAnalyze Theme Definitions
+   浅色(默认) + 深色(可选切换)
+   ============================================================================= */
+
+/* ---- 浅色主题 (Light) - 默认 ---- */
+:root,
+[data-theme='light'] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --bg-hover: #f1f5f9;
+  --bg-active: #e2e8f0;
+  --bg-inverse: #0f172a;
+
+  --surface-primary: #ffffff;
+  --surface-secondary: #f8fafc;
+  --surface-hover: #f1f5f9;
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #94a3b8;
+  --text-disabled: #cbd5e1;
+  --text-inverse: #ffffff;
+
+  --brand-primary: #334155;
+  --brand-hover: #1e293b;
+  --brand-light: #f1f5f9;
+  --brand-foreground: #ffffff;
+
+  --interactive: #3b82f6;
+  --interactive-hover: #2563eb;
+  --interactive-light: #eff6ff;
+
+  --success: #10b981;
+  --success-light: #ecfdf5;
+  --success-dark: #065f46;
+
+  --warning: #f59e0b;
+  --warning-light: #fffbeb;
+  --warning-dark: #78350f;
+
+  --error: #ef4444;
+  --error-light: #fef2f2;
+  --error-dark: #7f1d1d;
+
+  --info: #0ea5e9;
+  --info-light: #f0f9ff;
+  --info-dark: #0c4a6e;
+
+  --border-primary: #e2e8f0;
+  --border-secondary: #cbd5e1;
+  --border-focus: #334155;
+
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #94a3b8;
+
+  --overlay-bg: rgba(0, 0, 0, 0.3);
+
+  color-scheme: light;
+}
+
+/* ---- 深色主题 (Dark) ---- */
+/* Color philosophy: same hue family as the light theme (blue/emerald/red/amber),
+   only lightness lifted and saturation slightly reduced for dark backgrounds.
+   No neon/cyan pinks — keep the two themes reading as the same product. */
+[data-theme='dark'] {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #0e1422;
+  --bg-tertiary: #131b2c;
+  --bg-hover: #1a2235;
+  --bg-active: #1e2d45;
+  --bg-inverse: #f0f4f8;
+
+  --surface-primary: #0e1422;
+  --surface-secondary: #131b2c;
+  --surface-hover: #1a2235;
+
+  --text-primary: #d0e8f0;
+  --text-secondary: #7a9ab0;
+  /* Lifted from #4a6578 (≈3.4:1 on bg-primary) to meet WCAG AA (4.5:1).
+     Used for timestamps, metadata, counts, hints. */
+  --text-tertiary: #7d96aa;
+  --text-disabled: #2d4050;
+  --text-inverse: #0a0e1a;
+
+  /* Brand unified with interactive in the blue family — gives the product a
+     single color identity across both themes (see issue #75 §5). */
+  --brand-primary: #60a5fa;
+  --brand-hover: #93c5fd;
+  --brand-light: rgba(96, 165, 250, 0.10);
+  --brand-foreground: #0a0e1a;
+
+  --interactive: #3b82f6;
+  --interactive-hover: #60a5fa;
+  --interactive-light: rgba(59, 130, 246, 0.10);
+
+  --success: #34d399;
+  --success-light: rgba(52, 211, 153, 0.10);
+  --success-dark: #065f46;
+
+  --warning: #fbbf24;
+  --warning-light: rgba(251, 191, 36, 0.10);
+  --warning-dark: #78350f;
+
+  --error: #f87171;
+  --error-light: rgba(248, 113, 113, 0.10);
+  --error-dark: #7f1d1d;
+
+  --info: #38bdf8;
+  --info-light: rgba(56, 189, 248, 0.10);
+  --info-dark: #0c4a6e;
+
+  --border-primary: #152035;
+  --border-secondary: #1e2d45;
+  --border-focus: #60a5fa;
+
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: #1e2d45;
+  --scrollbar-thumb-hover: #2d4050;
+
+  --overlay-bg: rgba(0, 0, 0, 0.6);
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3),
+    0 2px 4px -2px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.35),
+    0 4px 6px -4px rgba(0, 0, 0, 0.2);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4),
+    0 8px 10px -6px rgba(0, 0, 0, 0.3);
+
+  color-scheme: dark;
+}

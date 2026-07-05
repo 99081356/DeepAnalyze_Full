@@ -1,0 +1,76 @@
+# DeepAnalyze Intranet Configuration Template
+#
+# Usage:
+#   1. Edit the model sections below to point to your LLM service(s)
+#   2. Run: ./deploy.sh
+#   3. Or configure via the Settings page in the Web UI after startup
+#
+# Embedding service is automatically started and configured.
+# No need to modify the embedding section unless using an external service.
+#
+
+models:
+  # ================================================================
+  # Main LLM - GLM-5.1 (primary model for agent tasks)
+  # ================================================================
+  main:
+    provider: openai-compatible
+    # TODO: Change to your GLM-5.1 service endpoint
+    endpoint: http://192.168.1.100:8080/v1
+    model: glm-5.1
+    # API Key (leave empty or use any value if not needed by your service)
+    apiKey: ""
+    maxTokens: 32768
+    supportsToolUse: true
+
+  # ================================================================
+  # Auxiliary LLM - Qwen3.6-27B (alternative model)
+  # Uncomment and configure if you have a Qwen3.6-27B service
+  # ================================================================
+  # qwen:
+  #   provider: openai-compatible
+  #   endpoint: http://192.168.1.101:8080/v1
+  #   model: qwen3.6-27b
+  #   apiKey: ""
+  #   maxTokens: 32768
+  #   supportsToolUse: true
+  #   supportsVision: true
+
+  # ================================================================
+  # Embedding - Auto-configured, uses built-in BGE-M3 service
+  # ================================================================
+  embedding:
+    provider: openai-compatible
+    endpoint: http://embedding:11435/v1
+    model: bge-m3
+    dimension: 1024
+    maxTokens: 8192
+
+  # ================================================================
+  # VLM (Vision Language Model) - Optional, for image understanding
+  # Uncomment and configure if you have a vision-capable model
+  # ================================================================
+  # vlm:
+  #   provider: openai-compatible
+  #   endpoint: http://192.168.1.102:8080/v1
+  #   model: qwen3.6-27b
+  #   apiKey: ""
+  #   maxTokens: 16384
+  #   supportsVision: true
+
+  # ================================================================
+  # ASR (Automatic Speech Recognition) - Optional, for audio transcription
+  # Uncomment to use an external ASR service instead of built-in Whisper
+  # ================================================================
+  # asr:
+  #   provider: openai-compatible
+  #   endpoint: http://192.168.1.103:8080/v1
+  #   model: whisper-large-v3
+  #   apiKey: ""
+
+defaults:
+  main: main
+  embedding: embedding
+  # qwen: qwen       # Uncomment if qwen model is configured above
+  # vlm: vlm         # Uncomment if vlm model is configured above
+  # asr: asr         # Uncomment if asr model is configured above

@@ -15,6 +15,7 @@ const ACCESS_SECRET = HUB_CONFIG.auth.jwtSecret;
 const REFRESH_SECRET = HUB_CONFIG.auth.jwtRefreshSecret;
 const ACCESS_EXPIRY = HUB_CONFIG.auth.jwtExpiry;
 const REFRESH_EXPIRY = "30d";
+const JWT_ISSUER = process.env.HUB_EXTERNAL_URL || `http://localhost:${HUB_CONFIG.port}`;
 
 export interface TokenPair {
   access_token: string;
@@ -26,12 +27,12 @@ export interface TokenPair {
 export function issueTokenPair(userId: string): TokenPair {
   const { privateKeyPem, kid } = getKeyPair();
   const access_token = jwt.sign(
-    { sub: userId, type: "access" },
+    { sub: userId, type: "access", iss: JWT_ISSUER },
     privateKeyPem,
     { algorithm: "RS256", expiresIn: ACCESS_EXPIRY, keyid: kid } as jwt.SignOptions,
   );
   const refresh_token = jwt.sign(
-    { sub: userId, type: "refresh" },
+    { sub: userId, type: "refresh", iss: JWT_ISSUER },
     privateKeyPem,
     { algorithm: "RS256", expiresIn: REFRESH_EXPIRY, keyid: kid } as jwt.SignOptions,
   );

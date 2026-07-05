@@ -1,0 +1,43 @@
+{
+  "test_id": "GV-125",
+  "level": 2,
+  "prompt": "As of May 2023, how many stops are between South Station and Windsor Gardens on MBTA’s Franklin-Foxboro line (not included)?",
+  "expected": "10",
+  "actual": "As of May 2023, there are **10 stops** between South Station and Windsor Gardens on the MBTA Franklin/Foxboro Line (not including either endpoint).\n\nThe stops in order are:\n\n1. **Back Bay** (1.2 mi)\n2. **Ruggles** (2.2 mi)\n3. **Forest Hills** (5.0 mi)\n4. **Hyde Park** (8.4 mi)\n5. **Readville** (9.5 mi)\n6. **Endicott** (10.9 mi)\n7. **Dedham Corporate Center** (11.8 mi)\n8. **Islington** (12.5 mi)\n9. **Norwood Depot** (14.3 mi)\n10. **Norwood Central** (14.8 mi)\n\nNote: Plimptonville (which would have been between Norwood Central and Windsor Gardens at 17.7 mi) was permanently closed on December 14, 2020, so it was not an active stop as of May 2023. Mount Hope (6.5 mi) was closed even earlier, in 1979.",
+  "finish_summary": "",
+  "tool_calls": [
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "search",
+        "query": "MBTA Franklin Line stations"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "search",
+        "query": "MBTA Franklin Line stations list"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "title": "Franklin/Foxboro Line"
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "From the Wikipedia article on the Franklin/Foxboro Line, I can extract the station listing. The question asks about the line \"as of May 2023.\"\n\nKey information from the article:\n- Plimptonville was closed December 14, 2020 (before May 2023, so it's NOT an active stop)\n- Mount Hope was closed November 2, 1979 (definitely not active)\n- Foxboro pilot service resumed May 23, 2022 (so Foxboro IS active by May 2023)\n\nThe active station order from South Station to Windsor Gardens (inclusive):\n1. South Station (0.0 mi)\n2. Back Bay (1.2 mi)\n3. Ruggles (2.2 mi)\n4. Forest Hills (5.0 mi)\n5. Hyde Park (8.4 mi)\n6. Readville (9.5 mi)\n7. Endicott (10.9 mi)\n8. Dedham Corporate Center (11.8 mi)\n9. Islington (12.5 mi)\n10. Norwood Depot (14.3 mi)\n11. Norwood Central (14.8 mi)\n12. Windsor Gardens (16.6 mi)\n\nExcluding South Station and Windsor Gardens, the stops between them are:\nBack Bay, Ruggles, Forest Hills, Hyde Park, Readville, Endicott, Dedham Corporate Center, Islington, Norwood Depot, Norwood Central\n\nThat's 10 stops.\n\nNote: As of May 2023, all these stations were active. Plimptonville was already closed (Dec 2020). Mount Hope was closed long ago (1979). Foxboro is not between South Station and Windsor Gardens - it's on a branch beyond Walpole."
+      }
+    }
+  ],
+  "tools": [
+    "wikipedia",
+    "think"
+  ],
+  "turns": 5,
+  "elapsed": 43.0
+}

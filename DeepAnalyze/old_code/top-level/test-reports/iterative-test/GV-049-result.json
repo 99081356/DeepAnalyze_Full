@@ -1,0 +1,42 @@
+{
+  "test_id": "GV-049",
+  "level": 1,
+  "prompt": "What writer is quoted by Merriam-Webster for the Word of the Day from June 27, 2022?",
+  "expected": "Annie Levin",
+  "actual": "The writer quoted by Merriam-Webster for the Word of the Day (June 27, 2022) — \"jingoism\" — is **Annie Levin**. The quote from her appeared in *The New York Observer* on March 7, 2022: \"War is bad for culture. Not least of all because it turns our cultural institutions into bastions of jingoism.\"",
+  "finish_summary": "The writer quoted by Merriam-Webster for the Word of the Day (June 27, 2022) — \"jingoism\" — is **Annie Levin**. The quote from her appeared in *The New York Observer* on March 7, 2022: \"War is bad for culture. Not least of all because it turns our cultural institutions into bastions of jingoism.\"",
+  "tool_calls": [
+    {
+      "tool": "web_search",
+      "input": {
+        "query": "Merriam-Webster Word of the Day June 27 2022"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://www.merriam-webster.com/word-of-the-day/2022-06-27"
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "From the Merriam-Webster Word of the Day page for June 27, 2022, the word is \"jingoism.\" In the \"jingoism in Context\" section, the quote is from Annie Levin, writing in The New York Observer on March 7, 2022. The quote is: \"War is bad for culture. Not least of all because it turns our cultural institutions into bastions of jingoism.\""
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "The writer quoted by Merriam-Webster for the Word of the Day (June 27, 2022) — \"jingoism\" — is **Annie Levin**. The quote from her appeared in *The New York Observer* on March 7, 2022: \"War is bad for culture. Not least of all because it turns our cultural institutions into bastions of jingoism.\""
+      }
+    }
+  ],
+  "tools": [
+    "web_search",
+    "web_fetch",
+    "think",
+    "finish"
+  ],
+  "turns": 4,
+  "elapsed": 16.1
+}

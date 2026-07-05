@@ -1,0 +1,531 @@
+[
+  {
+    "id": "SC01",
+    "name": "全知识库深度分析（bigtest3）",
+    "kb_scope": ["bigtest3"],
+    "category": "full-kb-analysis",
+    "difficulty": "extreme",
+    "timeout": 3600,
+    "prompt": "分析知识库文档的全部内容，分析清楚所有内容的主要分类关系，从属关系，分析清楚每一类、每一块知识的相关性。针对论文，请给出一份详细的分析报告分析这些论文的技术演进关系，分析不同技术的优劣势，预测未来核心的研究方向和建议，给出详细的分析报告。如果是剧本杀，请分析整个剧本的关系，找出明确的杀手和时间线推理关系，找出所有证据链条和推理逻辑链条，每个剧本杀单独给出详细的完整故事脉络和逻辑关系推理。如果是表格，详细统计分析表格内容和数据情况。其他类型也自定义不同需求，对整个知识库进行全面深入完整的分析与整理。",
+    "expected_output": "文档类型全覆盖（论文、剧本杀、表格、音频、视频、图片）、每类有独立完整分析、跨类关联性分析、无遗漏无幻觉",
+    "verification_criteria": [
+      "至少识别4种文档类型：论文、剧本杀、表格、多模态",
+      "每个剧本杀有独立分析（自杀派对、柯南之死、追凶手记、剪烛夜行）",
+      "论文分析包含技术演进关系",
+      "表格数据有统计分析",
+      "跨类别关联性分析存在",
+      "无遗漏主要文档类别"
+    ],
+    "scoring_weights": {
+      "completeness": 0.25,
+      "accuracy": 0.25,
+      "non_redundancy": 0.15,
+      "agent_collaboration": 0.15,
+      "output_quality": 0.20
+    }
+  },
+  {
+    "id": "SC02",
+    "name": "刑事案件完整证据链构建（lbctest）",
+    "kb_scope": ["lbctest"],
+    "category": "legal-evidence-chain",
+    "difficulty": "extreme",
+    "timeout": 3600,
+    "prompt": "你是刑侦分析师。请系统分析张伟等人组织卖淫案的全部卷宗材料，构建完整的证据链条。需要：1）分析所有讯问笔录，找出供词之间的矛盾点；2）分析资金流水，计算总营业额和利润分配；3）分析人员关系和组织架构；4）分析时间线，从筹备到被查的全过程；5）构建完整的证据链，证明各主犯的犯罪事实；6）评估各嫌疑人供述的可信度，按严重程度排序。请给出详尽的法律分析报告。",
+    "expected_output": "7个矛盾点全部识别、资金计算准确（980万/174万）、组织架构完整（3主犯+4管理层+15技师+3营销+2收银）、时间线正确",
+    "verification_criteria": [
+      "识别至少7个供词矛盾点",
+      "总营业额数据接近980万",
+      "利润数据接近174万",
+      "组织架构包含3主犯、4管理层、15技师",
+      "时间线覆盖2025.1.1-9.20",
+      "按严重程度排序的嫌疑人可信度评估",
+      "证据链条逻辑自洽"
+    ],
+    "scoring_weights": {
+      "completeness": 0.25,
+      "accuracy": 0.30,
+      "non_redundancy": 0.10,
+      "agent_collaboration": 0.15,
+      "output_quality": 0.20
+    }
+  },
+  {
+    "id": "SC03",
+    "name": "学术论文技术演进深度分析（bigtest3）",
+    "kb_scope": ["bigtest3"],
+    "category": "academic-analysis",
+    "difficulty": "extreme",
+    "timeout": 2400,
+    "prompt": "请深入分析知识库中所有AI/ML相关的学术论文。要求：1）准确识别每篇论文的核心贡献和关键技术；2）分析这些论文之间的技术演进关系（如哪篇是哪篇的改进或扩展）；3）按技术路线分类（如记忆系统、RAG、知识库架构）；4）分析每条技术路线的优劣势和发展趋势；5）预测未来2-3年的核心研究方向；6）对每篇论文的方法论进行对比评估。输出至少2万字的深度技术分析报告。",
+    "expected_output": "每篇论文正确识别（约10篇）、技术路线分类正确（RAG/记忆系统/知识库等）、技术演进关系合理、无混淆不同论文内容",
+    "verification_criteria": [
+      "识别全部AI/ML论文（约10篇）",
+      "论文间技术演进关系分析",
+      "技术路线分类合理（至少2条路线）",
+      "优劣势对比有具体内容",
+      "未来方向预测有理有据",
+      "输出内容超过1万字符",
+      "不混淆不同论文的方法和贡献"
+    ],
+    "scoring_weights": {
+      "completeness": 0.25,
+      "accuracy": 0.30,
+      "non_redundancy": 0.10,
+      "agent_collaboration": 0.10,
+      "output_quality": 0.25
+    }
+  },
+  {
+    "id": "SC04",
+    "name": "剧本杀《自杀派对》完整推理（bigtest3）",
+    "kb_scope": ["bigtest3"],
+    "category": "murder-mystery",
+    "difficulty": "hard",
+    "timeout": 1800,
+    "prompt": "请完整分析《自杀派对》这个剧本杀的所有角色线索、人物关系和推理逻辑。要求：1）分析每个角色的背景故事和动机；2）分析每个角色的线索卡，推断隐藏信息；3）构建角色之间的关系网络；4）根据线索推理出完整的案发经过；5）明确指出凶手及其动机和作案手法；6）对每个角色给出完整的人物画像。请给出至少1万字的详细分析报告。",
+    "expected_output": "6个角色全覆盖（柏十三、全明焕、李碧莹等）、线索卡内容正确引用、推理逻辑自洽",
+    "verification_criteria": [
+      "6个角色全覆盖并分析",
+      "线索卡内容被引用和分析",
+      "角色关系网络构建",
+      "推理逻辑自洽无矛盾",
+      "每个角色有完整人物画像",
+      "输出内容超过5000字符"
+    ],
+    "scoring_weights": {
+      "completeness": 0.30,
+      "accuracy": 0.25,
+      "non_redundancy": 0.10,
+      "agent_collaboration": 0.10,
+      "output_quality": 0.25
+    }
+  },
+  {
+    "id": "SC05",
+    "name": "50题Benchmark精确答题（lbctest）",
+    "kb_scope": ["lbctest"],
+    "category": "benchmark-qa",
+    "difficulty": "extreme",
+    "timeout": 3600,
+    "prompt": "请根据案件卷宗，逐一回答以下问题，每个问题必须给出明确的答案和推理过程，并标注信息来源文件。",
+
+    "qa_note": "此用例的完整50题通过benchmark_qa.json注入，运行时动态加载",
+    "expected_output": "50题准确率>90%，每题有来源标注、无幻觉编造",
+    "verification_criteria": [
+      "50题全部作答",
+      "准确率目标>90%",
+      "每题标注信息来源文件",
+      "无幻觉编造信息",
+      "计算题有计算过程"
+    ],
+    "scoring_weights": {
+      "completeness": 0.20,
+      "accuracy": 0.40,
+      "non_redundancy": 0.10,
+      "agent_collaboration": 0.10,
+      "output_quality": 0.20
+    }
+  },
+  {
+    "id": "SC06",
+    "name": "跨文档矛盾检测专项（lbctest）",
+    "kb_scope": ["lbctest"],
+    "category": "cross-document-contradiction",
+    "difficulty": "extreme",
+    "timeout": 2400,
+    "prompt": "请仔细对比张伟、李强、王芳、赵磊、陈静、孙浩、刘洋等7名核心人员的讯问笔录，与财务记录、微信聊天记录、现场勘验等其他证据进行交叉比对。找出所有供词与证据不一致的地方，每一处矛盾都需要：1）引用原始陈述；2）引用反驳证据；3）分析矛盾的性质（记忆错误/刻意隐瞒/避重就轻）；4）评估对案件定性的影响。",
+    "expected_output": "至少识别7个矛盾点（张伟不在场vs微信、李强80万vs140万、王芳只管账vs排班管理等），每个矛盾有双重证据引用",
+    "verification_criteria": [
+      "至少识别7个矛盾点",
+      "每个矛盾引用原始陈述",
+      "每个矛盾引用反驳证据",
+      "矛盾性质分析合理（记忆错误/刻意隐瞒/避重就轻）",
+      "7名核心人员均涉及",
+      "对案件定性的影响评估"
+    ],
+    "scoring_weights": {
+      "completeness": 0.25,
+      "accuracy": 0.30,
+      "non_redundancy": 0.10,
+      "agent_collaboration": 0.15,
+      "output_quality": 0.20
+    }
+  },
+  {
+    "id": "SC07",
+    "name": "超长输出 — 刑事案件完整分析报告（lbctest）",
+    "kb_scope": ["lbctest"],
+    "category": "ultra-long-output",
+    "difficulty": "extreme",
+    "timeout": 7200,
+    "prompt": "请生成一份超过10万字的刑事案件深度分析报告，涵盖以下所有方面：1）案件概述（5000字）；2）当事人详细画像（每人3000字以上，共30人约90000字）；3）资金流水详细分析（含每笔异常交易分析）；4）完整时间线重构（精确到小时级别）；5）证据链分析（每类证据的证明力评估）；6）法律适用分析（量刑建议和从重/从轻情节）；7）案件疑点分析。要求内容详实、数据准确、逻辑严密。",
+    "expected_output": "输出长度>10万字、数据准确无幻觉、每节有实质内容非注水",
+    "verification_criteria": [
+      "输出总字符数超过100000",
+      "案件概述有实质内容",
+      "当事人画像覆盖主要人员",
+      "资金流水有具体数据",
+      "时间线精确",
+      "法律适用分析有法条引用",
+      "无大量注水或重复内容"
+    ],
+    "scoring_weights": {
+      "completeness": 0.25,
+      "accuracy": 0.20,
+      "non_redundancy": 0.20,
+      "agent_collaboration": 0.10,
+      "output_quality": 0.25
+    }
+  },
+  {
+    "id": "SC08",
+    "name": "多模态联合分析（bigtest3）",
+    "kb_scope": ["bigtest3"],
+    "category": "multimodal-analysis",
+    "difficulty": "extreme",
+    "timeout": 2400,
+    "prompt": "请分析知识库中的音频文件（萧雨妈妈遗言、何老师遗言、全明焕爸爸录音、杀手自白、剪烛夜行背景故事），结合对应的角色剧本、线索卡和场景图片，构建完整的案发场景还原。要求：1）每段音频的转写内容分析；2）音频中透露的关键信息与剧本线索的关联；3）场景图片（案发现场、尸体信息等）的视觉分析；4）结合音频、图片、文字三种模态的信息，还原完整的案发过程。",
+    "expected_output": "音频转写内容正确、多模态信息交叉验证、无编造图片中不存在的内容",
+    "verification_criteria": [
+      "音频文件全部覆盖（至少5个）",
+      "ASR转写内容被引用",
+      "图片VLM描述被引用",
+      "多模态信息交叉验证",
+      "不编造图片中不存在的内容",
+      "案发过程还原合理"
+    ],
+    "scoring_weights": {
+      "completeness": 0.25,
+      "accuracy": 0.30,
+      "non_redundancy": 0.10,
+      "agent_collaboration": 0.15,
+      "output_quality": 0.20
+    }
+  },
+  {
+    "id": "SC09",
+    "name": "剪烛夜行 — 最复杂剧本杀推理（bigtest3）",
+    "kb_scope": ["bigtest3"],
+    "category": "murder-mystery",
+    "difficulty": "extreme",
+    "timeout": 2400,
+    "prompt": "请完整分析《剪烛夜行》这个剧本杀。这是知识库中最复杂的剧本，涉及名画家裴世春之死和之前两起艺术学院女生被杀案。要求：1）分析每个角色（裴世春、林森、海洋、南皓月、于恩琪、端木云）的完整背景和隐藏身份；2）分析所有线索卡和道具卡；3）分析于恩琪文件中揭示的关键信息；4）分析背景故事音频；5）构建完整的三起案件（两名女生+裴世春）的关联关系；6）推理出真正的凶手、动机和完整作案过程；7）分析每个角色的嫌疑程度和不在场证明。输出至少2万字的详细推理报告。",
+    "expected_output": "于恩琪真凶身份正确识别、三名死者关联正确、海洋是杀死裴世春的凶手、端木云为共犯",
+    "verification_criteria": [
+      "6个角色全覆盖分析",
+      "线索卡和道具卡分析",
+      "三起案件关联关系正确",
+      "凶手和共犯判断合理",
+      "作案过程推理完整",
+      "不在场证明分析",
+      "输出超过10000字符"
+    ],
+    "scoring_weights": {
+      "completeness": 0.25,
+      "accuracy": 0.30,
+      "non_redundancy": 0.10,
+      "agent_collaboration": 0.10,
+      "output_quality": 0.25
+    }
+  },
+  {
+    "id": "SC10",
+    "name": "资金流水精确计算（lbctest）",
+    "kb_scope": ["lbctest"],
+    "category": "financial-calculation",
+    "difficulty": "extreme",
+    "timeout": 1800,
+    "prompt": "请根据知识库中的所有财务文件，进行精确的资金分析。要求：1）列出每月营业额和利润数据；2）计算技师的月均收入和提成；3）分析POS机交易明细中的异常交易；4）对比银行流水与财务报表的差异；5）追踪每笔大额资金（>5万元）的流向；6）计算主犯按股份比例的应得分红；7）分析押金制度（15人x4000元）的资金规模；8）构建完整的资金流向图。所有计算必须精确到元。",
+    "expected_output": "数值计算全部正确、月度数据：1月60万/2月72万/3月95万/4月110万/5月125万/6月135万/7月140万/8月145万/9月98万、总980万/利润174万",
+    "verification_criteria": [
+      "月度营业额数据完整（9个月）",
+      "总营业额接近980万",
+      "利润接近174万",
+      "技师提成计算合理",
+      "押金计算正确（15人×4000=60000元）",
+      "利润分配比例正确（张伟40%/李强40%/王芳20%）",
+      "大额资金追踪有具体流向"
+    ],
+    "scoring_weights": {
+      "completeness": 0.20,
+      "accuracy": 0.40,
+      "non_redundancy": 0.10,
+      "agent_collaboration": 0.10,
+      "output_quality": 0.20
+    }
+  },
+  {
+    "id": "SC11",
+    "name": "组织架构与人员关系图谱（lbctest）",
+    "kb_scope": ["lbctest"],
+    "category": "organization-analysis",
+    "difficulty": "hard",
+    "timeout": 1800,
+    "prompt": "请根据讯问笔录、工资发放表、考勤记录等材料，构建雅诗阁SPA会所的完整组织架构。要求：1）绘制组织架构图（从主犯到基层员工）；2）分析每个岗位的职责和实际权限；3）分析人员之间的利益关系（亲属、经济利益）；4）分析营销人员、收银员是否构成共犯；5）分析技师的管理和约束机制（押金、排班等）；6）评估该组织的'组织性'程度（是否满足组织卖淫罪的构成要件）。",
+    "expected_output": "组织层级正确（张伟→赵磊→技师）、王芳-张伟夫妻关系识别、30人角色全覆盖",
+    "verification_criteria": [
+      "组织层级关系正确",
+      "王芳-张伟夫妻关系识别",
+      "30人角色全覆盖",
+      "岗位职责分析完整",
+      "押金制度分析（4000元/人）",
+      "组织性程度评估合理"
+    ],
+    "scoring_weights": {
+      "completeness": 0.25,
+      "accuracy": 0.30,
+      "non_redundancy": 0.10,
+      "agent_collaboration": 0.15,
+      "output_quality": 0.20
+    }
+  },
+  {
+    "id": "SC12",
+    "name": "论文对比分析 — RAG技术路线（bigtest3）",
+    "kb_scope": ["bigtest3"],
+    "category": "academic-comparison",
+    "difficulty": "hard",
+    "timeout": 1800,
+    "prompt": "请深入对比分析知识库中以下论文的RAG相关技术：HippoRAG、Antigravity RAG、QA-RAG、DeepSieve、X-RAG。要求：1）每篇论文的核心方法和技术创新点；2）检索策略对比（如何提高召回率和精确率）；3）记忆管理机制对比（长期vs短期、压缩vs全量）；4）实验设置和评估指标对比；5）各方法的局限性和适用场景；6）综合评估哪条技术路线最有前景。输出至少1.5万字的对比分析报告。",
+    "expected_output": "论文方法不混淆、对比维度全面（检索策略/记忆管理/实验设置）、实验数据引用准确",
+    "verification_criteria": [
+      "每篇论文核心方法正确识别",
+      "检索策略对比分析",
+      "记忆管理机制对比",
+      "实验设置对比",
+      "局限性和适用场景分析",
+      "综合评估结论",
+      "输出超过8000字符"
+    ],
+    "scoring_weights": {
+      "completeness": 0.25,
+      "accuracy": 0.30,
+      "non_redundancy": 0.10,
+      "agent_collaboration": 0.10,
+      "output_quality": 0.25
+    }
+  },
+  {
+    "id": "SC13",
+    "name": "刑事诉讼全流程时间线（lbctest）",
+    "kb_scope": ["lbctest"],
+    "category": "legal-timeline",
+    "difficulty": "hard",
+    "timeout": 1800,
+    "prompt": "请根据卷宗目录和诉讼文书，重建本案从犯罪开始到判决的完整时间线。要求：1）2025.1.1-9.20的犯罪行为时间线（含筹备、扩展、举报等关键节点）；2）2025.9.20搜查当天的详细时间线；3）刑事拘留→批捕→移送审查起诉→开庭审理的完整诉讼流程；4）每个环节的法定期限和实际耗时分析；5）各诉讼文书（拘留证、逮捕证、起诉书、判决书）的签发时间和内容要点。",
+    "expected_output": "关键日期：立案9/20、拘留9/21、逮捕10/5、起诉意见书11/15、起诉书12/1、判决书12/20",
+    "verification_criteria": [
+      "关键日期全部正确",
+      "诉讼程序完整覆盖",
+      "法定期限分析",
+      "搜查当天详细时间线",
+      "犯罪行为时间线",
+      "各法律文书的日期和内容要点"
+    ],
+    "scoring_weights": {
+      "completeness": 0.25,
+      "accuracy": 0.35,
+      "non_redundancy": 0.10,
+      "agent_collaboration": 0.10,
+      "output_quality": 0.20
+    }
+  },
+  {
+    "id": "SC14",
+    "name": "证据分类与证明力评估（lbctest）",
+    "kb_scope": ["lbctest"],
+    "category": "legal-evidence",
+    "difficulty": "hard",
+    "timeout": 1800,
+    "prompt": "请将本案的全部证据按法定证据分类（物证、书证、证人证言、被害人陈述、犯罪嫌疑人供述和辩解、鉴定意见、勘验笔录、视听资料、电子数据），评估每类证据的证明力。要求：1）每类至少列举3项具体证据；2）分析直接证据与间接证据的区别；3）分析证据之间的印证关系；4）识别证据链的薄弱环节；5）评估证据的合法性和关联性；6）给出证据是否足以认定组织卖淫罪的结论。",
+    "expected_output": "9类法定证据分类正确、每类至少3项具体证据、薄弱环节识别准确",
+    "verification_criteria": [
+      "9类法定证据分类正确",
+      "每类至少3项具体证据",
+      "直接vs间接证据分析",
+      "证据间印证关系分析",
+      "薄弱环节识别",
+      "合法性关联性评估",
+      "是否足以定罪的结论"
+    ],
+    "scoring_weights": {
+      "completeness": 0.25,
+      "accuracy": 0.30,
+      "non_redundancy": 0.10,
+      "agent_collaboration": 0.15,
+      "output_quality": 0.20
+    }
+  },
+  {
+    "id": "SC15",
+    "name": "奥运数据统计分析（bigtest3）",
+    "kb_scope": ["bigtest3"],
+    "category": "data-analysis",
+    "difficulty": "hard",
+    "timeout": 1800,
+    "prompt": "请分析athlete_events.xlsx中的奥运运动员数据。要求：1）数据概览（总记录数、时间跨度、参与国家/地区数）；2）按运动项目统计奖牌分布；3）分析中国运动员的参赛和获奖情况；4）分析奖牌榜的历史变化趋势；5）找出获得奖牌最多的运动员；6）分析夏季和冬季奥运会的参与人数变化；7）按性别分析运动员参与度的变化趋势。输出详尽的统计分析报告。",
+    "expected_output": "总记录271117行、数据准确、趋势分析有据",
+    "verification_criteria": [
+      "总记录数准确（271117行）",
+      "运动项目统计合理",
+      "中国运动员数据分析",
+      "奖牌最多的运动员识别",
+      "夏/冬季奥运会分别统计",
+      "性别参与度趋势分析",
+      "数据引用有据"
+    ],
+    "scoring_weights": {
+      "completeness": 0.20,
+      "accuracy": 0.35,
+      "non_redundancy": 0.10,
+      "agent_collaboration": 0.10,
+      "output_quality": 0.25
+    }
+  },
+  {
+    "id": "SC16",
+    "name": "剧本杀《柯南之死》完整推理（bigtest3）",
+    "kb_scope": ["bigtest3"],
+    "category": "murder-mystery",
+    "difficulty": "hard",
+    "timeout": 1800,
+    "prompt": "请完整分析《柯南之死》这个剧本杀。背景是高中生柯南（技术宅+侦探）被发现死亡并被肢解。要求：1）分析每个嫌疑人（何兵、周大鹏、徐义、梁贺等）的剧本和动机；2）分析所有线索卡（梁贺的保险单、日记、监控录像等）；3）分析'樱花恶魔案'与当前案件的关系；4）推理完整的案发经过；5）明确指出凶手身份；6）分析每个嫌疑人的不在场证明是否成立。输出详细推理报告。",
+    "expected_output": "嫌疑人全覆盖（7人）、线索卡内容正确引用、与樱花恶魔案的关联正确",
+    "verification_criteria": [
+      "7名嫌疑人全覆盖",
+      "线索卡内容引用正确",
+      "樱花恶魔案关联分析",
+      "完整案发经过推理",
+      "凶手身份判断",
+      "不在场证明分析",
+      "输出超过5000字符"
+    ],
+    "scoring_weights": {
+      "completeness": 0.25,
+      "accuracy": 0.30,
+      "non_redundancy": 0.10,
+      "agent_collaboration": 0.10,
+      "output_quality": 0.25
+    }
+  },
+  {
+    "id": "SC17",
+    "name": "刑事判决书对比分析（lbctest）",
+    "kb_scope": ["lbctest"],
+    "category": "legal-document-comparison",
+    "difficulty": "hard",
+    "timeout": 1800,
+    "prompt": "请阅读本案的起诉意见书、起诉书和刑事判决书三份法律文书，进行对比分析。要求：1）三份文书的法律性质和作用；2）犯罪事实认定的变化过程；3）各被告人的罪名和量刑差异；4）从重和从轻处罚情节的分析；5）适用法律条文的分析（刑法第358条等）；6）辩护意见和法院回应的对比；7）如果本案有量刑不公之处，指出并分析理由。",
+    "expected_output": "法律文书理解正确、量刑分析合理、适用法条正确（刑法358条组织卖淫罪）",
+    "verification_criteria": [
+      "三份文书性质和作用说明正确",
+      "犯罪事实认定变化过程分析",
+      "各被告量刑差异对比",
+      "从重/从轻情节分析",
+      "适用法条正确引用",
+      "辩护意见和法院回应对比",
+      "量刑公正性分析"
+    ],
+    "scoring_weights": {
+      "completeness": 0.20,
+      "accuracy": 0.35,
+      "non_redundancy": 0.10,
+      "agent_collaboration": 0.10,
+      "output_quality": 0.25
+    }
+  },
+  {
+    "id": "SC18",
+    "name": "跨知识库主题关联分析（bigtest3 + lbctest）",
+    "kb_scope": ["bigtest3", "lbctest"],
+    "category": "cross-kb-analysis",
+    "difficulty": "extreme",
+    "timeout": 2400,
+    "prompt": "请分析两个知识库中的内容关联。知识库包含：刑事案件卷宗、AI学术论文、剧本杀、奥运数据等。请找出以下关联：1）刑事案件中的证据分析方法与学术论文中的信息检索方法的类比；2）剧本杀中的推理逻辑与刑侦分析的异同；3）所有知识库中涉及'记忆'概念的文档（包括法律记忆、AI记忆系统、剧本杀中的记忆碎片）；4）数据统计技术在刑事案件和奥运分析中的应用对比。",
+    "expected_output": "跨库关联有创意但合理、不强行关联无关内容、类比分析有深度",
+    "verification_criteria": [
+      "两个知识库都涉及",
+      "证据分析与信息检索的类比",
+      "剧本杀推理与刑侦分析异同",
+      "'记忆'概念跨库搜索",
+      "数据统计技术应用对比",
+      "不强行关联无关内容",
+      "类比分析有深度"
+    ],
+    "scoring_weights": {
+      "completeness": 0.25,
+      "accuracy": 0.20,
+      "non_redundancy": 0.15,
+      "agent_collaboration": 0.15,
+      "output_quality": 0.25
+    }
+  },
+  {
+    "id": "SC19",
+    "name": "事实性挑战 — 刻意错误信息识别（lbctest）",
+    "kb_scope": ["lbctest"],
+    "category": "fact-verification",
+    "difficulty": "hard",
+    "timeout": 1800,
+    "prompt": "请验证以下陈述的真伪，每个陈述必须引用具体的来源文件和原始数据来支持你的判断：\n1) 雅诗阁SPA会所的地址是深圳市福田区中心路88号\n2) 张伟持有会所60%的股份\n3) 2025年8月的营业额是180万元\n4) 技师总共有20人\n5) 赵磊的月薪是20000元\n6) 搜查时间是2025年9月20日凌晨2点\n7) 王芳是张伟的姐姐\n8) 会所共有8间VIP包房\n9) 陈静供述总营业额约1200万\n10) 警方在现场查获现金50万元\n这些陈述中有多处与卷宗不符，请逐一核实。",
+    "expected_output": "所有错误陈述被识别（地址非福田区/张伟40%非60%/8月145万非180万/15技师非20人等）、正确事实有准确引用",
+    "verification_criteria": [
+      "10个陈述逐一核实",
+      "错误陈述全部识别",
+      "正确事实有来源引用",
+      "不出现模糊回答",
+      "区分正确和错误陈述",
+      "引用具体文件名"
+    ],
+    "scoring_weights": {
+      "completeness": 0.15,
+      "accuracy": 0.45,
+      "non_redundancy": 0.10,
+      "agent_collaboration": 0.10,
+      "output_quality": 0.20
+    }
+  },
+  {
+    "id": "SC20",
+    "name": "终极压力测试 — 同时运行两个复杂任务",
+    "kb_scope": ["bigtest3", "lbctest"],
+    "category": "concurrent-stress",
+    "difficulty": "extreme",
+    "timeout": 7200,
+    "concurrent": true,
+    "concurrent_tasks": [
+      {
+        "id": "SC20A",
+        "name": "Session A: lbctest法律分析",
+        "kb_scope": ["lbctest"],
+        "prompt": "请对lbctest知识库进行全面的法律分析，包括证据链、量刑建议、诉讼流程。输出至少5万字。"
+      },
+      {
+        "id": "SC20B",
+        "name": "Session B: bigtest3四个剧本杀推理",
+        "kb_scope": ["bigtest3"],
+        "prompt": "请对bigtest3知识库中的4个剧本杀分别给出完整的推理分析。每个剧本杀至少1万字。"
+      }
+    ],
+    "prompt": "[并发测试 - 见concurrent_tasks]",
+    "expected_output": "两个Session互不干扰、各自输出完整、无内容串台、系统不崩溃",
+    "verification_criteria": [
+      "两个任务同时启动",
+      "各自独立完成",
+      "无内容串台（lbctest不出现剧本杀内容）",
+      "无内容串台（bigtest3不出现法律内容）",
+      "Session A输出超过30000字符",
+      "Session B输出超过30000字符",
+      "系统稳定无崩溃"
+    ],
+    "scoring_weights": {
+      "completeness": 0.20,
+      "accuracy": 0.20,
+      "non_redundancy": 0.15,
+      "agent_collaboration": 0.15,
+      "output_quality": 0.15,
+      "isolation": 0.15
+    }
+  }
+]

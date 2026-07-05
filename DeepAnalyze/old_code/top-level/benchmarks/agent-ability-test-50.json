@@ -1,0 +1,602 @@
+[
+  {
+    "id": "T001",
+    "kb_scope": ["lbctest"],
+    "category": "single-document",
+    "difficulty": "hard",
+    "question": "雅诗阁SPA会所的租赁合同起止日期是什么？月租金多少？",
+    "expected_answer": "2025年1月1日至2027年12月31日（36个月），月租金12万元",
+    "evaluation_criteria": ["必须精确到起止年月日", "必须包含月租金金额", "必须标注来源文件"],
+    "tags": ["租赁", "金额", "时间"]
+  },
+  {
+    "id": "T002",
+    "kb_scope": ["lbctest"],
+    "category": "single-document",
+    "difficulty": "hard",
+    "question": "起诉书中指控张伟、李强、王芳各犯什么罪？建议量刑分别是什么？",
+    "expected_answer": "张伟-组织卖淫罪-12年+罚金50万；李强-组织卖淫罪-10年+罚金40万；王芳-组织卖淫罪（从犯）-5年+罚金20万",
+    "evaluation_criteria": ["三人均需列出", "罪名、刑期、罚金均需精确", "不能混淆主从犯身份"],
+    "tags": ["起诉书", "量刑", "罪名"]
+  },
+  {
+    "id": "T003",
+    "kb_scope": ["lbctest"],
+    "category": "single-document",
+    "difficulty": "hard",
+    "question": "搜查证上记载的搜查时间精确到几时几分？搜查地点是什么？",
+    "expected_answer": "2025年9月20日22时30分，地点为深圳市南山区粤海街道海德三道168号天利中央广场B座3楼",
+    "evaluation_criteria": ["时间精确到时分", "地址完整"],
+    "tags": ["搜查", "时间", "地址"]
+  },
+  {
+    "id": "T004",
+    "kb_scope": ["bigtest3"],
+    "category": "single-document",
+    "difficulty": "hard",
+    "question": "剪烛夜行游戏中，裴世春的尸体最终被发现在哪里？死因是什么？是谁杀死了他？",
+    "expected_answer": "画室中，被勒死后悬挂于窗帘杆上，后遭分尸。凶手是海洋，端木云为共犯",
+    "evaluation_criteria": ["必须包含地点", "必须包含死因", "必须指出凶手和共犯", "不能遗漏分尸情节"],
+    "tags": ["剪烛夜行", "凶杀", "尸体"]
+  },
+  {
+    "id": "T005",
+    "kb_scope": ["bigtest3"],
+    "category": "single-document",
+    "difficulty": "hard",
+    "question": "自杀派对游戏中，柏十三的学号是多少？这个名字的由来是什么？",
+    "expected_answer": "学号113，他是孤儿院第113个孩子，'十三'来自113的末两位",
+    "evaluation_criteria": ["学号精确", "名字由来解释清楚"],
+    "tags": ["自杀派对", "角色", "背景"]
+  },
+  {
+    "id": "T006",
+    "kb_scope": ["bigtest3"],
+    "category": "single-document",
+    "difficulty": "hard",
+    "question": "追凶手记中的连环杀手画像是什么？列出所有已知的特征。",
+    "expected_answer": "身高183cm，体重150斤，左撇子，餐馆老板，养猫，抽中华烟，独居，开SUV，使用A型行李箱",
+    "evaluation_criteria": ["至少列出7个特征", "不能编造未在文档中出现的特征"],
+    "tags": ["追凶手记", "嫌疑人", "画像"]
+  },
+  {
+    "id": "T007",
+    "kb_scope": ["lbctest"],
+    "category": "single-document",
+    "difficulty": "hard",
+    "question": "扣押物品清单中列出的扣押物品有哪些？现金扣押了多少？",
+    "expected_answer": "现金85600元，POS机2台（终端号T9876543210），电脑3台，手机15部，账本9册，财务报表12份，监控硬盘2块，安全套15盒",
+    "evaluation_criteria": ["现金金额精确", "各类物品数量精确", "POS终端号需包含"],
+    "tags": ["扣押", "物证", "清单"]
+  },
+  {
+    "id": "T008",
+    "kb_scope": ["bigtest3"],
+    "category": "single-document",
+    "difficulty": "hard",
+    "question": "bigtest3知识库中有音频文件，请找到并听取所有音频内容，逐一列出每个音频文件的名称和其中说了什么。",
+    "expected_answer": "应包含角色独白、背景故事等音频的ASR转写内容",
+    "evaluation_criteria": ["必须引用ASR转写的实际内容", "每个音频文件都需覆盖", "不能编造音频中不存在的内容"],
+    "tags": ["音频", "ASR", "多模态"]
+  },
+  {
+    "id": "T009",
+    "kb_scope": ["lbctest"],
+    "category": "cross-document",
+    "difficulty": "hard",
+    "question": "张伟在讯问笔录中说9月15日之后就没去过会所了，请找出所有能反驳这一说法的证据。",
+    "expected_answer": "微信记录显示9月16-19日张伟仍在群聊中讨论会所运营和排班",
+    "evaluation_criteria": ["必须引用具体证据内容", "必须标注来源文档", "不能遗漏任何反驳证据"],
+    "tags": ["矛盾", "供述", "证据"]
+  },
+  {
+    "id": "T010",
+    "kb_scope": ["lbctest"],
+    "category": "cross-document",
+    "difficulty": "hard",
+    "question": "王芳声称自己只是帮忙记账，请从所有相关文档中找出她实际参与经营的证据。",
+    "expected_answer": "微信记录显示王芳参与技师排班和营销决策；转账记录显示她经手非账目的资金流转",
+    "evaluation_criteria": ["至少2个不同来源的证据", "每个证据需有原文引用和来源标注"],
+    "tags": ["矛盾", "王芳", "经营"]
+  },
+  {
+    "id": "T011",
+    "kb_scope": ["lbctest"],
+    "category": "cross-document",
+    "difficulty": "hard",
+    "question": "李强在讯问中说会所月收入大约80万，请用财务数据验证这个说法是否属实，列出具体差异。",
+    "expected_answer": "实际月均收入约109万（980万/9个月），李强供述的80万严重偏低，差异约29万/月",
+    "evaluation_criteria": ["必须有精确的计算过程", "必须引用月度收入数据", "差异要量化"],
+    "tags": ["矛盾", "收入", "供述"]
+  },
+  {
+    "id": "T012",
+    "kb_scope": ["lbctest"],
+    "category": "cross-document",
+    "difficulty": "hard",
+    "question": "孙浩说自己的收入只是固定工资加正常提成，请从银行流水和微信转账中找出他实际收入的完整构成。",
+    "expected_answer": "月工资10000元+正常提成外，每单额外100元（非正常提成），微信转账记录中有大量额外收入",
+    "evaluation_criteria": ["必须区分正常和额外收入", "必须引用具体转账记录"],
+    "tags": ["矛盾", "收入", "孙浩"]
+  },
+  {
+    "id": "T013",
+    "kb_scope": ["bigtest3"],
+    "category": "cross-document",
+    "difficulty": "hard",
+    "question": "剪烛夜行中，9月7日晚裴世春被杀的完整经过是什么？请从所有角色的剧本中拼凑出完整的时间线，精确到分钟。",
+    "expected_answer": "约21:00海洋在裴世春家中将其勒死→装入行李箱→搬入端木云的奔驰车→21:40海洋回家洗澡→22:00端木云驾车将尸体运至画室停车场→22:30海洋驾车前往画室→23:30将尸体悬挂于画室窗帘杆",
+    "evaluation_criteria": ["时间线必须连续", "每个时间点需标注来自哪个角色剧本", "不能遗漏关键环节"],
+    "tags": ["剪烛夜行", "时间线", "凶杀"]
+  },
+  {
+    "id": "T014",
+    "kb_scope": ["bigtest3"],
+    "category": "cross-document",
+    "difficulty": "hard",
+    "question": "剪烛夜行中，方志彬这个角色的完整经历是什么？他为什么出现在画室？他做了什么？",
+    "expected_answer": "方志彬2年前被海洋推下悬崖（舒漫目击），未死但被秘密囚禁。9月7日18:30偷走裴世春5万元。9月8日22:00到达画室发现裴已死，将尸体分尸藏入玩偶中。9月9日用人皮面具伪装成裴世春出席画展",
+    "evaluation_criteria": ["必须包含2年前的坠崖事件", "必须包含偷钱、分尸、伪装的完整链路", "需标注来源"],
+    "tags": ["剪烛夜行", "方志彬", "角色"]
+  },
+  {
+    "id": "T015",
+    "kb_scope": ["bigtest3"],
+    "category": "cross-document",
+    "difficulty": "hard",
+    "question": "剪烛夜行中，南皓月的姐姐是怎么死的？这和整个案件有什么关联？",
+    "expected_answer": "南皓月（南皓雪）的姐姐南皓雪死于花店火灾，纵火者是端木云。南皓月因此对端木云有仇恨，这也是她参与案件调查的动机之一",
+    "evaluation_criteria": ["必须指出纵火者", "必须说明与案件的关联"],
+    "tags": ["剪烛夜行", "背景", "动机"]
+  },
+  {
+    "id": "T016",
+    "kb_scope": ["bigtest3"],
+    "category": "cross-document",
+    "difficulty": "hard",
+    "question": "剪烛夜行中，于恩琪身上有什么特殊的伤疤？这个伤疤的来历是什么？和案件有什么关系？",
+    "expected_answer": "月牙形伤疤在肩膀上，来源于交通事故。方志彬在所有画作中暗藏月牙标记作为签名。这个伤疤成为识别于恩琪和方志彬关系的关键线索",
+    "evaluation_criteria": ["必须包含伤疤形状和位置", "必须说明来历", "必须说明与方志彬画作的关联"],
+    "tags": ["剪烛夜行", "伤疤", "线索"]
+  },
+  {
+    "id": "T017",
+    "kb_scope": ["bigtest3"],
+    "category": "ultra-long-input",
+    "difficulty": "extreme",
+    "question": "athlete_events.xlsx中一共有多少行数据？找出所有获得过3枚及以上金牌的运动员，列出他们的姓名、国家、运动项目和金牌总数。",
+    "expected_answer": "271117行数据。需列出所有3金以上运动员的完整信息",
+    "evaluation_criteria": ["总行数必须精确", "不能遗漏任何符合条件的运动员", "每人需列出来源行号或精确查询方式", "金牌数必须精确"],
+    "tags": ["xlsx", "统计", "大数据"]
+  },
+  {
+    "id": "T018",
+    "kb_scope": ["bigtest3"],
+    "category": "ultra-long-input",
+    "difficulty": "extreme",
+    "question": "athlete_events.xlsx中，中国在历届夏季奥运会中获得的奖牌数分别是多少？按年份列出金、银、铜牌数量。",
+    "expected_answer": "需列出中国参加的每届夏季奥运会的金银铜牌数量",
+    "evaluation_criteria": ["每届数据必须精确", "不能遗漏任何一届", "需要区分夏季和冬季奥运会"],
+    "tags": ["xlsx", "中国", "奖牌"]
+  },
+  {
+    "id": "T019",
+    "kb_scope": ["bigtest3"],
+    "category": "ultra-long-input",
+    "difficulty": "extreme",
+    "question": "athlete_events.xlsx中，哪些运动员参加奥运会次数最多？列出参加4次及以上奥运会的所有运动员及其参赛年份。",
+    "expected_answer": "需列出所有参加4届及以上奥运会的运动员",
+    "evaluation_criteria": ["不能遗漏", "参赛年份必须精确", "需按次数排序"],
+    "tags": ["xlsx", "运动员", "参赛次数"]
+  },
+  {
+    "id": "T020",
+    "kb_scope": ["bigtest3"],
+    "category": "ultra-long-input",
+    "difficulty": "extreme",
+    "question": "athlete_events.xlsx中，女子体操项目中获得奖牌数最多的前10名运动员是谁？列出她们的详细奖牌明细。",
+    "expected_answer": "前10名女子体操奖牌获得者的完整明细",
+    "evaluation_criteria": ["必须限定女子体操", "前10名排序正确", "奖牌明细完整"],
+    "tags": ["xlsx", "体操", "排名"]
+  },
+  {
+    "id": "T021",
+    "kb_scope": ["lbctest"],
+    "category": "ultra-long-input",
+    "difficulty": "extreme",
+    "question": "请汇总lbctest知识库中所有Excel表格的数据：银行账户流水的全部交易记录有多少笔？总流入和总流出分别是多少？微信转账记录有多少笔？通话记录有多少条？",
+    "expected_answer": "需精确统计所有Excel中的记录数和金额汇总",
+    "evaluation_criteria": ["每个表格的记录数必须精确", "金额汇总必须精确", "不能遗漏任何Excel文件"],
+    "tags": ["Excel", "统计", "大数据"]
+  },
+  {
+    "id": "T022",
+    "kb_scope": ["bigtest3"],
+    "category": "ultra-long-output",
+    "difficulty": "extreme",
+    "question": "请根据剪烛夜行、自杀派对、追凶手记、柯南之死这四个剧本杀游戏的全部资料，创作一部10万字的长篇小说，要求：以第一人称视角，从一个侦探的角度串联四个案件。每个案件需要完整还原，包括所有角色的背景故事、动机、作案手法、证据链。角色之间的对话要生动自然，场景描写要细致。每个案件至少2万字，案件之间需要有合理的过渡和联系。",
+    "expected_answer": "一部至少10万字的连续小说，包含四个案件的完整叙事",
+    "evaluation_criteria": ["总字数不低于10万字符（约100K chars）", "四个案件都必须完整覆盖", "角色背景、动机、手法都必须基于文档内容", "不能编造文档中不存在的情节", "内容连贯，有过渡", "每个案件至少2万字"],
+    "tags": ["小说", "超长输出", "创作"]
+  },
+  {
+    "id": "T023",
+    "kb_scope": ["lbctest"],
+    "category": "ultra-long-output",
+    "difficulty": "extreme",
+    "question": "请将lbctest知识库中张伟等人组织卖淫案的全部证据整理成一份完整的案件卷宗。要求：逐条列出每一份证据的完整内容（原文引用）、来源文件名、证据类型、证明目的。所有讯问笔录的完整内容都要引用，所有财务数据都要详细列出，所有时间节点都要标注。最终形成一份不少于5万字的案件分析报告。",
+    "expected_answer": "不少于5万字的完整案件卷宗",
+    "evaluation_criteria": ["总字数不低于5万字符", "每条证据需有原文引用", "来源标注完整", "不能遗漏任何文档", "财务数据精确"],
+    "tags": ["卷宗", "超长输出", "案件"]
+  },
+  {
+    "id": "T024",
+    "kb_scope": ["bigtest3"],
+    "category": "ultra-long-output",
+    "difficulty": "extreme",
+    "question": "请为剪烛夜行游戏编写一份完整的游戏攻略手册，要求包含：所有角色的完整背景故事（每人至少3000字）、所有证据的详细解读、完整的真相还原、每轮游戏的推荐搜索策略、角色之间的关系图详解。总字数不少于8万字。",
+    "expected_answer": "不少于8万字的完整攻略手册",
+    "evaluation_criteria": ["每个角色至少3000字背景", "所有证据都要解读", "真相完整还原", "总字数达标", "不能编造文档外的内容"],
+    "tags": ["攻略", "超长输出", "剧本杀"]
+  },
+  {
+    "id": "T025",
+    "kb_scope": ["bigtest3", "lbctest"],
+    "category": "cross-kb",
+    "difficulty": "extreme",
+    "question": "bigtest3和lbctest两个知识库中，一共有多少份PDF文件？分别是什么内容？请分类汇总。",
+    "expected_answer": "bigtest3约46个PDF（剧本杀+论文），lbctest约20个PDF（起诉书+行政处罚决定书）",
+    "evaluation_criteria": ["两个KB都要覆盖", "PDF数量必须精确", "内容分类要合理"],
+    "tags": ["跨知识库", "PDF", "统计"]
+  },
+  {
+    "id": "T026",
+    "kb_scope": ["bigtest3", "lbctest"],
+    "category": "cross-kb",
+    "difficulty": "extreme",
+    "question": "在两个知识库中，分别存在哪些涉及'死亡'主题的文档？列出所有相关文档的文件名和具体涉及的内容。",
+    "expected_answer": "bigtest3中涉及多个谋杀案（剪烛夜行2人死亡等），lbctest中无直接死亡但涉及刑事判决",
+    "evaluation_criteria": ["两个KB都要搜索", "不能遗漏相关文档", "每个文档需说明具体涉及什么"],
+    "tags": ["跨知识库", "主题搜索"]
+  },
+  {
+    "id": "T027",
+    "kb_scope": ["bigtest3", "lbctest"],
+    "category": "cross-kb",
+    "difficulty": "extreme",
+    "question": "两个知识库中一共有多少个人名出现？列出所有出现的人名及其所在的知识库和文档。",
+    "expected_answer": "lbctest约30人，bigtest3约20+个有名角色",
+    "evaluation_criteria": ["不能遗漏重要人物", "每人需标注来源文档", "区分虚构人物和真实人物"],
+    "tags": ["跨知识库", "人物", "实体"]
+  },
+  {
+    "id": "T028",
+    "kb_scope": ["bigtest3", "lbctest"],
+    "category": "cross-kb",
+    "difficulty": "extreme",
+    "question": "两个知识库中涉及的案件/事件，分别发生在什么时间段？请按时间顺序排列所有可确定的时间节点。",
+    "expected_answer": "剪烛夜行2018年9月，自杀派对大约2016-2018年，追凶手记未明确，柯南之死未明确，lbctest 2025年1月-12月",
+    "evaluation_criteria": ["时间必须精确", "跨KB排列", "需标注来源"],
+    "tags": ["跨知识库", "时间线", "排序"]
+  },
+  {
+    "id": "T029",
+    "kb_scope": ["bigtest3", "lbctest"],
+    "category": "cross-kb",
+    "difficulty": "extreme",
+    "question": "两个知识库中，有哪些文档提到了'深圳'或'南山区'？分别是什么文档？在什么上下文中提到？",
+    "expected_answer": "lbctest大量文档涉及深圳南山区的案件地点；bigtest3中某些文档可能也涉及",
+    "evaluation_criteria": ["两个KB都要搜索", "上下文要引用", "不能遗漏"],
+    "tags": ["跨知识库", "地点", "搜索"]
+  },
+  {
+    "id": "T030",
+    "kb_scope": ["lbctest"],
+    "category": "multi-step",
+    "difficulty": "hard",
+    "question": "请完整重建张伟等人组织卖淫案从立案到判决的法律程序时间线，列出每一个法律文书及其日期。",
+    "expected_answer": "立案决定书(深公刑立字[2025]第0234号)→拘留证(9/21)→逮捕证(10/5)→搜查证(9/20)→扣押决定书(9/20)→辨认笔录(9/22)→起诉意见书(11/15)→起诉书(12/1)→刑事判决书(12/20)",
+    "evaluation_criteria": ["每个法律文书的名称和日期都需列出", "顺序必须正确", "不能遗漏任何文书"],
+    "tags": ["法律程序", "时间线", "文书"]
+  },
+  {
+    "id": "T031",
+    "kb_scope": ["lbctest"],
+    "category": "multi-step",
+    "difficulty": "hard",
+    "question": "请追踪全部涉案资金的流向：从客户支付→技师分成→管理层工资→最终利润分配。每个环节的金额和去向都要精确。",
+    "expected_answer": "客户支付(服务费898-1400)→技师提成(30%/25%/15%/18%/12%)→管理层工资→月租金12万→水电→营销→净利润张伟40%+李强40%+王芳20%",
+    "evaluation_criteria": ["每个环节的金额需精确", "分成比例需精确", "利润分配方式需说明"],
+    "tags": ["资金", "流向", "分析"]
+  },
+  {
+    "id": "T032",
+    "kb_scope": ["lbctest"],
+    "category": "multi-step",
+    "difficulty": "hard",
+    "question": "15名技师中，谁的工号最小？谁的总服务次数最多？最多的做了多少次？请列出技师101-115的完整名单，包含姓名、年龄、籍贯和总服务次数。",
+    "expected_answer": "工号最小101=张雨婷，服务次数最多的是赵雪(104)798次或李思琪(102)674次",
+    "evaluation_criteria": ["15人全部列出", "每人信息完整（姓名/年龄/籍贯/服务次数）", "排序正确"],
+    "tags": ["技师", "统计", "排名"]
+  },
+  {
+    "id": "T033",
+    "kb_scope": ["lbctest"],
+    "category": "multi-step",
+    "difficulty": "hard",
+    "question": "从所有讯问笔录中，找出7名嫌疑人各自的辩解要点，以及哪些辩解被其他证据推翻。",
+    "expected_answer": "张伟(不在场)、李强(收入偏低)、王芳(只管账)、赵磊(不知情)、陈静(听命行事)、刘洋(以为是正规按摩)、孙浩(正常收入)——各辩解及反驳证据",
+    "evaluation_criteria": ["7人都需覆盖", "每人至少1个辩解", "反驳证据需引用具体来源"],
+    "tags": ["讯问", "辩解", "矛盾"]
+  },
+  {
+    "id": "T034",
+    "kb_scope": ["bigtest3"],
+    "category": "multi-step",
+    "difficulty": "hard",
+    "question": "剪烛夜行游戏中，第一轮搜证一共有多少张证据卡？玩家可以选择哪些搜索地点？每个地点能找到什么类型的证据？",
+    "expected_answer": "第一轮42张证据卡，7个行动点。可搜索：玩家个人、尸体、画廊、舒漫",
+    "evaluation_criteria": ["证据卡数量精确", "搜索地点完整", "每个地点的证据类型描述合理"],
+    "tags": ["剪烛夜行", "证据", "游戏规则"]
+  },
+  {
+    "id": "T035",
+    "kb_scope": ["bigtest3"],
+    "category": "multi-step",
+    "difficulty": "hard",
+    "question": "剪烛夜行中，于恩琪杀死舒漫的动机是什么？作案过程是怎样的？她使用了什么工具？",
+    "expected_answer": "动机：舒漫目睹方志彬被推下悬崖却不施救（方志彬是于恩琪恋人）。作案：用墙钉将舒漫钉在'地狱之火'画作上。工具：墙钉",
+    "evaluation_criteria": ["动机完整", "作案过程详细", "工具精确", "需标注来源"],
+    "tags": ["剪烛夜行", "于恩琪", "凶杀"]
+  },
+  {
+    "id": "T036",
+    "kb_scope": ["bigtest3"],
+    "category": "multi-step",
+    "difficulty": "hard",
+    "question": "自杀派对中，谁策划了假情书事件？事件经过是什么？最终导致了什么后果？",
+    "expected_answer": "全明焕策划假情书，冒充李碧莹写给柏十三，导致柏十三表白被拒、尴尬，是三人友谊出现裂痕的原因之一",
+    "evaluation_criteria": ["策划者需指出", "事件经过完整", "后果需说明"],
+    "tags": ["自杀派对", "情书", "事件"]
+  },
+  {
+    "id": "T037",
+    "kb_scope": ["bigtest3"],
+    "category": "multi-step",
+    "difficulty": "hard",
+    "question": "bigtest3知识库中有视频文件，请找到并查看所有视频内容，逐一描述每个视频中可以看到什么。",
+    "expected_answer": "应包含视频文件的VLM描述内容",
+    "evaluation_criteria": ["必须引用VLM实际描述", "每个视频都需覆盖", "不能编造视频内容"],
+    "tags": ["视频", "VLM", "多模态"]
+  },
+  {
+    "id": "T038",
+    "kb_scope": ["lbctest"],
+    "category": "statistical",
+    "difficulty": "hard",
+    "question": "雅诗阁SPA会所从2025年1月到9月，每个月的营业额分别是多少？总收入是多少？净利润是多少？利润率是多少？",
+    "expected_answer": "1月60万、2月72万、3月95万、4月110万、5月125万、6月135万、7月140万、8月145万、9月98万。总计约980万，净利润约174万",
+    "evaluation_criteria": ["每月数据精确", "总计和净利润计算正确", "需标注数据来源"],
+    "tags": ["财务", "月度", "统计"]
+  },
+  {
+    "id": "T039",
+    "kb_scope": ["lbctest"],
+    "category": "statistical",
+    "difficulty": "hard",
+    "question": "15名技师的押金总额是多少？如果每名技师每月平均提成按最高月（8月）计算，所有技师的总提成是多少？",
+    "expected_answer": "押金15人×4000=60000元。提成需根据8月数据计算",
+    "evaluation_criteria": ["押金计算正确", "提成计算有据可依", "需展示计算过程"],
+    "tags": ["技师", "提成", "计算"]
+  },
+  {
+    "id": "T040",
+    "kb_scope": ["bigtest3"],
+    "category": "statistical",
+    "difficulty": "hard",
+    "question": "bigtest3知识库中一共有多少张图片（含jpg/jpeg/png/webp）？有多少个PDF文件？有多少个音频文件？有多少个视频文件？按文件类型统计。",
+    "expected_answer": "png~95, jpg~75, webp~8, jpeg~1, jpg@h_1280~1, pdf~46, mp3~5, wav~1, mp4~3",
+    "evaluation_criteria": ["每个类型的数量精确", "不能遗漏任何类型"],
+    "tags": ["文件统计", "类型", "bigtest3"]
+  },
+  {
+    "id": "T041",
+    "kb_scope": ["lbctest"],
+    "category": "statistical",
+    "difficulty": "hard",
+    "question": "根据银行账户流水，张伟、李强、王芳三个人各自的银行账户分别有多少笔交易？总流入金额分别是多少？",
+    "expected_answer": "需从Excel中精确统计每人交易笔数和流入金额",
+    "evaluation_criteria": ["三人都需统计", "笔数精确", "金额精确", "需标注数据来源"],
+    "tags": ["银行", "流水", "统计"]
+  },
+  {
+    "id": "T042",
+    "kb_scope": ["bigtest3"],
+    "category": "boundary",
+    "difficulty": "hard",
+    "question": "bigtest3知识库中有没有关于'量子计算'或'区块链'的内容？如果有，列出相关文档。",
+    "expected_answer": "应无相关内容（论文都是NLP/ML方向）",
+    "evaluation_criteria": ["必须明确回答有或无", "不能编造不存在的文档", "搜索需充分"],
+    "tags": ["空结果", "搜索", "边界"]
+  },
+  {
+    "id": "T043",
+    "kb_scope": ["bigtest3"],
+    "category": "boundary",
+    "difficulty": "hard",
+    "question": "在所有知识库中搜索名字叫'张伟'的人，列出所有出现的位置和上下文。",
+    "expected_answer": "lbctest中张伟是主犯；bigtest3中可能有同名也可能没有",
+    "evaluation_criteria": ["必须搜索两个KB", "不能混淆不同身份的张伟", "每个出现处都需标注上下文"],
+    "tags": ["歧义", "人名", "搜索"]
+  },
+  {
+    "id": "T044",
+    "kb_scope": ["lbctest"],
+    "category": "boundary",
+    "difficulty": "hard",
+    "question": "lbctest中有没有证据表明赵磊直接参与了招募或管理技师？如果没有直接证据，现有的间接证据有哪些？",
+    "expected_answer": "赵磊是店长，管理日常运营，考勤记录中有他的签字，但直接招募证据可能有限",
+    "evaluation_criteria": ["需区分直接和间接证据", "不能编造证据", "需标注来源"],
+    "tags": ["证据", "间接", "分析"]
+  },
+  {
+    "id": "T045",
+    "kb_scope": ["bigtest3"],
+    "category": "boundary",
+    "difficulty": "hard",
+    "question": "剪烛夜行中提到的'地狱画家'是谁？这个称号的由来是什么？在文档中出现在哪些地方？",
+    "expected_answer": "裴世春，因画风阴森恐怖而得名",
+    "evaluation_criteria": ["必须指出具体人物", "需解释称号由来", "需列出所有提及此称号的文档位置"],
+    "tags": ["别号", "搜索", "上下文"]
+  },
+  {
+    "id": "T046",
+    "kb_scope": ["lbctest"],
+    "category": "consistency",
+    "difficulty": "hard",
+    "question": "赵磊说突击检查发生在晚上11点左右，但搜查证上写的时间是22:30。请找出所有与突击检查时间相关的证据，分析哪个更可信。",
+    "expected_answer": "搜查证是官方文书，时间22:30更可信。赵磊供述的'11点左右'可能是记忆偏差",
+    "evaluation_criteria": ["必须引用搜查证时间", "必须引用赵磊供述", "分析需有理有据"],
+    "tags": ["时间矛盾", "一致性", "证据"]
+  },
+  {
+    "id": "T047",
+    "kb_scope": ["lbctest"],
+    "category": "consistency",
+    "difficulty": "hard",
+    "question": "隔壁商户赵某的询问笔录和周杰的供述中，关于会所经营时间的说法是否一致？如有不一致请详细列出。",
+    "expected_answer": "需对比两个来源对营业时间的描述",
+    "evaluation_criteria": ["必须引用两份原文", "差异需逐条列出", "不能编造差异"],
+    "tags": ["矛盾", "经营时间", "一致性"]
+  },
+  {
+    "id": "T048",
+    "kb_scope": ["lbctest"],
+    "category": "consistency",
+    "difficulty": "hard",
+    "question": "刘洋声称她以为雅诗阁是正规按摩店。请从服务价格表、考勤记录、微信群聊三个维度分析这个说法是否合理。",
+    "expected_answer": "服务价格（898-1400元）远高于正规按摩；考勤记录显示深夜排班；微信记录显示她参与服务安排——说法不可信",
+    "evaluation_criteria": ["三个维度都要分析", "每个维度需引用具体证据", "结论需有逻辑支撑"],
+    "tags": ["矛盾", "辩解", "合理性"]
+  },
+  {
+    "id": "T049",
+    "kb_scope": ["bigtest3"],
+    "category": "consistency",
+    "difficulty": "hard",
+    "question": "剪烛夜行中，林森在各角色剧本中的形象是否一致？他在不同角色眼中分别是什么身份？",
+    "expected_answer": "林森自称警察，实际是网络推理小说家。不同角色对他的认知不同：有人相信他是警察，有人有怀疑",
+    "evaluation_criteria": ["需引用多个角色的视角", "需区分'表面身份'和'真实身份'", "不能编造"],
+    "tags": ["剪烛夜行", "角色", "一致性"]
+  },
+  {
+    "id": "T050",
+    "kb_scope": ["bigtest3"],
+    "category": "consistency",
+    "difficulty": "hard",
+    "question": "剪烛夜行中，关于9月9日晚上的行踪，各角色的说法是否存在矛盾？请逐一对比每个角色的不在场证明。",
+    "expected_answer": "各角色对9月9日晚的行踪描述存在多处矛盾，需逐一列出并标注来源",
+    "evaluation_criteria": ["需覆盖至少5个角色", "每个角色的说法需引用原文", "矛盾点需明确指出", "需标注来源文档"],
+    "tags": ["剪烛夜行", "不在场证明", "矛盾"]
+  },
+  {
+    "id": "T051",
+    "kb_scope": ["lbctest"],
+    "category": "multi-agent",
+    "difficulty": "extreme",
+    "question": "请使用多Agent并行工作模式，全面分析张伟等人的组织卖淫案。要求：1）派一个Agent专门分析全部讯问笔录，提取各嫌疑人的供述要点；2）派另一个Agent专门分析全部财务数据（银行流水、微信转账、营业报表），计算涉案金额；3）派第三个Agent分析物证和法律文书（搜查证、扣押清单、辨认笔录）；4）最后汇总三方的发现，形成一份完整的案件分析报告。请使用workflow_run创建并行子Agent。",
+    "expected_answer": "三个Agent分别完成各自领域的深度分析，最终汇总为一份结构清晰的案件报告，包含供述对比、财务数据、物证链三个维度的完整信息",
+    "evaluation_criteria": ["必须使用多Agent协作（workflow_run或coordinated模式）", "各子Agent应有明确的分工", "最终输出需整合所有子Agent的结果", "信息不重复冗余", "各维度分析深度足够"],
+    "tags": ["多Agent", "并行", "案件分析"]
+  },
+  {
+    "id": "T052",
+    "kb_scope": ["bigtest3", "lbctest"],
+    "category": "multi-agent",
+    "difficulty": "extreme",
+    "question": "请使用多Agent团队模式，对bigtest3和lbctest两个知识库进行跨库对比分析。每个知识库派一个专门的Agent进行全面探索，然后汇总两方的发现，对比两个知识库在文档类型、内容主题、人物数量、时间范围等方面的异同。请使用workflow_run创建并行Agent团队。",
+    "expected_answer": "两个Agent分别探索各自的知识库，汇总时列出两个KB的对比维度：文档数量/类型、内容主题、涉及人物、时间范围等",
+    "evaluation_criteria": ["必须使用多Agent协作", "至少两个Agent分别负责不同知识库", "汇总时有明确的对比分析", "数据需来自实际探索", "不能编造不存在的对比点"],
+    "tags": ["多Agent", "跨知识库", "对比分析"]
+  },
+  {
+    "id": "T053",
+    "kb_scope": ["bigtest3"],
+    "category": "multi-agent",
+    "difficulty": "extreme",
+    "question": "请使用pipeline流水线模式完成以下分析任务：第一步，用一个Agent全面搜索剪烛夜行的所有文档，列出所有角色和关键线索；第二步，用另一个Agent基于第一步的结果，构建完整的时间线并分析各角色的动机；第三步，用第三个Agent对前两步的结果进行交叉验证，检查是否有矛盾或遗漏。请使用workflow_run创建pipeline工作流。",
+    "expected_answer": "三步流水线完成：搜索→时间线构建→交叉验证。每步结果应作为下一步的输入，最终输出经验证的完整分析",
+    "evaluation_criteria": ["必须使用pipeline模式的多Agent协作", "三步顺序执行", "后一步需利用前一步的结果", "交叉验证需指出发现的问题", "不能跳步或合并步骤"],
+    "tags": ["多Agent", "pipeline", "流水线"]
+  },
+  {
+    "id": "T054",
+    "kb_scope": ["lbctest"],
+    "category": "multi-agent",
+    "difficulty": "extreme",
+    "question": "请使用多视角council模式分析张伟案件中各嫌疑人的责任划分。每个Agent分别从以下视角独立分析：1）法律视角——根据法律条文判断各人应承担的法律责任；2）证据视角——评估现有证据对每个人的证明力；3）事实视角——梳理每个人的实际行为和参与程度。最后汇总三方分析，给出综合判断。请使用workflow_run创建council模式工作流。",
+    "expected_answer": "三个Agent分别从法律、证据、事实三个视角分析，最终给出综合判断，各视角的分析互不矛盾且有交叉验证",
+    "evaluation_criteria": ["必须使用council模式", "三个不同视角的分析", "各视角分析需独立完成", "汇总需综合三个视角", "不能某个视角只是形式上的"],
+    "tags": ["多Agent", "council", "多视角"]
+  },
+  {
+    "id": "T055",
+    "kb_scope": ["lbctest"],
+    "category": "multi-agent",
+    "difficulty": "extreme",
+    "question": "请使用并行Agent模式同时完成以下三个独立任务：1）统计雅诗阁SPA会所9个月的完整财务数据（月营业额、成本、净利润）；2）梳理所有15名技师的个人信息（姓名、年龄、籍贯、工号、服务次数）；3）列出所有法律文书及对应的日期和法律程序阶段。三个任务完成后合并为一份综合报告。请使用workflow_run并行执行。",
+    "expected_answer": "三个并行Agent分别完成财务统计、技师信息、法律文书三个任务，结果合并为综合报告",
+    "evaluation_criteria": ["必须使用并行模式", "三个任务同时进行", "每个任务的结果要完整准确", "合并后的报告结构清晰", "不能串行执行伪装成并行"],
+    "tags": ["多Agent", "并行", "统计"]
+  },
+  {
+    "id": "T056",
+    "kb_scope": ["bigtest3"],
+    "category": "multi-agent",
+    "difficulty": "extreme",
+    "question": "请使用多Agent工作流分析剪烛夜行和自杀派对两个剧本杀游戏的异同。先用两个Agent分别深入分析一个游戏（角色数量、剧情复杂度、推理难度、核心诡计），然后用第三个Agent对比两个游戏的设计特点。请使用workflow_run创建带依赖关系的DAG工作流。",
+    "expected_answer": "两个Agent分别分析各自的游戏，第三个Agent基于前两个的结果进行对比，给出异同总结",
+    "evaluation_criteria": ["必须使用多Agent协作", "前两个Agent的输出作为第三个Agent的输入", "对比分析需涵盖多个维度", "不能遗漏关键异同点", "DAG依赖关系正确"],
+    "tags": ["多Agent", "DAG", "对比"]
+  },
+  {
+    "id": "T057",
+    "kb_scope": ["lbctest"],
+    "category": "multi-agent",
+    "difficulty": "extreme",
+    "question": "请使用零幻觉分析模式对lbctest知识库进行分析。要求：1）第一个Agent从多个角度搜索所有与资金流向相关的信息；2）第二个Agent对第一个Agent的发现进行交叉验证，确认每条信息都有来源；3）第三个Agent将验证过的信息整理为带有精确引用的最终报告。请使用workflow_run创建graph工作流。",
+    "expected_answer": "三步graph工作流：多角度搜索→交叉验证→引用报告，每条结论都有来源标注",
+    "evaluation_criteria": ["必须使用graph模式的多Agent协作", "第二步必须验证第一步的结果", "最终报告每条信息需标注来源", "不能包含未经验证的信息", "Agent之间有明确的数据传递"],
+    "tags": ["多Agent", "graph", "零幻觉"]
+  },
+  {
+    "id": "T058",
+    "kb_scope": ["bigtest3"],
+    "category": "multi-agent",
+    "difficulty": "extreme",
+    "question": "请使用多Agent并行模式全面处理bigtest3知识库的多模态内容：1）一个Agent专门处理所有PDF文档（学术论文和剧本杀手册），提取文本内容；2）另一个Agent专门查看所有图片，通过VLM描述图片内容；3）第三个Agent听取所有音频文件，列出ASR转写内容；4）第四个Agent查看所有视频文件，描述视频内容。最后汇总所有多模态发现。请使用workflow_run并行执行。",
+    "expected_answer": "四个Agent分别处理PDF、图片、音频、视频，汇总后形成多模态内容的完整清单",
+    "evaluation_criteria": ["必须使用多Agent并行协作", "四种模态分别有Agent处理", "每种模态的内容要有实际提取结果", "汇总报告要覆盖所有模态", "不能遗漏任何一种文件类型"],
+    "tags": ["多Agent", "并行", "多模态"]
+  },
+  {
+    "id": "T059",
+    "kb_scope": ["lbctest"],
+    "category": "multi-agent",
+    "difficulty": "extreme",
+    "question": "请使用coordinated协调模式完成对张伟案件的全面分析。让coordinator Agent制定分析计划，然后自动分配子任务给不同的专业Agent：一个负责证据链分析，一个负责资金流向追踪，一个负责人物关系梳理。最终coordinator汇总各子Agent的结果并解决可能的矛盾。请使用/api/agents/run-coordinated端点或workflow_run工具。",
+    "expected_answer": "coordinator自动分解任务，三个专业Agent分别完成各自分析，最终coordinator汇总并解决矛盾",
+    "evaluation_criteria": ["必须使用协调模式（coordinator自动分配）", "coordinator需制定明确计划", "子Agent分工合理", "最终汇总需解决子Agent间的矛盾或重复", "整体结果需比单Agent更全面"],
+    "tags": ["多Agent", "coordinated", "协调"]
+  },
+  {
+    "id": "T060",
+    "kb_scope": ["bigtest3", "lbctest"],
+    "category": "multi-agent",
+    "difficulty": "extreme",
+    "question": "请使用多Agent工作流完成以下大规模分析：同时派出多个Agent，每个Agent负责一个特定剧本杀游戏（剪烛夜行、自杀派对、追凶手记、柯南之死）和lbctest案件的证据整理。每个Agent需要：1）找到所有相关文档 2）提取关键人物和事件 3）构建该案件的完整时间线。所有Agent完成后，汇总所有时间线，按时间顺序排列，找出跨案件可能的关联。请使用workflow_run并行执行。",
+    "expected_answer": "5个Agent分别处理5个案件，汇总后形成跨案件的综合时间线，发现潜在关联",
+    "evaluation_criteria": ["必须使用多Agent并行协作", "5个案件各有Agent负责", "每个案件的时间线要完整", "汇总时要尝试发现跨案件关联", "即使没有真实关联也要说明"],
+    "tags": ["多Agent", "并行", "大规模分析"]
+  }
+]

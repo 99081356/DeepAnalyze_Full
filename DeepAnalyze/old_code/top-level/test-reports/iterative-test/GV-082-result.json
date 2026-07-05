@@ -1,0 +1,50 @@
+{
+  "test_id": "GV-082",
+  "level": 1,
+  "prompt": "In the Scikit-Learn July 2017 changelog, what other predictor base command received a bug fix? Just give the name, not a path.",
+  "expected": "BaseLabelPropagation",
+  "actual": "BaseLabelPropagation",
+  "finish_summary": "BaseLabelPropagation",
+  "tool_calls": [
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Scikit-Learn July 2017 changelog predictor base bug fix"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://raw.githubusercontent.com/scikit-learn/scikit-learn/master/doc/whats_new/v0.19.rst"
+      }
+    },
+    {
+      "tool": "grep",
+      "input": {
+        "pattern": "predict.*base|base.*predict",
+        "path": "."
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "Based on the Scikit-Learn v0.19 changelog I fetched, the version 0.19 was released August 12, 2017. There's no separate \"July 2017\" changelog for version 0.19. However, let me look more carefully at the content.\n\nWait - the question says \"Scikit-Learn July 2017 changelog\" - this likely refers to the monthly changelog that was published. Let me check if there's a specific changelog document for July 2017.\n\nBut looking at the content I already have, under \"Other predictors\" bug fixes, I see:\n- Fix `semi_supervised.BaseLabelPropagation` to correctly implement ``LabelPropagation`` and ``LabelSpreading``...\n\nThe question asks about \"predictor base command\" that received a bug fix. This could be referring to `BaseLabelPropagation` which is a \"base\" class for predictors. The \"other predictor\" section contains bug fixes, and the one that mentions \"Base\" is `semi_supervised.BaseLabelPropagation`.\n\nLet me also check if there are other mentions. The content was truncated, so let me look for more.\n\nActually, re-reading the question: \"what other predictor base command received a bug fix\" - the word \"other\" suggests there might be a context I'm missing. But based on the changelog, the answer that fits \"predictor base command\" with a bug fix is `BaseLabelPropagation`.\n\nWait, let me reconsider. The question specifically mentions \"July 2017 changelog.\" The v0.19 changelog covers the August 2017 release. Let me check if there's a specific July 2017 changelog, perhaps on the scikit-learn website or GitHub.\n\nActually, looking at the scikit-learn GitHub, there might be a \"Change log\" or \"CHANGES.rst\" file. But the v0.19.rst is the most relevant. The content was truncated, so let me fetch the rest.\n\nBut I think the answer is most likely `BaseLabelPropagation` based on the \"Other predictors\" bug fix section. The full path would be `semi_supervised.BaseLabelPropagation` but the question asks for just the name, not the path."
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "BaseLabelPropagation"
+      }
+    }
+  ],
+  "tools": [
+    "mcp__minimax_websearch__web_search",
+    "web_fetch",
+    "grep",
+    "think",
+    "finish"
+  ],
+  "turns": 5,
+  "elapsed": 49.9
+}

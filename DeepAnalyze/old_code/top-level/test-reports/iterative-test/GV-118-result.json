@@ -1,0 +1,29 @@
+{
+  "test_id": "GV-118",
+  "level": 1,
+  "prompt": "What country had the least number of athletes at the 1928 Summer Olympics? If there's a tie for a number of athletes, return the first in alphabetical order. Give the IOC country code as your answer.",
+  "expected": "CUB",
+  "actual": "CUB",
+  "finish_summary": "CUB",
+  "tool_calls": [
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "title": "1928 Summer Olympics"
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "CUB"
+      }
+    }
+  ],
+  "tools": [
+    "wikipedia",
+    "finish"
+  ],
+  "turns": 2,
+  "elapsed": 11.5
+}

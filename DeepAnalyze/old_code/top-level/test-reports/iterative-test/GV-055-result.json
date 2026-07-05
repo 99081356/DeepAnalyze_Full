@@ -1,0 +1,80 @@
+{
+  "test_id": "GV-055",
+  "level": 2,
+  "prompt": "On a leap day before the year 2008, a joke was removed from the Wikipedia page for “Dragon”. What was the phrase that was removed? Give the phrase as it appeared on the page, but without punctuation.",
+  "expected": "Here be dragons",
+  "actual": "The phrase removed was **\"Here be dragons\"**.\n\nOn **February 29, 2004** (a leap day before 2008), user **Timwi** edited the Wikipedia page for \"Dragon\" and removed the joke phrase \"Here be dragons:\" — a famous medieval cartographer's notation — replacing it with the standard disambiguation header \"The term '''dragon''' may be referring to:\". Timwi's edit summary was: \"I admit, I did laugh. :-)\"\n\nWithout punctuation: **Here be dragons**",
+  "finish_summary": "The phrase removed was **\"Here be dragons\"**.\n\nOn **February 29, 2004** (a leap day before 2008), user **Timwi** edited the Wikipedia page for \"Dragon\" and removed the joke phrase \"Here be dragons:\" — a famous medieval cartographer's notation — replacing it with the standard disambiguation header \"The term '''dragon''' may be referring to:\". Timwi's edit summary was: \"I admit, I did laugh. :-)\"\n\nWithout punctuation: **Here be dragons**",
+  "tool_calls": [
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_revisions",
+        "title": "Dragon",
+        "limit": 50
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "The question asks about a leap day before 2008. Leap days before 2008 are Feb 29 of 2004, 2000, 1996, etc. The most recent leap day before 2008 is Feb 29, 2004. The API returned recent revisions but I need much older ones. Let me search for edits on Feb 29, 2004, or look for the specific revision where a joke was removed from the Dragon Wikipedia page. I should try the web_search tool to find this information, or search specifically for Wikipedia Dragon page history edits on Feb 29."
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_revisions",
+        "title": "Dragon",
+        "limit": 1
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/w/index.php?title=Dragon&action=history&year=2004&month=2",
+        "max_length": 30000
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/w/index.php?title=Dragon&diff=prev&oldid=2580816",
+        "max_length": 15000
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 10000,
+        "url": "https://en.wikipedia.org/w/index.php?title=Dragon&diff=prev&oldid=2580816&action=raw"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 10000,
+        "url": "https://en.wikipedia.org/w/index.php?title=Dragon&oldid=2572029&action=raw"
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "I found the answer. On February 29, 2004 (a leap day before 2008), user Timwi made an edit to the Dragon Wikipedia page removing 217 bytes, with the comment \"I admit, I did laugh. :-)\"\n\nComparing the two versions:\n- Before (revision 2572029): \"Here be dragons: \"\n- After (revision 2580816): \"The term '''dragon''' may be referring to: \"\n\nThe phrase removed was \"Here be dragons\" — a famous medieval map phrase used as a joke on the disambiguation page. The question asks for the phrase without punctuation. \"Here be dragons:\" becomes \"here be dragons\" (removing the colon and capitalizing normally, or just the words).\n\nThe phrase as it appeared on the page was \"Here be dragons:\" — without punctuation, that's \"Here be dragons\"."
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "The phrase removed was **\"Here be dragons\"**.\n\nOn **February 29, 2004** (a leap day before 2008), user **Timwi** edited the Wikipedia page for \"Dragon\" and removed the joke phrase \"Here be dragons:\" — a famous medieval cartographer's notation — replacing it with the standard disambiguation header \"The term '''dragon''' may be referring to:\". Timwi's edit summary was: \"I admit, I did laugh. :-)\"\n\nWithout punctuation: **Here be dragons**"
+      }
+    }
+  ],
+  "tools": [
+    "wikipedia",
+    "think",
+    "web_fetch",
+    "finish"
+  ],
+  "turns": 9,
+  "elapsed": 48.6
+}

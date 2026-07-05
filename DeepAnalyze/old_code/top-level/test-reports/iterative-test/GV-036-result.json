@@ -1,0 +1,48 @@
+{
+  "test_id": "GV-036",
+  "level": 2,
+  "prompt": "It is 1999. Before you party like it is 1999, please assist me in settling a bet.\n\nFiona Apple and Paula Cole released albums prior to 1999. Of these albums, which didn't receive a letter grade from Robert Christgau? Provide your answer as a comma delimited list of album titles, sorted alphabetically.",
+  "expected": "Harbinger, Tidal",
+  "actual": "Harbinger, Tidal",
+  "finish_summary": "Harbinger, Tidal",
+  "tool_calls": [
+    {
+      "tool": "think",
+      "input": {
+        "thought": "I need to:\n1. Identify all albums by Fiona Apple and Paula Cole released before 1999\n2. Check Robert Christgau's reviews for each album\n3. Determine which ones did NOT receive a letter grade from him\n4. Sort alphabetically and present as comma-delimited list\n\nFiona Apple's pre-1999 albums: \"Tidal\" (1996)\nPaula Cole's pre-1999 albums: \"Harbinger\" (1994), \"This Fire\" (1996)\n\nLet me verify these and check Christgau's reviews."
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Robert Christgau review Paula Cole \"This Fire\" letter grade"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://www.robertchristgau.com/get_artist.php?name=Paula+Cole"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://www.robertchristgau.com/get_artist.php?name=Fiona+Apple"
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "Harbinger, Tidal"
+      }
+    }
+  ],
+  "tools": [
+    "think",
+    "mcp__minimax_websearch__web_search",
+    "web_fetch",
+    "finish"
+  ],
+  "turns": 5,
+  "elapsed": 28.1
+}

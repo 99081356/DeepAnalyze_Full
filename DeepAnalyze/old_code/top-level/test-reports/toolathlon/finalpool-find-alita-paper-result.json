@@ -1,0 +1,88 @@
+{
+  "test_id": "finalpool-find-alita-paper",
+  "task_name": "find-alita-paper",
+  "prompt": "I'm looking for a paper on arxiv related to agentic reasoning. I only remember that its title contains \"Alita\" and it was published in June 2025 or earlier. Please help me find the latest version of this paper on arxiv, download it locally (named as alita_{arxiv_id}.pdf), and finally return its title, arxiv abs url, and code repository link in the following format, without using markdown format and without unnecessary line breaks.\n\ntitle: {title}\narxiv_abs_url: {arxiv_abs_url}\ncode_url: {code_url}",
+  "evaluation_criteria": "Find the correct Alita paper on arxiv, download PDF with correct naming, and return accurate title, arxiv URL, and code repo link in exact format.",
+  "needed_tools": [
+    "arxiv_local",
+    "filesystem",
+    "scholarly"
+  ],
+  "output": "title: Alita: Generalist Agent Enabling Scalable Agentic Reasoning with Minimal Predefinition and Maximal Self-Evolution\narxiv_abs_url: https://arxiv.org/abs/2505.20286\ncode_url: https://github.com/CharlesQ9/Alita",
+  "finish_summary": "title: Alita: Generalist Agent Enabling Scalable Agentic Reasoning with Minimal Predefinition and Maximal Self-Evolution\narxiv_abs_url: https://arxiv.org/abs/2505.20286\ncode_url: https://github.com/CharlesQ9/Alita",
+  "tool_calls": [
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "arxiv Alita agentic reasoning paper 2025"
+      }
+    },
+    {
+      "tool": "web_search",
+      "input": {
+        "query": "arxiv Alita agentic reasoning paper 2025"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://arxiv.org/search/?query=Alita+agentic+reasoning&searchtype=all",
+        "max_length": 15000
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://arxiv.org/abs/2505.20286",
+        "max_length": 10000
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "curl -L -o data/alita_2505.20286.pdf \"https://arxiv.org/pdf/2505.20286\" 2>&1 | tail -5",
+        "timeout": 60
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "mkdir -p /mnt/d/code/deepanalyze/data && curl -L -o /mnt/d/code/deepanalyze/data/alita_2505.20286.pdf \"https://arxiv.org/pdf/2505.20286\" 2>&1 | tail -3",
+        "timeout": 60
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "I have all the information needed:\n\n- Paper found: arXiv:2505.20286\n- Title: \"Alita: Generalist Agent Enabling Scalable Agentic Reasoning with Minimal Predefinition and Maximal Self-Evolution\"\n- Submitted: 26 May 2025 (within the June 2025 or earlier constraint)\n- PDF downloaded to /mnt/d/code/deepanalyze/data/alita_2505.20286.pdf\n- Code repo: https://github.com/CharlesQ9/Alita\n- arxiv abs URL: https://arxiv.org/abs/2505.20286\n\nLet me verify the download succeeded and submit the result."
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "ls -lh /mnt/d/code/deepanalyze/data/alita_2505.20286.pdf"
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "title: Alita: Generalist Agent Enabling Scalable Agentic Reasoning with Minimal Predefinition and Maximal Self-Evolution\narxiv_abs_url: https://arxiv.org/abs/2505.20286\ncode_url: https://github.com/CharlesQ9/Alita"
+      }
+    }
+  ],
+  "tools": [
+    "mcp__minimax_websearch__web_search",
+    "web_search",
+    "web_fetch",
+    "web_fetch",
+    "bash",
+    "bash",
+    "think",
+    "bash",
+    "finish"
+  ],
+  "turns": 9,
+  "elapsed": 31.3,
+  "score": 80,
+  "details": "All key elements found: title has Alita, has arxiv URL, has code URL, correct arxiv ID"
+}

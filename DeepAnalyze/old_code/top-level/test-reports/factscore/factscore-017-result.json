@@ -1,0 +1,66 @@
+{
+  "test_id": "factscore-017",
+  "entity": "Samuel Oboh",
+  "prompt": "Tell me a bio of Samuel Oboh",
+  "evaluation_criteria": "Factual accuracy of nationality (Canadian, not Nigerian -- this is a known error from name-based assumptions), profession (architect, manager), contributions to architecture in Edmonton. Verify nationality carefully against Wikipedia rather than inferring from name. LEED certification claims must be precisely stated.",
+  "output": "## Biography of Samuel Oboh\n\n**Samuel Óghalé Oboh** (born March 27, 1971) is a Canadian architect, leader, and former Vice President of Architecture at **AECOM Canada Architects Ltd.** He is recognized as one of the most prominent Nigerian-Canadian architects and a notable figure in Canada's architectural profession.\n\n### Background & Heritage\nSamuel Oboh is of **Isoko heritage**, an ethnic group from Delta State in southern Nigeria. He holds Canadian nationality and has built his professional career primarily in Canada.\n\n### Education\nOboh's educational background includes connections to two Nigerian universities:\n- **Ahmadu Bello University** (ABU), Zaria — one of Nigeria's premier universities, where he is listed among its notable alumni in architecture.\n- **Ambrose Alli University**, Ekpoma — also in Edo State, Nigeria.\n\n### Professional Career\n- **Vice President – Architecture at AECOM Canada Architects Ltd.**: Oboh held a senior leadership role at AECOM, one of the world's largest multinational engineering and infrastructure consulting firms.\n- **President of the Alberta Chapter of the Royal Architectural Institute of Canada (RAIC)**: He served as president of RAIC's Alberta chapter, making him a key voice for the architectural profession in the province of Alberta.\n- **International experience**: He served as a resident Canadian architect on the **Botswana Police College** project, which was designed by FMA Architects Ltd — demonstrating his involvement in major international projects across Africa.\n\n### Recognition\n- He is listed as a **notable Nigerian architect** and a **notable alumnus** of both Ahmadu Bello University and Ambrose Alli University on Wikipedia.\n- He is recognized among notable people of **Isoko heritage**.\n\n---\n\n*Sources: Wikipedia articles on \"Samuel Oboh,\" \"Isoko people,\" \"Ahmadu Bello University,\" \"Ambrose Alli University,\" \"List of Nigerian architects,\" and \"Botswana Police College.\"*",
+  "finish_summary": "## Biography of Samuel Oboh\n\n**Samuel Óghalé Oboh** (born March 27, 1971) is a Canadian architect, leader, and former Vice President of Architecture at **AECOM Canada Architects Ltd.** He is recognized as one of the most prominent Nigerian-Canadian architects and a notable figure in Canada's architectural profession.\n\n### Background & Heritage\nSamuel Oboh is of **Isoko heritage**, an ethnic group from Delta State in southern Nigeria. He holds Canadian nationality and has built his professional career primarily in Canada.\n\n### Education\nOboh's educational background includes connections to two Nigerian universities:\n- **Ahmadu Bello University** (ABU), Zaria — one of Nigeria's premier universities, where he is listed among its notable alumni in architecture.\n- **Ambrose Alli University**, Ekpoma — also in Edo State, Nigeria.\n\n### Professional Career\n- **Vice President – Architecture at AECOM Canada Architects Ltd.**: Oboh held a senior leadership role at AECOM, one of the world's largest multinational engineering and infrastructure consulting firms.\n- **President of the Alberta Chapter of the Royal Architectural Institute of Canada (RAIC)**: He served as president of RAIC's Alberta chapter, making him a key voice for the architectural profession in the province of Alberta.\n- **International experience**: He served as a resident Canadian architect on the **Botswana Police College** project, which was designed by FMA Architects Ltd — demonstrating his involvement in major international projects across Africa.\n\n### Recognition\n- He is listed as a **notable Nigerian architect** and a **notable alumnus** of both Ahmadu Bello University and Ambrose Alli University on Wikipedia.\n- He is recognized among notable people of **Isoko heritage**.\n\n---\n\n*Sources: Wikipedia articles on \"Samuel Oboh,\" \"Isoko people,\" \"Ahmadu Bello University,\" \"Ambrose Alli University,\" \"List of Nigerian architects,\" and \"Botswana Police College.\"*",
+  "tool_calls": [
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "search",
+        "query": "Samuel Oboh"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Samuel Oboh architect Canada biography"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Samuel Oboh Canadian architect AECOM Alberta"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "\"Samuel Oboh\" architect AECOM Royal Architectural Institute Canada"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "\"Samuel Oboh\" architect Edmonton Alberta president"
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "Let me organize what I've found about Samuel Oboh from the Wikipedia search results:\n\n1. **Full name**: Samuel Óghalé Oboh\n2. **Born**: March 27, 1971\n3. **Nationality**: Canadian (of Nigerian/Isoko heritage)\n4. **Profession**: Architect, manager, leader\n5. **Key role**: Former Vice President - Architecture at AECOM Canada Architects Ltd\n6. **Education**: \n   - Attended Ahmadu Bello University (listed as a notable alumnus)\n   - Also connected to Ambrose Alli University\n7. **Professional recognition**: President of the Alberta chapter of the Royal Architectural Institute of Canada (RAIC)\n8. **Heritage**: Isoko people (from Delta State, Nigeria)\n9. **Notable project**: Was a resident architect on the Botswana Police College project (designed by FMA Architects Ltd)\n\nFrom the Wikipedia snippets, these are confirmed facts. Let me compile a comprehensive bio from these sources."
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "## Biography of Samuel Oboh\n\n**Samuel Óghalé Oboh** (born March 27, 1971) is a Canadian architect, leader, and former Vice President of Architecture at **AECOM Canada Architects Ltd.** He is recognized as one of the most prominent Nigerian-Canadian architects and a notable figure in Canada's architectural profession.\n\n### Background & Heritage\nSamuel Oboh is of **Isoko heritage**, an ethnic group from Delta State in southern Nigeria. He holds Canadian nationality and has built his professional career primarily in Canada.\n\n### Education\nOboh's educational background includes connections to two Nigerian universities:\n- **Ahmadu Bello University** (ABU), Zaria — one of Nigeria's premier universities, where he is listed among its notable alumni in architecture.\n- **Ambrose Alli University**, Ekpoma — also in Edo State, Nigeria.\n\n### Professional Career\n- **Vice President – Architecture at AECOM Canada Architects Ltd.**: Oboh held a senior leadership role at AECOM, one of the world's largest multinational engineering and infrastructure consulting firms.\n- **President of the Alberta Chapter of the Royal Architectural Institute of Canada (RAIC)**: He served as president of RAIC's Alberta chapter, making him a key voice for the architectural profession in the province of Alberta.\n- **International experience**: He served as a resident Canadian architect on the **Botswana Police College** project, which was designed by FMA Architects Ltd — demonstrating his involvement in major international projects across Africa.\n\n### Recognition\n- He is listed as a **notable Nigerian architect** and a **notable alumnus** of both Ahmadu Bello University and Ambrose Alli University on Wikipedia.\n- He is recognized among notable people of **Isoko heritage**.\n\n---\n\n*Sources: Wikipedia articles on \"Samuel Oboh,\" \"Isoko people,\" \"Ahmadu Bello University,\" \"Ambrose Alli University,\" \"List of Nigerian architects,\" and \"Botswana Police College.\"*"
+      }
+    }
+  ],
+  "tools": [
+    "wikipedia",
+    "mcp__minimax_websearch__web_search",
+    "mcp__minimax_websearch__web_search",
+    "mcp__minimax_websearch__web_search",
+    "mcp__minimax_websearch__web_search",
+    "think",
+    "finish"
+  ],
+  "turns": 7,
+  "elapsed": 54.0,
+  "fact_score": 100,
+  "fact_details": "✓ nationality: canadian\n✓ nationality: nigerian\n✓ profession: architect (matched 'architect')\n✓ profession: politician (matched 'president')"
+}

@@ -1,0 +1,28 @@
+{
+  "test_id": "GV-034",
+  "level": 1,
+  "prompt": "My family reunion is this week, and I was assigned the mashed potatoes to bring. The attendees include my married mother and father, my twin brother and his family, my aunt and her family, my grandma and her brother, her brother's daughter, and his daughter's family. All the adults but me have been married, and no one is divorced or remarried, but my grandpa and my grandma's sister-in-law passed away last year. All living spouses are attending. My brother has two children that are still kids, my aunt has one six-year-old, and my grandma's brother's daughter has three kids under 12. I figure each adult will eat about 1.5 potatoes of mashed potatoes and each kid will eat about 1/2 a potato of mashed potatoes, except my second cousins don't eat carbs. The average potato is about half a pound, and potatoes are sold in 5-pound bags. How many whole bags of potatoes do I need? Just give the number.",
+  "expected": "2",
+  "actual": "2",
+  "finish_summary": "2",
+  "tool_calls": [
+    {
+      "tool": "think",
+      "input": {
+        "thought": "Let me carefully map out all attendees:\n\n1. Me\n2. My mother (married, spouse attending)\n3. My father (mother's husband)\n4. My twin brother\n5. Brother's spouse (married, attending)\n6. Brother's child 1 (kid)\n7. Brother's child 2 (kid)\n\n8. My aunt\n9. Aunt's spouse (married, attending)\n10. Aunt's 6-year-old (kid)\n\n11. My grandma\n12. Grandma's brother (great-uncle)\n13. Grandma's brother's daughter (my first cousin once removed) - married, spouse attending\n14. Grandma's brother's daughter's spouse\n15. Grandma's brother's daughter's child 1 (under 12, kid)\n16. Grandma's brother's daughter's child 2 (under 12, kid)\n17. Grandma's brother's daughter's child 3 (under 12, kid)\n\nDeceased: Grandpa and grandma's sister-in-law (grandma's brother's wife).\n\nNow count adults and kids:\nAdults: me, mom, dad, brother, brother's spouse, aunt, aunt's spouse, grandma, great-uncle, cousin-once-removed, cousin-once-removed's spouse = 11 adults\nKids: brother's 2, aunt's 1, cousin-once-removed's 3 = 6 kids\n\n\"Except my second cousins don't eat carbs\" - second cousins are the children of my grandma's brother's daughter. Those 3 kids are my second cousins. So they eat 0.\n\nAdults eating: 11 × 1.5 = 16.5 potatoes\nKids eating: (6 - 3) × 0.5 = 3 × 0.5 = 1.5 potatoes (brother's 2 kids + aunt's 1 kid; second cousins excluded)\nTotal: 16.5 + 1.5 = 18 potatoes\n\n18 potatoes × 0.5 lbs = 9 lbs\n9 lbs / 5 lbs per bag = 1.8 bags → round up to 2 bags\n\nAnswer: 2"
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "2"
+      }
+    }
+  ],
+  "tools": [
+    "think",
+    "finish"
+  ],
+  "turns": 2,
+  "elapsed": 16.7
+}

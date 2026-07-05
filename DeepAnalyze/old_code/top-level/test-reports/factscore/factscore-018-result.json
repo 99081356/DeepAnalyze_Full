@@ -1,0 +1,39 @@
+{
+  "test_id": "factscore-018",
+  "entity": "Chaim Malinowitz",
+  "prompt": "Tell me a bio of Chaim Malinowitz",
+  "evaluation_criteria": "Factual accuracy of profession, biographical details, and any notable achievements. As a very rare entity, information may be extremely sparse on Wikipedia. The model should be evaluated on whether it correctly identifies what is and is not known, avoiding fabrication of biographical details that cannot be verified.",
+  "output": "Rabbi Chaim Zev Malinowitz (1952–2019) was a Haredi rabbi, dayan, and Talmudic scholar best known as the general editor of the 73-volume Schottenstein Edition of the Babylonian Talmud (ArtScroll). Born on the Lower East Side of NYC, he studied at the Talmudical Yeshiva of Philadelphia and Yeshivas Iyun HaTalmud in Monsey, received semikhah from Rabbi Moshe Feinstein, and became a world authority on gittin (Jewish divorce law). He served as rosh kollel in Monsey, opposed the 1992 NY Get Law, and after making aliyah in 1997, led Beis Tefillah Yonah Avraham in Ramat Beit Shemesh for 17 years. He was known for intellectual independence (opposing the ban on Natan Slifkin's books), encyclopedic Torah knowledge, and a down-to-earth personality. He died in Jerusalem on November 21, 2019, at age 67, and was buried in Rehovot.",
+  "finish_summary": "Rabbi Chaim Zev Malinowitz (1952–2019) was a Haredi rabbi, dayan, and Talmudic scholar best known as the general editor of the 73-volume Schottenstein Edition of the Babylonian Talmud (ArtScroll). Born on the Lower East Side of NYC, he studied at the Talmudical Yeshiva of Philadelphia and Yeshivas Iyun HaTalmud in Monsey, received semikhah from Rabbi Moshe Feinstein, and became a world authority on gittin (Jewish divorce law). He served as rosh kollel in Monsey, opposed the 1992 NY Get Law, and after making aliyah in 1997, led Beis Tefillah Yonah Avraham in Ramat Beit Shemesh for 17 years. He was known for intellectual independence (opposing the ban on Natan Slifkin's books), encyclopedic Torah knowledge, and a down-to-earth personality. He died in Jerusalem on November 21, 2019, at age 67, and was buried in Rehovot.",
+  "tool_calls": [
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "search",
+        "query": "Chaim Malinowitz"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "title": "Chaim Malinowitz"
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "Rabbi Chaim Zev Malinowitz (1952–2019) was a Haredi rabbi, dayan, and Talmudic scholar best known as the general editor of the 73-volume Schottenstein Edition of the Babylonian Talmud (ArtScroll). Born on the Lower East Side of NYC, he studied at the Talmudical Yeshiva of Philadelphia and Yeshivas Iyun HaTalmud in Monsey, received semikhah from Rabbi Moshe Feinstein, and became a world authority on gittin (Jewish divorce law). He served as rosh kollel in Monsey, opposed the 1992 NY Get Law, and after making aliyah in 1997, led Beis Tefillah Yonah Avraham in Ramat Beit Shemesh for 17 years. He was known for intellectual independence (opposing the ban on Natan Slifkin's books), encyclopedic Torah knowledge, and a down-to-earth personality. He died in Jerusalem on November 21, 2019, at age 67, and was buried in Rehovot."
+      }
+    }
+  ],
+  "tools": [
+    "wikipedia",
+    "wikipedia",
+    "finish"
+  ],
+  "turns": 3,
+  "elapsed": 51.3,
+  "fact_score": 80,
+  "fact_details": "Substantial output (828 chars) about Chaim Malinowitz - no specific criteria facts to verify"
+}

@@ -1,0 +1,74 @@
+{
+  "test_id": "GV-028",
+  "dataset": "gaia",
+  "level": "level-2",
+  "prompt": "How many High Energy Physics - Lattice articles listed in January 2020 on Arxiv had ps versions available?",
+  "expected_answer": "31",
+  "actual_output": "",
+  "evaluation": {
+    "expected": "31",
+    "actual_preview": "",
+    "pass": false,
+    "match_type": "empty_output"
+  },
+  "turns_used": 0,
+  "elapsed_seconds": 110.3,
+  "tool_calls_count": 7,
+  "tools_used": [
+    "mcp__minimax_websearch__web_search",
+    "web_fetch"
+  ],
+  "tool_calls": [
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "site:arxiv.org hep-lat 2020 January"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://export.arxiv.org/api/query?search_query=cat:hep-lat%20AND%20submittedDate:[20200101%20TO%2020200131]&start=0&max_results=500",
+        "max_length": 200000
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "arxiv list hep-lat 2020 January"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "\"hep-lat\" \"2020\" \"January\" site:arxiv.org"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "site:arxiv.org/list/hep-lat 2020"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://arxiv.org/list/hep-lat/2020",
+        "max_length": 50000
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://arxiv.org/list/hep-lat/2020?skip=0&show=2000",
+        "max_length": 500000
+      }
+    }
+  ],
+  "push_contents": [],
+  "thinking": [],
+  "finish_summary": "",
+  "final_output": "",
+  "content_deltas_text": "<think>\nWe need to answer: \"How many High Energy Physics - Lattice articles listed in January 2020 on Arxiv had ps versions available?\"\n\nThis is a specific question about ArXiv papers. We need to find the number of articles in the category \"High Energy Physics - Lattice\" (hep-lat) that were listed in January 2020 and had ps versions available. This requires searching ArXiv for hep-lat submissions in that time period, and checking which have a \"ps\" format version (i.e., source files in PostScript). \n\nWe should do this via web search. The user asks for a count. Likely we need to check the ArXiv API or a search engine for \"site:arxiv.org hep-lat 2020\" but need to filter by month. However, ArXiv's API supports date filters. But using web search might be easier: search query \"arxiv hep-lat January 2020 ps version\".\n\nWe may need to examine multiple pages. Also, caution: the question asks \"How many ... articles listed in January 2020 on Arxiv had ps versions available?\" This means we should consider submissions to hep-lat category that were submitted (or listed) in Jan 2020. Then among those, check if they have a \"ps\" version (like \"Other formats\" -> \"ps\"). Answer should be a number.\n\nWe can find using ArXiv's search: query \"cat:hep-lat AND submittedDate:[20200101 TO 20200131]\". But easier to use google? Use web search.\n\nGiven that \"ps versions\" refers to the old-style PostScript figures. Many papers may have PDF only. But historically, ArXiv used to provide PDF, source, and sometimes other formats like ps. The question is testing ability to filter.\n\nWe should systematically find out. Approach:\n\n1. Use web search with query: \"site:arxiv.org hep-lat 2020 \\\"Phys. Rev.\\\" \\\"January\\\" \\\"2020\\\"\". But need actual date.\n\nBetter: Use ArXiv's API: query http://export.arxiv.org/api/... However, this may need to implement HTTP request. But we can do web search for a list page like \"https://arxiv.org/list/hep-lat/recent?show=...\" But the ArXiv category page lists only recent submission",
+  "error": null
+}

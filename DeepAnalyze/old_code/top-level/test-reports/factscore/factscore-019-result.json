@@ -1,0 +1,53 @@
+{
+  "test_id": "factscore-019",
+  "entity": "Lanny Flaherty",
+  "prompt": "Tell me a bio of Lanny Flaherty",
+  "evaluation_criteria": "Factual accuracy of profession, biographical details, film/TV appearances if applicable. As a rare entity, verify each claimed role or appearance against the subject's Wikipedia page. Avoid conflating this person with other entities who may share similar names.",
+  "output": "Lanny Flaherty (July 27, 1942 – February 18, 2024) was an American character actor born in Pontotoc, Mississippi. A graduate of Pontotoc High School and the University of Southern Mississippi, he built a prolific career spanning 1984–2020 with over 30 film and TV credits. His notable films include Miller's Crossing (1990), Natural Born Killers (1994), Signs (2002), Men in Black 3 (2012), Blood In Blood Out (1993), and Cold in July (2014). On television, he appeared in the acclaimed Lonesome Dove miniseries (1989), The Cosby Show, White Collar, and Little America (2020, his final role). He resided in New York City and died there at age 81 following surgery.",
+  "finish_summary": "Lanny Flaherty (July 27, 1942 – February 18, 2024) was an American character actor born in Pontotoc, Mississippi. A graduate of Pontotoc High School and the University of Southern Mississippi, he built a prolific career spanning 1984–2020 with over 30 film and TV credits. His notable films include Miller's Crossing (1990), Natural Born Killers (1994), Signs (2002), Men in Black 3 (2012), Blood In Blood Out (1993), and Cold in July (2014). On television, he appeared in the acclaimed Lonesome Dove miniseries (1989), The Cosby Show, White Collar, and Little America (2020, his final role). He resided in New York City and died there at age 81 following surgery.",
+  "tool_calls": [
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "search",
+        "query": "Lanny Flaherty"
+      }
+    },
+    {
+      "tool": "web_search",
+      "input": {
+        "query": "Lanny Flaherty actor biography obituary"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "title": "Lanny Flaherty"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Lanny Flaherty actor obituary biography career"
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "Lanny Flaherty (July 27, 1942 – February 18, 2024) was an American character actor born in Pontotoc, Mississippi. A graduate of Pontotoc High School and the University of Southern Mississippi, he built a prolific career spanning 1984–2020 with over 30 film and TV credits. His notable films include Miller's Crossing (1990), Natural Born Killers (1994), Signs (2002), Men in Black 3 (2012), Blood In Blood Out (1993), and Cold in July (2014). On television, he appeared in the acclaimed Lonesome Dove miniseries (1989), The Cosby Show, White Collar, and Little America (2020, his final role). He resided in New York City and died there at age 81 following surgery."
+      }
+    }
+  ],
+  "tools": [
+    "wikipedia",
+    "web_search",
+    "wikipedia",
+    "mcp__minimax_websearch__web_search",
+    "finish"
+  ],
+  "turns": 5,
+  "elapsed": 45.0,
+  "fact_score": 80,
+  "fact_details": "Substantial output (664 chars) about Lanny Flaherty - no specific criteria facts to verify"
+}

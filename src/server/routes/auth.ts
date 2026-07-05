@@ -49,6 +49,15 @@ export function createAuthRoutes() {
     );
     const roleIds = await getUserRoleIds(user.id);
 
+    // 查询用户关联的 DA Worker（与 /auth/me 保持一致）
+    const workerResult = await getPool().query(
+      `SELECT id, da_url FROM workers
+       WHERE assigned_user_id = $1 AND status IN ('approved', 'online', 'offline')
+       ORDER BY registered_at DESC LIMIT 1`,
+      [user.id],
+    );
+    const daWorker = workerResult.rows[0] ?? null;
+
     c.header(
       "Set-Cookie",
       `refresh_token=${refresh_token}; HttpOnly; Path=/api/v1/auth; Max-Age=2592000; SameSite=Strict`,
@@ -66,6 +75,8 @@ export function createAuthRoutes() {
         is_org_admin: user.is_org_admin,
         organization_id: user.organization_id,
         roles: roleIds,
+        da_url: daWorker?.da_url ?? null,
+        da_worker_id: daWorker?.id ?? null,
       },
     });
   });

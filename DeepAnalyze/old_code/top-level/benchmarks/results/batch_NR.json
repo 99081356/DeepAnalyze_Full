@@ -1,0 +1,171 @@
+[
+  {
+    "case_id": "NR-01",
+    "case_name": "无冗余 - 精确数字提取",
+    "category": "no_redundancy",
+    "session_id": "59f77228-1b96-4527-9d06-0c4dc79c5c5e",
+    "input": "请找到「antigravity-rag-2026.pdf」，只回答一个数字：系统处理了多少条Telegram消息？不需要任何解释或额外信息。",
+    "ground_truth": "725,521",
+    "started_at": "2026-05-10T10:48:09.174007",
+    "tool_calls": [
+      {
+        "tool": "bash",
+        "input": {
+          "command": "grep -rl 'antigravity-rag-2026' wiki/681aa199-134b-4812-8559-2f20e3b58ab3/manifest.json"
+        },
+        "status": "completed",
+        "output_preview": "{\"exitCode\":0,\"output\":\"wiki/681aa199-134b-4812-8559-2f20e3b58ab3/manifest.json\"}"
+      },
+      {
+        "tool": "bash",
+        "input": {
+          "command": "grep -i 'telegram\\|Telegram' wiki/681aa199-134b-4812-8559-2f20e3b58ab3/documents/*/parsed.md | head -20"
+        },
+        "status": "completed",
+        "output_preview": "{\"exitCode\":0,\"output\":\"wiki/681aa199-134b-4812-8559-2f20e3b58ab3/documents/1bc9eff1-a592-47c4-bf29-2603d9f393c8/parsed.md:We present Antigravity RAG, a production-grade retrieval-augmented generation"
+      },
+      {
+        "tool": "finish",
+        "input": {
+          "summary": "725,521"
+        },
+        "status": "completed",
+        "output_preview": "{\"completed\":true,\"summary\":\"725,521\"}"
+      }
+    ],
+    "push_contents": [],
+    "content_deltas": [
+      "7",
+      "25",
+      ",",
+      "5",
+      "21"
+    ],
+    "turns": 4,
+    "full_content": "725,521",
+    "errors": [],
+    "completed": true,
+    "task_id": "37e2dafd-9e7f-437d-bd17-502a8bd3f37e",
+    "finished_at": "2026-05-10T10:48:24.079538",
+    "duration_seconds": 14.905531,
+    "tool_call_summary": {
+      "bash": 2,
+      "finish": 1
+    },
+    "evaluation": {
+      "accuracy_score": 40,
+      "completeness_score": 30,
+      "usefulness_score": 20,
+      "tool_usage_score": 10,
+      "total_score": 100,
+      "verdict": "PASS",
+      "reason": "Agent的回答完美契合了「无冗余 - 精确数字提取」的任务要求，仅输出了正确的数字，没有任何多余的解释或背景信息，表现极佳。",
+      "issues": []
+    }
+  },
+  {
+    "case_id": "NR-02",
+    "case_name": "无冗余 - 简短事实确认",
+    "category": "no_redundancy",
+    "session_id": "df8f42f2-ad47-4175-bcbb-b290f3ee8698",
+    "input": "请确认知识库中是否存在名为「test.txt」的文件？如果存在，其第三行的内容是什么？只需直接回答。",
+    "ground_truth": "存在; 第三行：Line three has some special characters: 中文 English 日本語",
+    "started_at": "2026-05-10T10:48:26.868825",
+    "tool_calls": [
+      {
+        "tool": "bash",
+        "input": {
+          "command": "find original/34e5e5f9-30ca-4dbd-9ed5-b8363b8cf23a/ -name \"test.txt\" 2>/dev/null"
+        },
+        "status": "completed",
+        "output_preview": "{\"exitCode\":0,\"output\":\"original/34e5e5f9-30ca-4dbd-9ed5-b8363b8cf23a/5aae7360-7a2d-457b-8a7e-0342395a6280/test.txt\"}"
+      },
+      {
+        "tool": "run_sql",
+        "input": {
+          "sql": "SELECT doc_id, file_name, file_path FROM documents WHERE kb_id = '34e5e5f9-30ca-4dbd-9ed5-b8363b8cf23a' AND file_name = 'test.txt'"
+        },
+        "status": "completed",
+        "output_preview": "{\"error\":\"SQL error: column \\\"doc_id\\\" does not exist\"}"
+      },
+      {
+        "tool": "bash",
+        "input": {
+          "command": "sed -n '3p' original/34e5e5f9-30ca-4dbd-9ed5-b8363b8cf23a/5aae7360-7a2d-457b-8a7e-0342395a6280/test.txt"
+        },
+        "status": "completed",
+        "output_preview": "{\"exitCode\":0,\"output\":\"Line three has some special characters: 中文 English 日本語\"}"
+      },
+      {
+        "tool": "finish",
+        "input": {
+          "summary": "知识库中存在名为「test.txt」的文件，其第三行内容为：Line three has some special characters: 中文 English 日本語"
+        },
+        "status": "completed",
+        "output_preview": "{\"completed\":true,\"summary\":\"知识库中存在名为「test.txt」的文件，其第三行内容为：Line three has some special characters: 中文 English 日本語\"}"
+      }
+    ],
+    "push_contents": [],
+    "content_deltas": [
+      "知识",
+      "库",
+      "中",
+      "**",
+      "存在",
+      "**",
+      "名为",
+      " `",
+      "test",
+      ".txt",
+      "`",
+      " 的",
+      "文件",
+      "。",
+      "其",
+      "第三",
+      "行",
+      "内容",
+      "为",
+      "：\n\n",
+      "``",
+      "`\n",
+      "Line",
+      " three",
+      " has",
+      " some",
+      " special",
+      " characters",
+      ":",
+      " 中文",
+      " English",
+      " 日本",
+      "語",
+      "\n",
+      "```"
+    ],
+    "turns": 3,
+    "full_content": "知识库中**存在**名为 `test.txt` 的文件。其第三行内容为：\n\n```\nLine three has some special characters: 中文 English 日本語\n```",
+    "errors": [],
+    "completed": true,
+    "task_id": "10acb50b-5600-43a3-9fe2-67b55079d01a",
+    "finished_at": "2026-05-10T10:48:48.101162",
+    "duration_seconds": 21.232337,
+    "tool_call_summary": {
+      "bash": 2,
+      "run_sql": 1,
+      "finish": 1
+    },
+    "evaluation": {
+      "accuracy_score": 40,
+      "completeness_score": 30,
+      "usefulness_score": 15,
+      "tool_usage_score": 10,
+      "total_score": 95,
+      "verdict": "PASS",
+      "reason": "Agent准确且完整地回答了问题，提取的特殊字符完全正确。但在任务明确要求“只需直接回答”和“无冗余”的情况下，Agent给出了Markdown加粗、代码块以及末尾的总结，存在轻微的格式冗余，因此在有用性（简洁度）上略微扣分。",
+      "issues": [
+        "回答存在冗余，未能严格遵循“只需直接回答”的指令，包含了额外的Markdown格式和总结性文本。"
+      ]
+    }
+  }
+]

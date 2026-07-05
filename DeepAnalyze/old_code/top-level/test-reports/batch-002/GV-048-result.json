@@ -1,0 +1,201 @@
+{
+  "test_id": "GV-048",
+  "dataset": "gaia",
+  "level": "level-1",
+  "prompt": "Who nominated the only Featured Article on English Wikipedia about a dinosaur that was promoted in November 2016?",
+  "expected_answer": "FunkMonk",
+  "actual_output": "模型调用失败: Provider \"minimax-highspeed\" returned HTTP 400: {\"type\":\"error\",\"error\":{\"type\":\"bad_request_error\",\"message\":\"invalid params, context window exceeds limit (2013)\",\"http_code\":\"400\"},\"request_id\":\"064bfc5923014db8630e8a762666f102\"}\n\n\n可用的模型: minimax-highspeed, minimax, minimax-tts, minimax-embedding, local-bge-m3, glm-5.1, glm5。请在设置中检查模型配置。",
+  "evaluation": {
+    "expected": "FunkMonk",
+    "actual_preview": "模型调用失败: Provider \"minimax-highspeed\" returned HTTP 400: {\"type\":\"error\",\"error\":{\"type\":\"bad_request_error\",\"message\":\"invalid params, context window exceeds limit (2013)\",\"http_code\":\"400\"},\"request_id\":\"064bfc5923014db8630e8a762666f102\"}\n\n\n可用的模型: minimax-highspeed, minimax, minimax-tts, minimax-embedding, local-bge-m3, glm-5.1, glm5。请在设置中检查模型配置。",
+    "pass": false,
+    "match_type": "no_match"
+  },
+  "turns_used": 0,
+  "elapsed_seconds": 168.4,
+  "tool_calls_count": 28,
+  "tools_used": [
+    "web_fetch",
+    "think",
+    "mcp__minimax_websearch__web_search",
+    "web_search"
+  ],
+  "tool_calls": [
+    {
+      "tool": "web_search",
+      "input": {
+        "query": "English Wikipedia Featured Article dinosaur promoted November 2016"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Wikipedia Featured Article dinosaur November 2016 nomination"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "\"Featured Article\" Wikipedia dinosaur \"November 2016\""
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Wikipedia \"Featured article\" November 2016 dinosaurs list"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "site:en.wikipedia.org \"Featured article\" November 2016 archive"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/wiki/Wikipedia:Featured_article_review/November_2016"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Wikipedia Featured article review November 2016 archive dinosaur"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/wiki/Wikipedia:Featured_articles"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/wiki/Wikipedia:Featured_article_review"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "site:en.wikipedia.org \"Featured article\" dinosaur T-Rex Tyannosaurus"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/wiki/Wikipedia:Featured_article_review/November_2016"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Wikipedia list featured articles dinosaurs paleontology"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/wiki/Wikipedia:Featured_article_candidates"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "en.wikipedia.org Tyrannosaurus featured article nomination"
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "I need to find the only Featured Article about a dinosaur that was promoted in November 2016 on English Wikipedia, and identify who nominated it. \n\nLet me think about this systematically:\n1. First, I should find out which dinosaur articles are Featured Articles on English Wikipedia\n2. Then identify which one was promoted in November 2016 specifically\n3. Find the nomination\n\nInstead of searching the web, let me try accessing Wikipedia's API or specific pages. Wikipedia has a structured system for tracking Featured Article nominations (FAN).\n\nThe page for Featured Article Candidates nominations would be at: https://en.wikipedia.org/wiki/Wikipedia:Featured_article_candidates/[Article_Name]/archive\n\nLet me try to access the Wikipedia API or specific archive pages to find dinosaur articles. Alternatively, I can look at the list of all Featured articles and filter for dinosaurs."
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/wiki/Wikipedia:Featured_article_candidates/dinosaur_archive"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/wiki/Category:Featured_articles_about_dinosaurs"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/w/index.php?title=Category:Featured_articles&action=listing"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/wiki/Special:Search?search=featured+article+dinosaur+wikipedia"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/wiki/Tyrannosaurus"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/wiki/Triceratops"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/wiki/Wikipedia:Featured_article_candidates/Spinosaurus"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "\"Wikipedia\" \"featured article candidate\" November 2016 archive dinosaur"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/w/index.php?title=Wikipedia:Featured_article_review&action=history"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/wiki/Wikipedia:Featured_article_candidates/Velociraptor"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/wiki/Wikipedia:Featured_article_candidates/Stegosaurus"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "site:en.wikipedia.org \"Featured article\" November 2016 promoted dinosaur"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "\"Spinosaurus\" \"Featured article\" Wikipedia 2016"
+      }
+    }
+  ],
+  "push_contents": [],
+  "thinking": [
+    "I need to find the only Featured Article about a dinosaur that was promoted in November 2016 on English Wikipedia, and identify who nominated it. \n\nLet me think about this systematically:\n1. First, I should find out which dinosaur articles are Featured Articles on English Wikipedia\n2. Then identify which one was promoted in November 2016 specifically\n3. Find the nomination\n\nInstead of searching the web, let me try accessing Wikipedia's API or specific pages. Wikipedia has a structured system for tracking Featured Article nominations (FAN).\n\nThe page for Featured Article Candidates nominations would be at: https://en.wikipedia.org/wiki/Wikipedia:Featured_article_candidates/[Article_Name]/archive\n\nLet me try to access the Wikipedia API or specific archive pages to find dinosaur articles. Alternatively, I can look at the list of all Featured articles and filter for dinosaurs."
+  ],
+  "finish_summary": "",
+  "final_output": "模型调用失败: Provider \"minimax-highspeed\" returned HTTP 400: {\"type\":\"error\",\"error\":{\"type\":\"bad_request_error\",\"message\":\"invalid params, context window exceeds limit (2013)\",\"http_code\":\"400\"},\"request_id\":\"064bfc5923014db8630e8a762666f102\"}\n\n\n可用的模型: minimax-highspeed, minimax, minimax-tts, minimax-embedding, local-bge-m3, glm-5.1, glm5。请在设置中检查模型配置。",
+  "content_deltas_text": "<think>\nWe need to find the only Featured Article on English Wikipedia about a dinosaur that was promoted in November 2016, and then determine who nominated it. This is a specific question about Wikipedia's Featured Article process. Let me think about how to approach this.\n\nI should search for Wikipedia's Featured Articles that are about dinosaurs and were promoted in November 2016. This will likely require searching Wikipedia's edit history or featured article logs. Let me start with a web search to find information about this.\n</think>\n\n\n<think>\nLet me try a different approach and use the Wikipedia tool to search for featured articles about dinosaurs.\n</think>\n\n\n<think>\nThe search results don't seem to be relevant to Wikipedia Featured Articles. Let me try a more specific search about Wikipedia's featured article process or look for the specific dinosaur article that was promoted to Featured Article status in November 2016.\n</think>\n\n\n<think>\nThe search results aren't giving me relevant information about Wikipedia Featured Articles. Let me try a more specific search about Wikipedia's featured article logs or history. I should search for Wikipedia's featured article review process or look directly at the Wikipedia archives for November 2016 dinosaur featured articles.\n</think>\n\n\n<think>\nI'm having trouble finding relevant results about Wikipedia Featured Articles. Let me try to access Wikipedia directly to look at their Featured Article archives for November 2016, or search for specific information about Featured Article nominations for dinosaur articles.\n</think>\n\nLet me try a more targeted approach by accessing Wikipedia's official pages for featured article reviews.\n<think>\nI'm still not getting relevant results. Let me try directly accessing Wikipedia's featured article review page for November 2016. I should look for pages like Wikipedia:Featured article review or similar archives. Let me try web fetching a direct Wikipedia URL.\n</think>\n\n\n<think>\nLet me try t",
+  "error": "{'taskId': '453b6591-32b3-4bd0-a608-7f520b392336', 'error': 'Provider \"minimax-highspeed\" returned HTTP 400: {\"type\":\"error\",\"error\":{\"type\":\"bad_request_error\",\"message\":\"invalid params, context window exceeds limit (2013)\",\"http_code\":\"400\"},\"request_id\":\"064bfc5923014db8630e8a762666f102\"}\\n'}"
+}

@@ -1,0 +1,53 @@
+{
+  "test_id": "factscore-016",
+  "entity": "Hibo Wardere",
+  "prompt": "Tell me a bio of Hibo Wardere",
+  "evaluation_criteria": "Factual accuracy of nationality (Somali-British), activism (anti-FGM campaigner), memoir publication ('Cut: One Woman's Fight Against FGM in Britain Today'). Note that some facts may not appear on the Wikipedia page but may be verifiable from other sources. Verify memoir title and activism details precisely.",
+  "output": "Hibo Wardere is a Somali-born British campaigner against female genital mutilation (FGM), author, and public speaker. Born in Somalia, she was subjected to Type 3 FGM at age six and fled to London as a teenage refugee in 1989 during the Somali Civil War. After finding little medical support from the NHS, she discovered answers about FGM through library research. Her activism began when she wrote about her experience in a teaching assistant course essay, leading to speaking engagements at schools. She has since become one of Britain's most prominent FGM campaigners, working as a mediator and educator in Waltham Forest Borough, London, and delivering awareness sessions to doctors and police. Her memoir, \"Cut: One Woman's Fight Against FGM in Britain Today,\" was published by Simon & Schuster in April 2016. She lives in Walthamstow with her husband Yusuf and their seven children, and her ultimate goal is to see FGM eradicated in her lifetime.",
+  "finish_summary": "Hibo Wardere is a Somali-born British campaigner against female genital mutilation (FGM), author, and public speaker. Born in Somalia, she was subjected to Type 3 FGM at age six and fled to London as a teenage refugee in 1989 during the Somali Civil War. After finding little medical support from the NHS, she discovered answers about FGM through library research. Her activism began when she wrote about her experience in a teaching assistant course essay, leading to speaking engagements at schools. She has since become one of Britain's most prominent FGM campaigners, working as a mediator and educator in Waltham Forest Borough, London, and delivering awareness sessions to doctors and police. Her memoir, \"Cut: One Woman's Fight Against FGM in Britain Today,\" was published by Simon & Schuster in April 2016. She lives in Walthamstow with her husband Yusuf and their seven children, and her ultimate goal is to see FGM eradicated in her lifetime.",
+  "tool_calls": [
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "search",
+        "query": "Hibo Wardere"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Hibo Wardere biography FGM campaigner"
+      }
+    },
+    {
+      "tool": "web_search",
+      "input": {
+        "query": "Hibo Wardere biography book Cut FGM campaigner"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "title": "Hibo Wardere"
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "Hibo Wardere is a Somali-born British campaigner against female genital mutilation (FGM), author, and public speaker. Born in Somalia, she was subjected to Type 3 FGM at age six and fled to London as a teenage refugee in 1989 during the Somali Civil War. After finding little medical support from the NHS, she discovered answers about FGM through library research. Her activism began when she wrote about her experience in a teaching assistant course essay, leading to speaking engagements at schools. She has since become one of Britain's most prominent FGM campaigners, working as a mediator and educator in Waltham Forest Borough, London, and delivering awareness sessions to doctors and police. Her memoir, \"Cut: One Woman's Fight Against FGM in Britain Today,\" was published by Simon & Schuster in April 2016. She lives in Walthamstow with her husband Yusuf and their seven children, and her ultimate goal is to see FGM eradicated in her lifetime."
+      }
+    }
+  ],
+  "tools": [
+    "wikipedia",
+    "mcp__minimax_websearch__web_search",
+    "web_search",
+    "wikipedia",
+    "finish"
+  ],
+  "turns": 5,
+  "elapsed": 42.4,
+  "fact_score": 100,
+  "fact_details": "✓ nationality: british\n✓ profession: activist (matched 'campaigner')\n✓ profession: politician (matched 'mp')"
+}

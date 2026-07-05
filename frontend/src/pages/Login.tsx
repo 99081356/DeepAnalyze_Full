@@ -17,6 +17,19 @@ export function Login({ onLogin }: { onLogin: (u: MeResponse) => void }) {
       const resp = await api.login(username, password);
       localStorage.setItem("hub_access_token", resp.access_token);
       onLogin(resp.user);
+
+      // SSO redirect: if user has an assigned DA worker, create SSO ticket and redirect
+      if (resp.user.da_worker_id) {
+        try {
+          const ticketData = await api.createSsoTicket(resp.user.da_worker_id);
+          window.location.href = ticketData.redirect_url;
+          return;
+        } catch (ssoErr) {
+          console.error("SSO ticket creation failed:", ssoErr);
+          // Fall through to normal navigation
+        }
+      }
+
       navigate("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");

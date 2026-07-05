@@ -1,0 +1,81 @@
+# DeepAnalyze - Offline/Intranet Deployment
+#
+# Single-command deployment: ./deploy.sh
+# Only need to edit config/default.yaml for your LLM endpoint
+#
+# Port mapping:
+#   Frontend (Web UI):  host 21000 -> nginx 3000
+#   Backend  (API):     internal only (21000, accessed via nginx proxy)
+#   Embedding service:  internal only (11435)
+#   PostgreSQL:         internal only (5432)
+#
+
+services:
+  postgres:
+    image: deepanalyze-pg:offline
+    environment:
+      - POSTGRES_DB=${PG_DATABASE:-deepanalyze}
+      - POSTGRES_USER=${PG_USER:-deepanalyze}
+      - POSTGRES_PASSWORD=${PG_PASSWORD:-deepanalyze_dev}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-deepanalyze} -d ${PG_DATABASE:-deepanalyze}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  embedding:
+    image: deepanalyze-embedding:offline
+    depends_on: []
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11435/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 90s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    image: deepanalyze-backend:offline
+    # No host port — backend is accessed through frontend's nginx proxy
+    volumes:
+      - deepanalyze-data:/app/data
+      - ./config:/app/config:ro
+      - ./models/docling:/app/data/models/docling
+    environment:
+      - DATA_DIR=/app/data
+      - PORT=21000
+      - MODEL_CONFIG=/app/config/default.yaml
+      - PG_HOST=postgres
+      - PG_PORT=5432
+      - PG_DATABASE=${PG_DATABASE:-deepanalyze}
+      - PG_USER=${PG_USER:-deepanalyze}
+      - PG_PASSWORD=${PG_PASSWORD:-deepanalyze_dev}
+      - HF_ENDPOINT=
+    depends_on:
+      postgres:
+        condition: service_healthy
+      embedding:
+        condition: service_started
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:21000/api/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 5
+
+  frontend:
+    image: deepanalyze-frontend:offline
+    ports:
+      - "${FRONTEND_PORT:-21000}:3000"
+    depends_on:
+      backend:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  deepanalyze-data:
+  pgdata:

@@ -1,0 +1,38 @@
+.module-status-bar {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  background: var(--bg-soft, #f9fafb);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 6px;
+}
+
+.module-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.15s;
+}
+.module-pill:hover { background: rgba(59, 130, 246, 0.08); }
+
+.module-pill__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.module-pill__dot--running { background: #22c55e; box-shadow: 0 0 4px #22c55e; }
+.module-pill__dot--installing { background: #eab308; }
+.module-pill__dot--installed { background: #9ca3af; }
+.module-pill__dot--not_installed { background: #d1d5db; }
+.module-pill__dot--error { background: #ef4444; }
+
+.module-pill__label { font-weight: 600; }
+.module-pill__status { color: var(--text-muted, #6b7280); }

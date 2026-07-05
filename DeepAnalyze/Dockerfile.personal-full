@@ -1,0 +1,50 @@
+# DeepAnalyze Personal Edition - Full (all weights pre-bundled)
+# Suitable for offline deployment or first-time users with adequate disk.
+# Target size: ~10 GB
+
+FROM da:full
+
+# Pre-download all module weights into /app/data/_bundled/
+# These are hardlinked to /app/data/models/<module>/ at first-run wizard time.
+
+# Set HF mirror for build-time downloads
+ENV HF_ENDPOINT=https://hf-mirror.com
+
+RUN mkdir -p /app/data/_bundled/bge-m3 \
+             /app/data/_bundled/whisper \
+             /app/data/_bundled/docling \
+             /app/data/_bundled/paddleocr-vl \
+             /app/data/_bundled/glm-ocr
+
+# BGE-M3 weights (~2.2 GB)
+RUN python3 -c "from sentence_transformers import SentenceTransformer; \
+                 SentenceTransformer('BAAI/bge-m3')" && \
+    cp -r ~/.cache/huggingface/hub/models--BAAI--bge-m3/snapshots/*/ \
+          /app/data/_bundled/bge-m3/ || echo "BGE-M3 download failed, will download at runtime"
+
+# Whisper tiny + base (~220 MB)
+RUN python3 -c "import whisper; whisper.load_model('tiny'); whisper.load_model('base')" && \
+    cp ~/.cache/whisper/*.pt /app/data/_bundled/whisper/ || echo "Whisper download failed"
+
+# PaddleOCR-VL weights (~1.8 GB) — already in data/models/docling/vlm/ from da:full
+RUN cp -r /app/data/models/docling/vlm/PaddlePaddle--PaddleOCR-VL-1.5/* \
+          /app/data/_bundled/paddleocr-vl/ 2>/dev/null || true
+
+# GLM-OCR weights (~2.5 GB) — already in data/models/docling/vlm/ from da:full
+RUN cp -r /app/data/models/docling/vlm/zai-org--GLM-OCR/* \
+          /app/data/_bundled/glm-ocr/ 2>/dev/null || true
+
+# Docling layout/ocr/table models (~500 MB) — already in data/models/docling/ from da:full
+RUN cp -r /app/data/models/docling/layout /app/data/_bundled/docling/ 2>/dev/null || true
+RUN cp -r /app/data/models/docling/ocr /app/data/_bundled/docling/ 2>/dev/null || true
+RUN cp -r /app/data/models/docling/table /app/data/_bundled/docling/ 2>/dev/null || true
+
+# Mark image variant
+ENV DA_IMAGE_VARIANT=personal-full \
+    DA_BUNDLE_TYPE=full
+
+LABEL org.opencontainers.image.title="DeepAnalyze Personal Full"
+LABEL org.opencontainers.image.description="All weights pre-bundled for offline deployment"
+LABEL org.opencontainers.image.version="0.7.7"
+
+CMD ["python3", "start.py"]

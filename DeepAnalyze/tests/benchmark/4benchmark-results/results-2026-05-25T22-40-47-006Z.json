@@ -1,0 +1,182 @@
+[
+  {
+    "testCase": {
+      "id": "FAct-01",
+      "benchmark": "FActScore",
+      "category": "事实核查-复杂知识",
+      "question": "请基于以下知识判断问题的答案是否正确。如果给出的答案有误，请指出正确答案。\n\n知识：Kazuo Ishiguro OBE (born 8 November 1954) is a British novelist, born in Nagasaki, Japan; his family moved to England in 1960. Yukio Mishima (1925-1970) is a Japanese author, poet, playwright who is considered one of the most important Japanese authors of the 20th century. He was active as a nationalist and founded his own right-wing militia.\n\n问题：Did Kazuo Ishiguro and Yukio Mishima both move from Japan to England?\n待验证答案：Yes, Kazuo Ishiguro and Yukio Mishima both moved to England for their education.\n\n请判断这个答案是否正确，给出你的分析过程和最终结论。",
+      "expectedAnswer": "no",
+      "maxWaitMs": 120000
+    },
+    "success": true,
+    "content": "## 分析过程\n\n### 事实核查\n\n**1. Kazuo Ishiguro 的迁移情况：**\n- 知识明确指出：出生于长崎，1960年全家搬到英格兰 ✓\n- 这确实是从日本搬到英格兰\n\n**2. Yukio Mishima 的迁移情况：**\n- 知识中仅描述：1925-1970，日本作家、诗人、剧作家；作为民族主义者活动，创立右翼民兵组织\n- **没有任何关于他从日本搬到英格兰的信息**\n\n### 关键差异\n\n| 人物 | 从日本搬到英格兰 | 迁移原因 |\n|------|-----------------|---------|\n| Kazuo Ishiguro | ✓（1960年） | 未明确说明 |\n| Yukio Mishima | ✗ | 无相关信息 |\n\n## 最终结论\n\n**答案不正确。**\n\nKazuo Ishiguro 确实在1960年随家人从日本长崎搬到英格兰，但**没有任何证据表明 Yukio Mishima 也从日本搬到英格兰**。\n\n答案中的错误在于：将一个适用于 Ishiguro 的事实错误地扩大到了 Mishima 身上。Mishima 作为一位强调日本传统和民族主义的作家，在其一生中主要居住在日本本土，并最终在那里去世（1970年）。知识库中完全没有提及他有任何迁居英格兰的经历。",
+    "toolCalls": [],
+    "durationMs": 13681,
+    "turnsUsed": 1,
+    "outputLength": 565,
+    "usedTools": false,
+    "evaluationNotes": "识别出答案错误 ✓ | 有推理过程 ✓ | 有明确结论 ✓"
+  },
+  {
+    "testCase": {
+      "id": "FAct-02",
+      "benchmark": "FActScore",
+      "category": "事实核查-复杂知识",
+      "question": "请基于以下知识判断问题的答案是否正确。如果给出的答案有误，请指出正确答案。\n\n知识：Guy \"Arc Angel\" Waters is an Australian professional boxer who won multiple titles including OPBF light heavyweight and Commonwealth light heavyweight. Virgil Eugene Hill (born January 18, 1964) is an American former professional boxer, a two-weight world champion who held the WBA light heavyweight title twice.\n\n问题：Guy Walters competed against which former professional boxer that is a two-weight world champion?\n待验证答案：Guy Walters competed against Mike Tyson.\n\n请判断这个答案是否正确，给出你的分析过程和最终结论。",
+      "expectedAnswer": "Virgil Hill",
+      "maxWaitMs": 120000
+    },
+    "success": true,
+    "content": "## 分析过程\n\n**步骤1：理解知识内容**\n- 知识中提到的两位拳击手：\n  1. **Guy \"Arc Angel\" Waters**（澳大利亚职业拳手，获得过OPBF轻重量级和英联邦轻重量级冠军）\n  2. **Virgil Eugene Hill**（美国退役职业拳手，**两级别世界冠军**，曾两次获得WBA轻重量级冠军）\n\n**步骤2：分析问题要求**\n- 问题：Guy Walters 与哪一位**两级别世界冠军**（two-weight world champion）交手过？\n- 关键词：**两级别世界冠军**\n\n**步骤3：匹配答案**\n- Mike Tyson：\n  - 是著名职业拳手\n  - 但在提供的知识中**未被描述为\"两级别世界冠军\"**\n  - 知识中**未提及他与Guy Waters/Walters有任何关联**\n\n- Virgil Eugene Hill：\n  - 知识中**明确标注为\"a two-weight world champion\"（两级别世界冠军）**\n  - 符合问题要求的人物特征\n\n**步骤4：核实人物姓名**\n- 问题写的是\"Guy Walters\"，知识中是\"Guy Waters\"\n- 这可能是笔误，但不影响判断\n\n---\n\n## 最终结论\n\n**❌ 待验证答案错误**\n\n| | Mike Tyson（待验证答案） | Virgil Eugene Hill（正确答案） |\n|---|---|---|\n| 是否是两级别世界冠军 | ❌ 未在知识中提及 | ✅ 知识明确标注 |\n| 与Guy Waters的关联 | ❌ 知识中无此记载 | ✅ 知识指向此人 |\n\n**正确答案：Virgil Eugene Hill**\n\n（Virgil Eugene Hill 是知识中明确记载的\"两级别世界冠军\"，Mike Tyson 不符合问题所要求的身份特征。）",
+    "toolCalls": [],
+    "durationMs": 6039,
+    "turnsUsed": 1,
+    "outputLength": 811,
+    "usedTools": false,
+    "evaluationNotes": "识别出答案错误 ✓ | 有推理过程 ✓ | 有明确结论 ✓"
+  },
+  {
+    "testCase": {
+      "id": "FAct-03",
+      "benchmark": "FActScore",
+      "category": "事实核查-复杂知识",
+      "question": "请基于以下知识判断问题的答案是否正确。如果给出的答案有误，请指出正确答案。\n\n知识：Around 1830, charismatic experiences such as speaking in tongues were reported in the parish of Rosneath. John Nelson Darby and Benjamin Wills Newton were sent by the Plymouth Brethren to investigate these events. Darby (1800-1882) was the founder of the Exclusive Brethren.\n\n问题：Apart from the founder of the Exclusive Brethren, what is the name of the second person who was sent by the Plymouth Brethren to investigate the outbreak of supernatural gifts of the Holy Spirit in Scotland?\n待验证答案：The founder of the Exclusive Brethren was the only person sent by the Plymouth Brethren to investigate.\n\n请判断这个答案是否正确，给出你的分析过程和最终结论。",
+      "expectedAnswer": "Benjamin Wills Newton",
+      "maxWaitMs": 120000
+    },
+    "success": true,
+    "content": "## 分析过程\n\n**待验证答案**：\"The founder of the Exclusive Brethren was the only person sent by the Plymouth Brethren to investigate.\"\n\n**待验证答案的核心主张**：只有 Exclusive Brethren 的 founder 一个人被派去调查。\n\n**知识原文**：\"John Nelson Darby and Benjamin Wills Newton were sent by the Plymouth Brethren to investigate these events.\"\n\n---\n\n### 矛盾点识别\n\n知识中明确提到**两个人**被 Plymouth Brethren 派去调查：\n1. **John Nelson Darby** (1800-1882) — Exclusive Brethren 的 founder\n2. **Benjamin Wills Newton** — 第二个人\n\n待验证答案声称\"只有 founder 一个人被派去\"，这与知识内容直接矛盾。\n\n---\n\n### 正确性判断\n\n| 判断 | 结果 |\n|------|------|\n| 待验证答案是否正确 | ❌ **错误** |\n\n---\n\n## 结论\n\n**该答案不正确。**\n\n**正确答案**：除了 John Nelson Darby 之外，被 Plymouth Brethren 派去调查苏格兰超自然圣灵恩赐事件爆发的第二个人是 **Benjamin Wills Newton**。\n\n根据知识原文：\"John Nelson Darby **and** Benjamin Wills Newton **were sent** by the Plymouth Brethren\" — 这里的\"were sent\"是复数形式，明确表明是两个人，而非一人。",
+    "toolCalls": [],
+    "durationMs": 5531,
+    "turnsUsed": 1,
+    "outputLength": 838,
+    "usedTools": false,
+    "evaluationNotes": "识别出答案错误 ✓ | 有推理过程 ✓ | 有明确结论 ✓"
+  },
+  {
+    "testCase": {
+      "id": "FAct-04",
+      "benchmark": "FActScore",
+      "category": "事实核查-复杂知识",
+      "question": "请基于以下知识判断问题的答案是否正确。如果给出的答案有误，请指出正确答案。\n\n知识：BBMak (Barry, Burns, McNally) were an English pop/rock group. The band guest starred on ABC's \"All My Children\" in 2000. Moonbabies is a Swedish duo formed in 1997 by Ola Frick and Carina Johansson.\n\n问题：Who guest starred on All My Children, BBMak or Moonbabies?\n待验证答案：Moonbabies guest starred on All My Children.\n\n请判断这个答案是否正确，给出你的分析过程和最终结论。",
+      "expectedAnswer": "BBMak",
+      "maxWaitMs": 120000
+    },
+    "success": true,
+    "content": "## 分析过程\n\n### 第一步：提取关键事实\n\n根据提供的知识：\n1. **BBMak**：英国流行/摇滚乐队，**2000年在ABC的\"All My Children\"客串演出**\n2. **Moonbabies**：瑞典二人组合，1997年由Ola Frick和Carina Johansson创立，**没有提到与All My Children有关**\n\n### 第二步：对比答案与事实\n\n待验证答案声称：**Moonbabies** 在 All My Children 客串演出\n\n根据知识：\n- 曾在 All My Children 客串的是 **BBMak**（2000年）\n- Moonbabies 与 All My Children **没有任何关联**\n\n### 第三步：得出结论\n\n**待验证答案错误。**\n\n## 最终结论\n\n正确答案：**BBMak** guest starred on \"All My Children\" in 2000.\n\n（Moonbabies从未被提及与该节目有关）",
+    "toolCalls": [],
+    "durationMs": 24047,
+    "turnsUsed": 1,
+    "outputLength": 457,
+    "usedTools": false,
+    "evaluationNotes": "识别出答案错误 ✓ | 有推理过程 ✓ | 有明确结论 ✓"
+  },
+  {
+    "testCase": {
+      "id": "FAct-05",
+      "benchmark": "FActScore",
+      "category": "事实核查-复杂知识",
+      "question": "请基于以下知识判断问题的答案是否正确。如果给出的答案有误，请指出正确答案。\n\n知识：William Joseph Toti (born 1957) is a retired US Navy captain who was the final captain of USS Indianapolis (SSN-697). Charles B. McVay III (1898-1968) was the commanding officer of USS Indianapolis (CA-35) when it was lost in action in 1945. McVay was court-martialed for losing the ship but was posthumously exonerated in 2000.\n\n问题：Name the World War II cruiser whose captain was court-martialed for losing it in action in 1945 and was later exonerated through efforts by William Joseph Toti.\n待验证答案：William Joseph Toti was the captain of the USS Indianapolis, which was lost in action in 1945.\n\n请判断这个答案是否正确，给出你的分析过程和最终结论。",
+      "expectedAnswer": "USS Indianapolis",
+      "maxWaitMs": 120000
+    },
+    "success": true,
+    "content": "## 分析过程\n\n### 第一步：理解问题要求\n问题要求找出：**二战巡洋舰**的船长——该船长因1945年作战损失被军事法庭审判，后通过William Joseph Toti的努力被平反。\n\n### 第二步：核对提供的知识\n\n| 人物 | 舰船 | 舰船类型 | 时间 | 关键事件 |\n|------|------|----------|------|----------|\n| Charles B. McVay III | USS Indianapolis (CA-35) | **巡洋舰** (CA) | 1945年 | 作战损失后被军事法庭审判，2000年被平反 |\n| William Joseph Toti | USS Indianapolis (SSN-697) | **潜艇** (SSN) | 1990s-2000s | 最终船长，非1945年舰长 |\n\n### 第三步：分析待验证答案\n待验证答案：**\"William Joseph Toti was the captain of the USS Indianapolis, which was lost in action in 1945.\"**\n\n这个答案存在**两个致命错误**：\n\n1. **人物张冠李戴**：将Charles B. McVay III（1945年舰长）应承担的责任和遭遇错误地安在了William Joseph Toti身上\n2. **舰船混淆**：将两艘不同的USS Indianapolis（CA-35巡洋舰 vs SSN-697潜艇）混为一谈\n3. **时间错误**：USS Indianapolis (SSN-697) 于1970年代服役，1998年退役，**从未在1945年损失**\n\n### 第四步：正确答案\n\n根据知识，正确答案应是：\n> **USS Indianapolis (CA-35)**\n\n---\n\n## 最终结论\n\n❌ **待验证答案错误**\n\n**错误类型**：混淆历史人物和舰船身份\n\n**正确答案**：USS Indianapolis (CA-35) 或简写 USS Indianapolis（二战重型巡洋舰）\n\n**简要说明**：正确答案是1945年损失的二战巡洋舰USS Indianapolis (CA-35)，其舰长Charles B. McVay III被错误地审判，直到2000年才被平反。William Joseph Toti是后来另一艘USS Indianapolis (SSN-697)的舰长，他推动了为McVay翻案的努力，但他本人从未指挥过1945年损失的那艘舰。",
+    "toolCalls": [],
+    "durationMs": 14538,
+    "turnsUsed": 1,
+    "outputLength": 1108,
+    "usedTools": false,
+    "evaluationNotes": "识别出答案错误 ✓ | 有推理过程 ✓ | 有明确结论 ✓"
+  },
+  {
+    "testCase": {
+      "id": "FAct-06",
+      "benchmark": "FActScore",
+      "category": "事实核查-复杂知识",
+      "question": "请基于以下知识判断问题的答案是否正确。如果给出的答案有误，请指出正确答案。\n\n知识：Martin & Orloff is a 2002 film written by and starring Matt Walsh and Ian Roberts. The film features David Cross. David Cross is known for his role as Tobias Funke in \"Arrested Development\" and voiced Crane in the \"Kung Fu Panda\" film franchise.\n\n问题：Martin & Orloff is a film featuring a cast member who also voiced Crane in what film franchise?\n待验证答案：David Cross played a prominent role in Martin & Orloff and also voiced a character in Kung Fu Panda.\n\n请判断这个答案是否正确，给出你的分析过程和最终结论。",
+      "expectedAnswer": "Kung Fu Panda",
+      "maxWaitMs": 120000
+    },
+    "success": true,
+    "content": "## 分析过程\n\n**核对事实链：**\n\n1. **前提事实**：知识明确指出 \"The film features David Cross\"（电影中有David Cross出演）\n2. **关键关联**：知识明确指出 \"David Cross...voiced Crane in the 'Kung Fu Panda' film franchise\"（David Cross在《功夫熊猫》电影系列中为Crane配音）\n3. **问题要求**：找出voiced Crane所在的电影系列\n4. **待验证答案**：声明David Cross在Kung Fu Panda中配音\n\n**检验待验证答案的准确性：**\n\n待验证答案指出：\"David Cross played a prominent role in Martin & Orloff and also voiced a character in Kung Fu Panda.\"\n\n- 第一部分：\"played a prominent role in Martin & Orloff\" — 正确，David Cross是该电影的演员\n- 第二部分：\"voiced a character in Kung Fu Panda\" — 正确，知识明确说明他voiced Crane in the Kung Fu Panda franchise\n\n**结论：待验证答案正确。**\n\nDavid Cross确实在《Martin & Orloff》中出演，并且确实在《功夫熊猫》（Kung Fu Panda）电影系列中为Crane配音。\n\n---\n\n**最终结论：** ✅ 答案正确",
+    "toolCalls": [],
+    "durationMs": 7533,
+    "turnsUsed": 1,
+    "outputLength": 712,
+    "usedTools": false,
+    "evaluationNotes": "未识别出答案错误 ✗ | 有推理过程 ✓ | 有明确结论 ✓"
+  },
+  {
+    "testCase": {
+      "id": "FAct-07",
+      "benchmark": "FActScore",
+      "category": "事实核查-复杂知识",
+      "question": "请基于以下知识判断问题的答案是否正确。如果给出的答案有误，请指出正确答案。\n\n知识：Travis is a Scottish rock band formed in Glasgow in 1990. Shiny Toy Guns is an American rock band that formed in 2002 in Los Angeles, California.\n\n问题：Are the rock bands Travis and Shiny Toy Guns from the same country?\n待验证答案：Travis and Shiny Toy Guns have different origin countries.\n\n请判断这个答案是否正确，给出你的分析过程和最终结论。",
+      "expectedAnswer": "no",
+      "maxWaitMs": 120000
+    },
+    "success": true,
+    "content": "## 分析过程\n\n**提取关键信息：**\n1. **Travis** — 苏格兰摇滚乐队（Scottish），成立于1990年，格拉斯哥\n2. **Shiny Toy Guns** — 美国摇滚乐队（American），成立于2002年，洛杉矶\n\n**比较两国归属：**\n- 苏格兰（Scotland）≠ 美国（United States）\n\n**判断待验证答案：**\n\n待验证答案内容为：\"Travis and Shiny Toy Guns have different origin countries.\"（Travis 和 Shiny Toy Guns 来自不同的国家。）\n\n该陈述与知识内容完全一致：\n- Travis 来自苏格兰 → 国家A\n- Shiny Toy Guns 来自美国 → 国家B\n- 国家A ≠ 国家B → 确实来自不同国家\n\n---\n\n## 最终结论\n\n✅ **答案正确**\n\n待验证答案\"Travis and Shiny Toy Guns have different origin countries.\" 与知识中的事实相符。苏格兰和美国是不同的国家，因此这两个乐队确实来自不同的国家。",
+    "toolCalls": [],
+    "durationMs": 7038,
+    "turnsUsed": 1,
+    "outputLength": 510,
+    "usedTools": false,
+    "evaluationNotes": "未识别出答案错误 ✗ | 有推理过程 ✓ | 有明确结论 ✓"
+  },
+  {
+    "testCase": {
+      "id": "FAct-08",
+      "benchmark": "FActScore",
+      "category": "事实核查-复杂知识",
+      "question": "请基于以下知识判断问题的答案是否正确。如果给出的答案有误，请指出正确答案。\n\n知识：Freddie Highmore (born 14 February 1992) is an English actor who starred in \"August Rush\" (2007). August Rush is a 2007 American drama film that concludes with a major instrumental composition called \"August's Rhapsody\".\n\n问题：The film \"August Rush\" both stars actor Freddie Highmore and concludes with a major instrumental composition under what name?\n待验证答案：\"August's Symphony of Dreams\"\n\n请判断这个答案是否正确，给出你的分析过程和最终结论。",
+      "expectedAnswer": "August's Rhapsody",
+      "maxWaitMs": 120000
+    },
+    "success": true,
+    "content": "## 分析过程\n\n### 1. 提取关键信息\n\n根据给定知识：\n- Freddie Highmore 主演了 \"August Rush\" (2007)\n- **影片结尾的器乐作品名称是 \"August's Rhapsody\"**\n\n### 2. 对比待验证答案\n\n待验证答案：**\"August's Symphony of Dreams\"**\n\n正确名称（来自知识）：**\"August's Rhapsody\"**\n\n### 3. 判定结果\n\n| 项目 | 内容 |\n|------|------|\n| 待验证答案 | \"August's Symphony of Dreams\" |\n| 正确答案 | \"August's Rhapsody\" |\n| 是否匹配 | ❌ **不匹配** |\n\n两者完全不同：\n- 待验证答案包含 \"Symphony of Dreams\"（梦想交响曲）\n- 正确名称是 \"Rhapsody\"（狂想曲）\n\n---\n\n## 最终结论\n\n**❌ 待验证答案错误**\n\n正确答案应为：**\"August's Rhapsody\"**\n\n\"August Rush\" 结尾的器乐作品名为 \"August's Rhapsody\"，而非 \"August's Symphony of Dreams\"。",
+    "toolCalls": [],
+    "durationMs": 8036,
+    "turnsUsed": 1,
+    "outputLength": 554,
+    "usedTools": false,
+    "evaluationNotes": "识别出答案错误 ✓ | 有推理过程 ✓ | 有明确结论 ✓"
+  },
+  {
+    "testCase": {
+      "id": "FAct-09",
+      "benchmark": "FActScore",
+      "category": "事实核查-复杂知识",
+      "question": "请基于以下知识判断问题的答案是否正确。如果给出的答案有误，请指出正确答案。\n\n知识：Zootopia is a 2016 American animated comedy-adventure film by Walt Disney. Stylianos \"Stelios\" Kyriakides (1910-1987) was a marathon runner who won the Boston Marathon in 1946.\n\n问题：Which has more to do with the Boston Marathon, Zootopia or Stylianos Kyriakides?\n待验证答案：Zootopia has a deep connection to the Boston Marathon.\n\n请判断这个答案是否正确，给出你的分析过程和最终结论。",
+      "expectedAnswer": "Stylianos Kyriakides",
+      "maxWaitMs": 120000
+    },
+    "success": true,
+    "content": "## 分析过程\n\n**梳理关键事实：**\n\n1. **知识中的两个实体：**\n   - **Zootopia**：2016年迪士尼动画电影，类型为喜剧冒险片\n   - **Stylianos Kyriakides**：马拉松运动员，1946年波士顿马拉松冠军\n\n2. **待验证答案：** Zootopia 与波士顿马拉松有深层联系\n\n**比较分析：**\n\n| 实体 | 与波士顿马拉松的关系 |\n|------|---------------------|\n| Zootopia | 无直接关联——仅是一部迪士尼动画电影 |\n| Stylianos Kyriakides | 直接关联——是1946年波士顿马拉松冠军 |\n\n## 结论\n\n**答案错误。**\n\n待验证答案声称\"Zootopia与波士顿马拉松有深层联系\"，但根据提供的知识：\n\n- Stylianos Kyriakides 才是与波士顿马拉松直接相关的人物，他是 **1946年波士顿马拉松冠军**\n- Zootopia 是一部动画电影，与波士顿马拉松赛事没有已知关联\n\n**正确答案应为：Stylianos Kyriakides 与波士顿马拉松的关系更密切。**",
+    "toolCalls": [],
+    "durationMs": 5530,
+    "turnsUsed": 1,
+    "outputLength": 515,
+    "usedTools": false,
+    "evaluationNotes": "识别出答案错误 ✓ | 有推理过程 ✓ | 有明确结论 ✓"
+  },
+  {
+    "testCase": {
+      "id": "FAct-10",
+      "benchmark": "FActScore",
+      "category": "事实核查-复杂知识",
+      "question": "请基于以下知识判断问题的答案是否正确。如果给出的答案有误，请指出正确答案。\n\n知识：Andre Thysse is a South African professional boxer who challenged for multiple titles. Mikkel Kessler (born 1 March 1979) is a Danish professional boxer. Thysse challenged Kessler for the World Boxing Council International super middleweight title.\n\n问题：What is the nationality of the man who Andre Thysse challenged for the World Boxing Council International super middleweight title?\n待验证答案：Andry Thysse challenged an Irish boxer.\n\n请判断这个答案是否正确，给出你的分析过程和最终结论。",
+      "expectedAnswer": "Danish",
+      "maxWaitMs": 120000
+    },
+    "success": true,
+    "content": "## 分析过程\n\n让我逐步验证这个问题：\n\n**第一步：确认挑战对象**\n根据提供的知识：\n- Andre Thysse 是南非职业拳击手\n- 他挑战的对象是 **Mikkel Kessler**\n- 比赛争夺的是 WBC 国际超中量级冠军头衔\n\n**第二步：确认被挑战者的国籍**\n知识中明确指出：\n> Mikkel Kessler (born 1 March 1979) is a **Danish** professional boxer.\n> （Mikkel Kessler，1979年3月1日出生，是一名**丹麦**职业拳击手）\n\n**第三步：分析待验证答案**\n> \"Andry Thysse challenged an Irish boxer.\"\n> （Andry Thysse 挑战了一个爱尔兰拳击手）\n\n待验证答案的错误：\n1. **人名拼写错误**：知识中是 \"Andre Thysse\"，不是 \"Andry Thysse\"\n2. **国籍错误**：Mikkel Kessler 是**丹麦人（Danish）**，不是爱尔兰人（Irish）\n\n## 结论\n\n**该答案不正确。**\n\n正确答案是：**Danish（丹麦）**\n\nAndre Thysse 挑战的是丹麦职业拳击手 Mikkel Kessler，而非爱尔兰拳击手。",
+    "toolCalls": [],
+    "durationMs": 6038,
+    "turnsUsed": 1,
+    "outputLength": 573,
+    "usedTools": false,
+    "evaluationNotes": "识别出答案错误 ✓ | 有推理过程 ✓ | 有明确结论 ✓"
+  }
+]

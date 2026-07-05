@@ -1,0 +1,111 @@
+{
+  "test_id": "GV-017",
+  "level": "1",
+  "prompt": "Of the authors (First M. Last) that worked on the paper \"Pie Menus or Linear Menus, Which Is Better?\" in 2015, what was the title of the first paper authored by the one that had authored prior papers?",
+  "expected": "Mapping Human Oriented Information to Software Agents for Online Systems Usage",
+  "actual": "The title of the first paper authored by Pietro Murano (the author who had prior papers) is **\"Mapping human-oriented information to software agents for online systems usage\"**, published in 2001.\n\n**Reasoning:**\n\n1. The paper \"Pie Menus or Linear Menus, Which Is Better?\" (2015) has two authors:\n   - **Pietro Murano** \n   - **Iram N. Khan**\n\n2. Using OpenAlex data, I checked both authors' publication histories:\n   - **Iram N. Khan** had **0 papers** before 2015.\n   - **Pietro Murano** had **42 total papers**, with publications dating back to 2001 — clearly the author who had authored prior papers.\n\n3. Pietro Murano's earliest paper (sorted by publication date ascending via OpenAlex) is \"Mapping human-oriented information to software agents for online systems usage\" (2001, DOI: 10.1049/cp:20010464).",
+  "finish_summary": "The title of the first paper authored by Pietro Murano (the author who had prior papers) is **\"Mapping human-oriented information to software agents for online systems usage\"**, published in 2001.\n\n**Reasoning:**\n\n1. The paper \"Pie Menus or Linear Menus, Which Is Better?\" (2015) has two authors:\n   - **Pietro Murano** \n   - **Iram N. Khan**\n\n2. Using OpenAlex data, I checked both authors' publication histories:\n   - **Iram N. Khan** had **0 papers** before 2015.\n   - **Pietro Murano** had **42 total papers**, with publications dating back to 2001 — clearly the author who had authored prior papers.\n\n3. Pietro Murano's earliest paper (sorted by publication date ascending via OpenAlex) is \"Mapping human-oriented information to software agents for online systems usage\" (2001, DOI: 10.1049/cp:20010464).",
+  "tool_calls": [
+    {
+      "tool": "kb_search",
+      "input": {
+        "query": "Pie Menus or Linear Menus Which Is Better 2015"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "\"Pie Menus or Linear Menus, Which Is Better?\" 2015 paper authors"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Pie Menus Linear Menus Which Is Better 2015 HCI paper"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "pie menus linear menus comparison study 2015 research paper"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://scholar.google.com/scholar?q=%22Pie+Menus+or+Linear+Menus%22+%22Which+Is+Better%22",
+        "max_length": 10000
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 10000,
+        "url": "https://api.semanticscholar.org/graph/v1/paper/search?query=Pie+Menus+or+Linear+Menus+Which+Is+Better&limit=5&fields=title,authors,year"
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "Let me organize what I need to do:\n\n1. Find the paper \"Pie Menus or Linear Menus, Which Is Better?\" from 2015\n2. Get the list of authors in First M. Last format\n3. Determine which author had prior papers before 2015\n4. Find the title of that author's first paper\n\nMy web searches have been failing to return relevant results. Let me try different search approaches - perhaps searching on Google Scholar or DBLP directly, or trying Semantic Scholar with a different approach.\n"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "\"Pie Menus or Linear Menus\" \"Which Is Better\" site:dl.acm.org OR site:ieeexplore.ieee.org OR site:springer.com"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://api.openalex.org/works?search=Pie%20Menus%20or%20Linear%20Menus%20Which%20Is%20Better&per_page=5",
+        "max_length": 10000
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 15000,
+        "url": "https://api.openalex.org/works?filter=author.id:A5016585278,publication_year:<2015&sort=publication_date:asc&per_page=5"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 15000,
+        "url": "https://api.openalex.org/works?filter=author.id:A5047423326&sort=publication_date:asc&per_page=5"
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "I already have the answer from the data I've collected:\n\n1. The paper \"Pie Menus or Linear Menus, Which Is Better?\" (2015) has two authors:\n   - Pietro Murano (First M. Last = Pietro Murano - no middle initial)\n   - Iram N. Khan (First M. Last format)\n\n2. From OpenAlex:\n   - Iram N. Khan (author ID A5016585278): 0 papers before 2015\n   - Pietro Murano (author ID A5047423326): 42 total papers, with the earliest being from 2001\n\n3. Pietro Murano clearly had prior papers before 2015. He's the one who had authored prior papers.\n\n4. His first paper (sorted by publication_date ascending) is:\n   - Title: \"Mapping human-oriented information to software agents for online systems usage\"\n   - Published: 2001\n   - DOI: 10.1049/cp:20010464\n\nWait, there were two papers from 2001 both sorted first. Let me check - the first result in the sorted list was \"Mapping human-oriented information to software agents for online systems usage\". The second was \"A new software agent ?learning? algorithm\". Both from 2001-01-01. \n\nSince they have the same publication date, I need to check if one comes before the other. But based on the OpenAlex API result sorted by publication_date:asc, the first one listed is \"Mapping human-oriented information to software agents for online systems usage\".\n\nThe answer is: \"Mapping human-oriented information to software agents for online systems usage\"\n"
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "The title of the first paper authored by Pietro Murano (the author who had prior papers) is **\"Mapping human-oriented information to software agents for online systems usage\"**, published in 2001.\n\n**Reasoning:**\n\n1. The paper \"Pie Menus or Linear Menus, Which Is Better?\" (2015) has two authors:\n   - **Pietro Murano** \n   - **Iram N. Khan**\n\n2. Using OpenAlex data, I checked both authors' publication histories:\n   - **Iram N. Khan** had **0 papers** before 2015.\n   - **Pietro Murano** had **42 total papers**, with publications dating back to 2001 — clearly the author who had authored prior papers.\n\n3. Pietro Murano's earliest paper (sorted by publication date ascending via OpenAlex) is \"Mapping human-oriented information to software agents for online systems usage\" (2001, DOI: 10.1049/cp:20010464)."
+      }
+    }
+  ],
+  "tools": [
+    "kb_search",
+    "mcp__minimax_websearch__web_search",
+    "mcp__minimax_websearch__web_search",
+    "mcp__minimax_websearch__web_search",
+    "web_fetch",
+    "web_fetch",
+    "think",
+    "mcp__minimax_websearch__web_search",
+    "web_fetch",
+    "web_fetch",
+    "web_fetch",
+    "think",
+    "finish"
+  ],
+  "turns": 13,
+  "elapsed": 86.2,
+  "attempt": 2
+}

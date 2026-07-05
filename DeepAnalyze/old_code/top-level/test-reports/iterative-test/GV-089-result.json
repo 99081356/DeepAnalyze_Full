@@ -1,0 +1,67 @@
+{
+  "test_id": "GV-089",
+  "level": "2",
+  "prompt": "The longest-lived vertebrate is named after an island.  According to Wikipedia as of January 1, 2021, what is the 2020 estimated population of that island, to the nearest thousand?",
+  "expected": "56000",
+  "actual": "**Answer: 56,000**\n\n**Reasoning chain:**\n\n1. **Longest-lived vertebrate**: The Greenland shark (*Somniosus microcephalus*) holds the record for the longest-lived vertebrate, with an estimated lifespan of 272–512 years, as confirmed by multiple Wikipedia articles.\n\n2. **Named after an island**: The Greenland shark is named after **Greenland**, the world's largest island.\n\n3. **2020 estimated population of Greenland**: According to the Wikipedia article on Greenland as it appeared in early January 2021 (verified via the Wayback Machine capture from January 5, 2021 — the closest available snapshot to January 1, 2021), the infobox and article text both state:\n   - \"2020 estimate: **56,081**\" (ranked 210th)\n   - \"With a population of 56,081 (2020)\"\n\n4. **Rounded to the nearest thousand**: 56,081 → **56,000**",
+  "finish_summary": "**Answer: 56,000**\n\n**Reasoning chain:**\n\n1. **Longest-lived vertebrate**: The Greenland shark (*Somniosus microcephalus*) holds the record for the longest-lived vertebrate, with an estimated lifespan of 272–512 years, as confirmed by multiple Wikipedia articles.\n\n2. **Named after an island**: The Greenland shark is named after **Greenland**, the world's largest island.\n\n3. **2020 estimated population of Greenland**: According to the Wikipedia article on Greenland as it appeared in early January 2021 (verified via the Wayback Machine capture from January 5, 2021 — the closest available snapshot to January 1, 2021), the infobox and article text both state:\n   - \"2020 estimate: **56,081**\" (ranked 210th)\n   - \"With a population of 56,081 (2020)\"\n\n4. **Rounded to the nearest thousand**: 56,081 → **56,000**",
+  "tool_calls": [
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "search",
+        "query": "longest-lived vertebrate"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "title": "Greenland shark"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "title": "Greenland"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "title": "Demographics of Greenland"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://web.archive.org/web/20201231/https://en.wikipedia.org/wiki/Greenland"
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "Let me organize what I've found:\n\n1. The longest-lived vertebrate is the Greenland shark (Somniosus microcephalus), with a lifespan estimated between 272 and 512 years. This is confirmed by Wikipedia.\n\n2. The Greenland shark is named after Greenland, which is the world's largest island.\n\n3. From the Wayback Machine archive of the Wikipedia Greenland page captured on January 5, 2021 (closest to January 1, 2021), the infobox clearly states:\n   - \"2020 estimate: 56,081 [7] (210th)\"\n   - The text also says: \"With a population of 56,081 (2020)\"\n\n4. The question asks for the 2020 estimated population of Greenland to the nearest thousand.\n\n5. 56,081 rounded to the nearest thousand = 56,000.\n\nThe answer is 56,000."
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "**Answer: 56,000**\n\n**Reasoning chain:**\n\n1. **Longest-lived vertebrate**: The Greenland shark (*Somniosus microcephalus*) holds the record for the longest-lived vertebrate, with an estimated lifespan of 272–512 years, as confirmed by multiple Wikipedia articles.\n\n2. **Named after an island**: The Greenland shark is named after **Greenland**, the world's largest island.\n\n3. **2020 estimated population of Greenland**: According to the Wikipedia article on Greenland as it appeared in early January 2021 (verified via the Wayback Machine capture from January 5, 2021 — the closest available snapshot to January 1, 2021), the infobox and article text both state:\n   - \"2020 estimate: **56,081**\" (ranked 210th)\n   - \"With a population of 56,081 (2020)\"\n\n4. **Rounded to the nearest thousand**: 56,081 → **56,000**"
+      }
+    }
+  ],
+  "tools": [
+    "wikipedia",
+    "wikipedia",
+    "wikipedia",
+    "wikipedia",
+    "web_fetch",
+    "think",
+    "finish"
+  ],
+  "turns": 7,
+  "elapsed": 51.8
+}

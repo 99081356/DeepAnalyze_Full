@@ -1,0 +1,193 @@
+{
+  "test_id": "GV-074",
+  "level": 2,
+  "prompt": "According to the World Bank, which countries had gross savings of over 35% of GDP for every year in the period 2001-2010? Give your answer as a comma-separated list of countries in alphabetical order. Use the countries most common names in english when answering.",
+  "expected": "Brunei, China, Morocco, Singapore",
+  "actual": "According to the World Bank (indicator NY.GNS.ICTR.ZS — Gross savings % of GDP), the countries that had gross savings strictly over 35% of GDP for every year in the period 2001–2010 are:\n\n**Brunei, China, Morocco, Singapore**\n\nDetails (all values > 35% for each year):\n- **Brunei** (BRN): ranged from 51.8% (2001) to 69.5% (2008)\n- **China** (CHN): ranged from 37.1% (2001) to 51.3% (2008)\n- **Morocco** (MAR): ranged from 35.04% (2010) to 40.2% (2008)\n- **Singapore** (SGP): ranged from 38.4% (2002) to 50.6% (2010)\n\nNear miss: Philippines had all years above 35% except 2001 (34.6%).\n\n[Data source: World Bank API, all 2,660 records for indicator NY.GNS.ICTR.ZS across 2001–2010]",
+  "finish_summary": "According to the World Bank (indicator NY.GNS.ICTR.ZS — Gross savings % of GDP), the countries that had gross savings strictly over 35% of GDP for every year in the period 2001–2010 are:\n\n**Brunei, China, Morocco, Singapore**\n\nDetails (all values > 35% for each year):\n- **Brunei** (BRN): ranged from 51.8% (2001) to 69.5% (2008)\n- **China** (CHN): ranged from 37.1% (2001) to 51.3% (2008)\n- **Morocco** (MAR): ranged from 35.04% (2010) to 40.2% (2008)\n- **Singapore** (SGP): ranged from 38.4% (2002) to 50.6% (2010)\n\nNear miss: Philippines had all years above 35% except 2001 (34.6%).\n\n[Data source: World Bank API, all 2,660 records for indicator NY.GNS.ICTR.ZS across 2001–2010]",
+  "tool_calls": [
+    {
+      "tool": "think",
+      "input": {
+        "thought": "I need to find World Bank data on gross savings as a percentage of GDP for countries during 2001-2010. I need to find countries that had over 35% gross savings rate for EVERY year in that period. Let me search for this data online."
+      }
+    },
+    {
+      "tool": "web_search",
+      "input": {
+        "query": "World Bank indicator gross savings % of GDP data download"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://api.worldbank.org/v2/country/all/indicator/NY.GNS.ICTR.ZS?date=2001:2010&format=json&per_page=2640"
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "curl -s \"https://api.worldbank.org/v2/country/all/indicator/NY.GNS.ICTR.ZS?date=2001:2010&format=json&per_page=2640\" 2>/dev/null | head -c 500",
+        "timeout": 30
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://api.worldbank.org/v2/country/all/indicator/NY.GNS.ICTR.ZS?date=2001:2010&format=json&per_page=2640",
+        "max_length": 100000
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "I got data from the World Bank API for the indicator NY.GNS.ICTR.ZS (Gross savings % of GDP) for 2001-2010. But the results are truncated and I only see aggregate/region data, not individual countries yet. The API returned 2660 total records across 2 pages. I need to fetch page 2 and also need to filter for actual countries (not regions). \n\nLet me write a script to fetch all the data and process it properly. I'll use Python to:\n1. Fetch both pages of data from the World Bank API\n2. Filter for actual countries only\n3. Find countries where gross savings > 35% for ALL years 2001-2010\n"
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "python3 -c \"\nimport json, urllib.request\n\nall_data = []\nfor page in [1, 2]:\n    url = f'https://api.worldbank.org/v2/country/all/indicator/NY.GNS.ICTR.ZS?date=2001:2010&format=json&per_page=2640&page={page}'\n    try:\n        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})\n        with urllib.request.urlopen(req, timeout=60) as resp:\n            raw = json.loads(resp.read().decode())\n            if len(raw) > 1:\n                all_data.extend(raw[1])\n                print(f'Page {page}: got {len(raw[1])} records')\n    except Exception as e:\n        print(f'Page {page} error: {e}')\n\nprint(f'Total records: {len(all_data)}')\n\n# Build country-year data - filter out non-countries (regions, aggregates)\n# Non-country ISO3 codes are typically 3-letter codes that don't match standard ISO 3166\n# Let's collect all unique countries\ncountries = {}\nfor rec in all_data:\n    iso3 = rec['countryiso3code']\n    name = rec['country']['value']\n    year = rec['date']\n    val = rec['value']\n    if iso3 not in countries:\n        countries[iso3] = {'name': name, 'years': {}}\n    if val is not None:\n        countries[iso3]['years'][year] = val\n\n# Known aggregate/region codes to exclude\naggregates = {'AFE', 'AFW', 'ARB', 'CSS', 'CEB', 'EAR', 'EAS', 'EAP', 'TEA', 'EMU', 'ECS', 'TEC', \n              'EUU', 'FCS', 'HPC', 'HIC', 'IBD', 'IBT', 'IDA', 'IDB', 'IDX', 'INX', 'LAC', 'TLA',\n              'LCN', 'LDC', 'LIC', 'LMC', 'LMY', 'LTE', 'MEA', 'TMN', 'MIC', 'MNA', 'NAC', 'OED',\n              'OSS', 'PSS', 'PST', 'SST', 'SAS', 'TSA', 'SSA', 'TSS', 'SSF', 'SFM', 'UMC', 'WLD',\n              'EAR', 'HIC', 'INX', 'PRE', 'PRT', 'SVK'}\n\n# Find countries with >35% for ALL 10 years\nresults = []\nrequired_years = [str(y) for y in range(2001, 2011)]\n\nfor iso3, info in countries.items():\n    if iso3 in aggregates:\n        continue\n    name = info['name']\n    years = info['years']\n    \n    # Check if all 10 years have data AND all > 35%\n    all_above = True\n    for y in required_years:\n        if y not in years:\n            all_above = False\n            break\n        if years[y] <= 35:\n            all_above = False\n            break\n    \n    if all_above:\n        min_val = min(years[y] for y in required_years)\n        results.append((name, iso3, min_val))\n\nresults.sort(key=lambda x: x[0])\nprint(f'\\nCountries with gross savings > 35% of GDP for ALL years 2001-2010:')\nfor name, iso3, min_val in results:\n    vals = {y: countries[iso3]['years'][y] for y in required_years}\n    print(f'{name} ({iso3}): min={min_val:.2f}, values: {vals}')\n\"\n",
+        "timeout": 120
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "python3 << 'PYEOF'\nimport json, urllib.request, ssl\n\nctx = ssl.create_default_context()\nctx.check_hostname = False\nctx.verify_mode = ssl.CERT_NONE\n\nall_data = []\nfor page in [1, 2]:\n    url = f'https://api.worldbank.org/v2/country/all/indicator/NY.GNS.ICTR.ZS?date=2001:2010&format=json&per_page=2640&page={page}'\n    try:\n        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})\n        with urllib.request.urlopen(req, timeout=60, context=ctx) as resp:\n            raw = json.loads(resp.read().decode('utf-8'))\n            if len(raw) > 1:\n                all_data.extend(raw[1])\n                print(f'Page {page}: got {len(raw[1])} records')\n    except Exception as e:\n        print(f'Page {page} error: {e}')\n\nprint(f'Total records: {len(all_data)}')\n\n# Build country data\ncountries = {}\nfor rec in all_data:\n    iso3 = rec.get('countryiso3code', '')\n    name = rec.get('country', {}).get('value', '')\n    year = rec.get('date', '')\n    val = rec.get('value')\n    if iso3 not in countries:\n        countries[iso3] = {'name': name, 'years': {}}\n    if val is not None:\n        countries[iso3]['years'][year] = float(val)\n\n# Known aggregate codes\naggregates = set(['AFE','AFW','ARB','CSS','CEB','EAR','EAS','EAP','TEA','EMU','ECS','TEC',\n    'EUU','FCS','HPC','HIC','IBD','IBT','IDA','IDB','IDX','INX','LAC','TLA',\n    'LCN','LDC','LIC','LMC','LMY','LTE','MEA','TMN','MIC','MNA','NAC','OED',\n    'OSS','PSS','PST','SST','SAS','TSA','SSA','TSS','SSF','SFM','UMC','WLD',\n    'PRE','PRT','SVK','Z4','4E','T4','V2','S3','B8','1A','ZI','ZH','ZG'])\n\nrequired_years = [str(y) for y in range(2001, 2011)]\n\nresults = []\nfor iso3, info in countries.items():\n    if iso3 in aggregates:\n        continue\n    years = info['years']\n    all_above = True\n    for y in required_years:\n        if y not in years:\n            all_above = False\n            break\n        if years[y] <= 35.0:\n            all_above = False\n            break\n    if all_above:\n        min_val = min(years[y] for y in required_years)\n        results.append((info['name'], iso3, min_val))\n\nresults.sort(key=lambda x: x[0])\nprint(f'\\nCountries with gross savings > 35% of GDP for ALL years 2001-2010 ({len(results)} found):')\nfor name, iso3, min_val in results:\n    vals = ', '.join([f\"{y}={countries[iso3]['years'][y]:.1f}\" for y in required_years])\n    print(f'  {name} ({iso3}): {vals}')\nPYEOF\n",
+        "timeout": 120
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "which python3 && python3 --version"
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "python3 -u -c \"\nimport urllib.request, ssl, json as j\n\nctx = ssl.create_default_context()\nctx.check_hostname = False\nctx.verify_mode = ssl.CERT_NONE\n\nurl = 'https://api.worldbank.org/v2/country/all/indicator/NY.GNS.ICTR.ZS?date=2001:2010&format=json&per_page=2640'\nreq = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})\nresp = urllib.request.urlopen(req, timeout=60, context=ctx)\ntext = resp.read().decode('utf-8')\nwith open('/tmp/wb_data.json', 'w') as f:\n    f.write(text)\nprint('Saved', len(text), 'bytes')\n\" 2>&1",
+        "timeout": 60
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "python3 -u /tmp/analyze_wb.py 2>&1"
+      }
+    },
+    {
+      "tool": "write_file",
+      "input": {
+        "path": "tmp/analyze_wb.py",
+        "content": "import json\n\nwith open('/tmp/wb_data.json', 'r') as f:\n    raw = json.load(f)\n\nrecords = raw[1]\nprint(f\"Total records: {len(records)}\")\n\n# Build country data\ncountries = {}\nfor rec in records:\n    iso3 = rec.get('countryiso3code', '')\n    name = rec.get('country', {}).get('value', '')\n    year = rec.get('date', '')\n    val = rec.get('value')\n    if iso3 not in countries:\n        countries[iso3] = {'name': name, 'years': {}}\n    if val is not None:\n        countries[iso3]['years'][year] = float(val)\n\n# Aggregate codes to exclude\naggregates = set(['AFE','AFW','ARB','CSS','CEB','EAR','EAS','EAP','TEA','EMU','ECS','TEC',\n    'EUU','FCS','HPC','HIC','IBD','IBT','IDA','IDB','IDX','INX','LAC','TLA',\n    'LCN','LDC','LIC','LMC','LMY','LTE','MEA','TMN','MIC','MNA','NAC','OED',\n    'OSS','PSS','PST','SST','SAS','TSA','SSA','TSS','SSF','SFM','UMC','WLD',\n    'PRE','PRT','SVK','Z4','4E','T4','V2','S3','B8','1A','ZI','ZH','ZG','XKX'])\n\nrequired_years = [str(y) for y in range(2001, 2011)]\n\nresults = []\nfor iso3, info in countries.items():\n    if iso3 in aggregates:\n        continue\n    years = info['years']\n    all_above = True\n    for y in required_years:\n        if y not in years:\n            all_above = False\n            break\n        if years[y] <= 35.0:\n            all_above = False\n            break\n    if all_above:\n        min_val = min(years[y] for y in required_years)\n        results.append((info['name'], iso3, min_val))\n\nresults.sort(key=lambda x: x[0])\nprint(f\"\\nCountries with gross savings > 35% of GDP for ALL years 2001-2010 ({len(results)} found):\")\nfor name, iso3, min_val in results:\n    vals = ', '.join([f\"{y}={countries[iso3]['years'][y]:.1f}\" for y in required_years])\n    print(f'  {name} ({iso3}): {vals}')\n\n# Also check page 2 - see if we need more data\nprint(f\"\\nTotal unique ISO3 codes in data: {len(countries)}\")\nprint(f\"Non-aggregate codes: {len([c for c in countries if c not in aggregates])}\")\n"
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "cp data/tmp/analyze_wb.py /tmp/analyze_wb.py && python3 -u /tmp/analyze_wb.py 2>&1",
+        "timeout": 30
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "find / -name \"analyze_wb.py\" 2>/dev/null; find / -name \"wb_data.json\" 2>/dev/null; ls /tmp/wb_data.json 2>&1; pwd",
+        "timeout": 10
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "pwd && ls /tmp/wb_data.json 2>&1",
+        "timeout": 5
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "ls /mnt/d/code/deepanalyze/deepanalyze/data/tmp/ 2>&1",
+        "timeout": 5
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "python3 /mnt/d/code/deepanalyze/deepanalyze/data/tmp/analyze_wb.py 2>&1",
+        "timeout": 30
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "python3 -u -c \"\nimport json, urllib.request, ssl\n\nctx = ssl.create_default_context()\nctx.check_hostname = False\nctx.verify_mode = ssl.CERT_NONE\n\nurl = 'https://api.worldbank.org/v2/country/all/indicator/NY.GNS.ICTR.ZS?date=2001:2010&format=json&per_page=2640&page=2'\nreq = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})\nresp = urllib.request.urlopen(req, timeout=60, context=ctx)\ntext = resp.read().decode('utf-8')\nwith open('/tmp/wb_page2.json', 'w') as f:\n    f.write(text)\nprint('Saved page 2:', len(text), 'bytes')\n\" 2>&1",
+        "timeout": 60
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "cat /tmp/wb_page2.json | python3 -c \"import json,sys; d=json.load(sys.stdin); print(json.dumps(d, indent=2)[:2000])\"",
+        "timeout": 10
+      }
+    },
+    {
+      "tool": "read_file",
+      "input": {
+        "path": "/tmp/wb_page2.json"
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "cat /tmp/wb_page2.json 2>&1 | head -c 3000",
+        "timeout": 5
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "The data is now clear. Page 2 only contains 20 additional records for Zambia and Zimbabwe at the end of the alphabet, and neither qualifies (Zambia only has 2010 data at 34.1%, Zimbabwe has very low savings rates).\n\nSo the final results from the World Bank API are:\n1. Brunei (Brunei Darussalam) - consistently 50-70%\n2. China - consistently 37-51%\n3. Morocco - consistently 35-40% \n4. Singapore - consistently 38-51%\n\nAlphabetical order by common English names:\nBrunei, China, Morocco, Singapore\n\nWait - let me reconsider Morocco. The data shows 2010=35.0. The question says \"over 35%\", so 35.0 is NOT over 35%. Let me recheck.\n\nLooking at the data:\n- Morocco 2010=35.0 - this is NOT over 35%, it equals 35%.\n\nSo Morocco should be excluded. The answer is: Brunei, China, Singapore.\n\nHmm, but let me also reconsider - the original script checked `years[y] <= 35.0` which would exclude values equal to 35. Morocco 2010 = 35.0 would be excluded by this logic, which is correct for \"over 35%\". But wait, my script output shows Morocco was included with \"2010=35.0\" - that means there might be a floating point issue. Let me check: 35.0 is not > 35, so Morocco should be excluded.\n\nActually, looking again at the output more carefully - the script said 4 countries were found including Morocco. But Morocco's 2010 value of 35.0 should NOT qualify as \"over 35%\". Let me check the raw value more carefully. It was shown as 35.0 but could be slightly above. The raw JSON would tell.\n\nActually, the World Bank value for Morocco 2010 was \"35.024...\" or similar - the display just rounded to 35.0. Let me verify this more carefully.\n\nLooking at the earlier full data I fetched, I didn't see Morocco's raw data. The script printed 35.0 but that could be due to rounding from e.g. 35.02. \n\nLet me re-run the analysis more carefully with full precision, and also include the page 2 data.\n"
+      }
+    },
+    {
+      "tool": "write_file",
+      "input": {
+        "path": "tmp/analyze_wb2.py",
+        "content": "import json\n\nwith open('/tmp/wb_data.json', 'r') as f:\n    raw = json.load(f)\n\nrecords = raw[1]\n\n# Also load page 2\ntry:\n    with open('/tmp/wb_page2.json', 'r') as f:\n        raw2 = json.load(f)\n    if len(raw2) > 1:\n        records.extend(raw2[1])\n        print(f\"Added page 2 records: {len(raw2[1])}\")\nexcept:\n    pass\n\nprint(f\"Total records: {len(records)}\")\n\n# Build country data\ncountries = {}\nfor rec in records:\n    iso3 = rec.get('countryiso3code', '')\n    name = rec.get('country', {}).get('value', '')\n    year = rec.get('date', '')\n    val = rec.get('value')\n    if iso3 not in countries:\n        countries[iso3] = {'name': name, 'years': {}}\n    if val is not None:\n        countries[iso3]['years'][year] = float(val)\n\n# Aggregate codes to exclude\naggregates = set(['AFE','AFW','ARB','CSS','CEB','EAR','EAS','EAP','TEA','EMU','ECS','TEC',\n    'EUU','FCS','HPC','HIC','IBD','IBT','IDA','IDB','IDX','INX','LAC','TLA',\n    'LCN','LDC','LIC','LMC','LMY','LTE','MEA','TMN','MIC','MNA','NAC','OED',\n    'OSS','PSS','PST','SST','SAS','TSA','SSA','TSS','SSF','SFM','UMC','WLD',\n    'PRE','PRT','SVK','Z4','4E','T4','V2','S3','B8','1A','ZI','ZH','ZG','XKX'])\n\nrequired_years = [str(y) for y in range(2001, 2011)]\n\n# Find countries with > 35% for ALL 10 years - show FULL precision\nresults = []\nnear_misses = []\nfor iso3, info in countries.items():\n    if iso3 in aggregates:\n        continue\n    years = info['years']\n    \n    has_all = all(y in years for y in required_years)\n    if not has_all:\n        continue\n    \n    min_val = min(years[y] for y in required_years)\n    \n    # Check strictly > 35\n    all_strictly_above = all(years[y] > 35.0 for y in required_years)\n    \n    if all_strictly_above:\n        results.append((info['name'], iso3, min_val))\n    elif min_val > 34.0:  # near misses\n        near_misses.append((info['name'], iso3, min_val))\n\nresults.sort(key=lambda x: x[0])\nnear_misses.sort(key=lambda x: x[0])\n\nprint(f\"\\n=== Countries with gross savings STRICTLY > 35% for ALL years 2001-2010 ({len(results)}) ===\")\nfor name, iso3, min_val in results:\n    vals = ', '.join([f\"{y}={countries[iso3]['years'][y]:.4f}\" for y in required_years])\n    print(f'  {name} ({iso3}): {vals}')\n\nprint(f\"\\n=== Near misses (min > 34% but not all > 35%) ===\")\nfor name, iso3, min_val in near_misses:\n    vals = ', '.join([f\"{y}={countries[iso3]['years'][y]:.4f}\" for y in required_years])\n    print(f'  {name} ({iso3}): min={min_val:.4f}, {vals}')\n"
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "python3 /mnt/d/code/deepanalyze/deepanalyze/data/tmp/analyze_wb2.py 2>&1",
+        "timeout": 15
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "Now I have the complete and precise data from the World Bank API (all 2660 records, both pages).\n\nThe 4 countries with gross savings strictly > 35% of GDP for EVERY year from 2001-2010:\n\n1. **Brunei** (Brunei Darussalam, BRN) - ranged from 51.8% to 69.5%\n2. **China** (CHN) - ranged from 37.1% to 51.3%\n3. **Morocco** (MAR) - ranged from 35.0% to 40.2% (minimum was 35.04% in 2010)\n4. **Singapore** (SGP) - ranged from 38.4% to 50.6%\n\nNear miss: Philippines (PHL) - 2001 value was 34.6%, below 35%.\n\nUsing common English names in alphabetical order:\nBrunei, China, Morocco, Singapore\n\nThe data source is the World Bank API, indicator NY.GNS.ICTR.ZS (Gross savings % of GDP).\n"
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "According to the World Bank (indicator NY.GNS.ICTR.ZS — Gross savings % of GDP), the countries that had gross savings strictly over 35% of GDP for every year in the period 2001–2010 are:\n\n**Brunei, China, Morocco, Singapore**\n\nDetails (all values > 35% for each year):\n- **Brunei** (BRN): ranged from 51.8% (2001) to 69.5% (2008)\n- **China** (CHN): ranged from 37.1% (2001) to 51.3% (2008)\n- **Morocco** (MAR): ranged from 35.04% (2010) to 40.2% (2008)\n- **Singapore** (SGP): ranged from 38.4% (2002) to 50.6% (2010)\n\nNear miss: Philippines had all years above 35% except 2001 (34.6%).\n\n[Data source: World Bank API, all 2,660 records for indicator NY.GNS.ICTR.ZS across 2001–2010]"
+      }
+    }
+  ],
+  "tools": [
+    "think",
+    "web_search",
+    "web_fetch",
+    "bash",
+    "write_file",
+    "read_file",
+    "finish"
+  ],
+  "turns": 26,
+  "elapsed": 307.9
+}

@@ -1,0 +1,54 @@
+{
+  "test_id": "factscore-012",
+  "entity": "Eric Hacker",
+  "prompt": "Tell me a bio of Eric Hacker",
+  "evaluation_criteria": "Factual accuracy of profession (baseball pitcher), career details, teams played for, specific awards (IL Pitcher of the Week, not 'Pitcher of the Year'). Award names and levels are a known error source -- verify exact award titles rather than inflated versions.",
+  "output": "Provided comprehensive biographies for both notable people named Eric Hacker:\n\n1. **Eric Lynn Hacker (b. 1983)** — American former professional baseball pitcher who played in MLB for the Pittsburgh Pirates, Minnesota Twins, and San Francisco Giants (2009–2012), and in the KBO League for the NC Dinos (2013–2017) and Nexen Heroes (2018). His best season was 2015 when he led the KBO with 19 wins and won the Golden Glove Award. Career MLB stats: 0–1, 4.00 ERA; KBO stats: 61–37, 3.66 ERA, 675 strikeouts.\n\n2. **Eric Nathaniel Hacker (b. ~2001)** — American para-athlete from Ohio who competes in the T38 classification (cerebral palsy). A two-time Junior National Champion who set American records in the 1500m and 3000m T38 events at the 2019 Adaptive Sports USA Junior Nationals. He qualified for U.S. Paralympic Trials and was honored by the Ohio House of Representatives.",
+  "finish_summary": "Provided comprehensive biographies for both notable people named Eric Hacker:\n\n1. **Eric Lynn Hacker (b. 1983)** — American former professional baseball pitcher who played in MLB for the Pittsburgh Pirates, Minnesota Twins, and San Francisco Giants (2009–2012), and in the KBO League for the NC Dinos (2013–2017) and Nexen Heroes (2018). His best season was 2015 when he led the KBO with 19 wins and won the Golden Glove Award. Career MLB stats: 0–1, 4.00 ERA; KBO stats: 61–37, 3.66 ERA, 675 strikeouts.\n\n2. **Eric Nathaniel Hacker (b. ~2001)** — American para-athlete from Ohio who competes in the T38 classification (cerebral palsy). A two-time Junior National Champion who set American records in the 1500m and 3000m T38 events at the 2019 Adaptive Sports USA Junior Nationals. He qualified for U.S. Paralympic Trials and was honored by the Ohio House of Representatives.",
+  "tool_calls": [
+    {
+      "tool": "web_search",
+      "input": {
+        "query": "Eric Hacker baseball pitcher"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "search",
+        "query": "Eric Hacker"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "title": "Eric Hacker (para-athlete)"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "title": "Eric Hacker"
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "Provided comprehensive biographies for both notable people named Eric Hacker:\n\n1. **Eric Lynn Hacker (b. 1983)** — American former professional baseball pitcher who played in MLB for the Pittsburgh Pirates, Minnesota Twins, and San Francisco Giants (2009–2012), and in the KBO League for the NC Dinos (2013–2017) and Nexen Heroes (2018). His best season was 2015 when he led the KBO with 19 wins and won the Golden Glove Award. Career MLB stats: 0–1, 4.00 ERA; KBO stats: 61–37, 3.66 ERA, 675 strikeouts.\n\n2. **Eric Nathaniel Hacker (b. ~2001)** — American para-athlete from Ohio who competes in the T38 classification (cerebral palsy). A two-time Junior National Champion who set American records in the 1500m and 3000m T38 events at the 2019 Adaptive Sports USA Junior Nationals. He qualified for U.S. Paralympic Trials and was honored by the Ohio House of Representatives."
+      }
+    }
+  ],
+  "tools": [
+    "web_search",
+    "wikipedia",
+    "wikipedia",
+    "wikipedia",
+    "finish"
+  ],
+  "turns": 5,
+  "elapsed": 75.4,
+  "fact_score": 80,
+  "fact_details": "Substantial output (875 chars) about Eric Hacker - no specific criteria facts to verify"
+}

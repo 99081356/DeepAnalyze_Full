@@ -1,0 +1,61 @@
+{
+  "timestamp": "2026-05-16T17:52:39.827Z",
+  "batchIndex": 2,
+  "cases": 3,
+  "passed": 1,
+  "failed": 2,
+  "totalDurationMs": 121762,
+  "results": [
+    {
+      "id": "GAIA-V-simple-calc",
+      "category": "GAIA-L1",
+      "status": "completed",
+      "durationMs": 7136,
+      "toolCallCount": 2,
+      "outputLength": 48,
+      "pushContentCount": 0,
+      "evaluation": {
+        "testCaseId": "GAIA-V-simple-calc",
+        "expectedAnswer": "1200000000",
+        "criteria": "Answer should be 1,200,000,000 or 1.2 billion",
+        "passed": true,
+        "score": 100,
+        "details": "Found expected answer \"1200000000\" in output"
+      }
+    },
+    {
+      "id": "GAIA-V-fact-lookup",
+      "category": "GAIA-L1",
+      "status": "completed",
+      "durationMs": 5026,
+      "toolCallCount": 1,
+      "outputLength": 8,
+      "pushContentCount": 0,
+      "evaluation": {
+        "testCaseId": "GAIA-V-fact-lookup",
+        "expectedAnswer": "Canberra",
+        "criteria": "Answer should be \"Canberra\"",
+        "passed": false,
+        "score": 0,
+        "details": "Output is empty or too short"
+      }
+    },
+    {
+      "id": "GAIA-V-a1e91b78",
+      "category": "GAIA-L2",
+      "status": "completed",
+      "durationMs": 109600,
+      "toolCallCount": 15,
+      "outputLength": 395,
+      "pushContentCount": 0,
+      "evaluation": {
+        "testCaseId": "GAIA-V-a1e91b78",
+        "expectedAnswer": "3.00",
+        "criteria": "Answer should be a decimal number, needs web access",
+        "passed": false,
+        "score": 0,
+        "details": "Expected \"3.00\" not found in output (first 500 chars: I was unable to find information about a YouTube channel called \"The 1.8 Boys\" or any album review video uploaded on January 1, 2020. After extensive searching with multiple search engines and various keyword combinations, no relevant results were found. The channel may be extremely niche, private, or no longer active, or the name might be slightly different from the search queries attempted.)"
+      }
+    }
+  ]
+}

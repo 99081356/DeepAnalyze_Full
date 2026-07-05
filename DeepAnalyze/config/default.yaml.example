@@ -1,0 +1,100 @@
+# DeepAnalyze default configuration
+# ================================
+#
+# Copy this file to `config/default.yaml` and fill in your API keys.
+# This example file is tracked by git; `config/default.yaml` is gitignored.
+#
+# This file defines the LLM backends that DeepAnalyze will use.
+# Each entry under `models` creates a named provider instance.
+# The `defaults` section maps roles to model names.
+# API keys can also be configured via the settings UI at runtime.
+
+models:
+  main:
+    provider: anthropic-compatible
+    endpoint: https://open.bigmodel.cn/api/anthropic/v1
+    model: glm-5.1
+    apiKey: YOUR_GLM_API_KEY
+    maxTokens: 0
+    supportsToolUse: true
+
+  glm:
+    provider: anthropic-compatible
+    endpoint: https://open.bigmodel.cn/api/anthropic/v1
+    model: glm-5.1
+    apiKey: YOUR_GLM_API_KEY
+    maxTokens: 0
+    supportsToolUse: true
+
+  qwen:
+    provider: openai-compatible
+    endpoint: https://coding.dashscope.aliyuncs.com/v1
+    model: qwen3.6-plus
+    apiKey: YOUR_QWEN_API_KEY
+    maxTokens: 0
+    supportsToolUse: true
+
+  embedding:
+    provider: openai-compatible
+    endpoint: http://localhost:11434/v1
+    model: bge-m3
+    dimension: 1024
+    maxTokens: 8192
+
+  # ================================================================
+  # MiniMax Models (requires MINIMAX_API_KEY env var or DB config)
+  # MiniMax API: https://api.minimaxi.com/v1
+  # ================================================================
+  minimax-text:
+    provider: openai-compatible
+    endpoint: https://api.minimaxi.com/v1
+    model: MiniMax-M3
+    apiKey: YOUR_MINIMAX_API_KEY
+    maxTokens: 0
+    supportsToolUse: true
+
+  minimax-embedding:
+    provider: openai-compatible
+    endpoint: https://api.minimaxi.com/v1
+    model: embo-01
+    dimension: 1024
+    maxTokens: 8192
+
+  minimax-tts:
+    provider: openai-compatible
+    endpoint: https://api.minimaxi.com/v1
+    model: Speech-2.8
+    maxTokens: 4096
+
+  minimax-video:
+    provider: openai-compatible
+    endpoint: https://api.minimaxi.com/v1
+    model: Hailuo-2.3-768p-6s
+    maxTokens: 2048
+
+  minimax-image:
+    provider: openai-compatible
+    endpoint: https://api.minimaxi.com/v1
+    model: image-01
+    maxTokens: 4096
+
+  minimax-music:
+    provider: openai-compatible
+    endpoint: https://api.minimaxi.com/v1
+    model: Music-2.6
+    maxTokens: 4096
+
+defaults:
+  main: minimax-text
+  summarizer: glm
+  embedding: embedding
+  # ================================================================
+  # Role → Model Mappings (uncomment to enable MiniMax)
+  # ================================================================
+  # vlm: minimax-text
+  tts: minimax-tts
+  image_gen: minimax-image
+  video_gen: minimax-video
+  music_gen: minimax-music
+  # audio_transcribe:
+  # video_understand:

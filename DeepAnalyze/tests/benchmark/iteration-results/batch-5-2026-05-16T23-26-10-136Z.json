@@ -1,0 +1,61 @@
+{
+  "timestamp": "2026-05-16T23:35:20.594Z",
+  "batchIndex": 5,
+  "cases": 3,
+  "passed": 2,
+  "failed": 1,
+  "totalDurationMs": 526141,
+  "results": [
+    {
+      "id": "AB-Research-S4-T4",
+      "category": "AgencyBench-v2-Research",
+      "status": "completed",
+      "durationMs": 109979,
+      "toolCallCount": 10,
+      "outputLength": 828,
+      "pushContentCount": 0,
+      "evaluation": {
+        "testCaseId": "AB-Research-S4-T4",
+        "expectedAnswer": "XPeng Inc.",
+        "criteria": "Score 10: Correctly identifies XPeng Inc., cites the official 2023/2024 agreement where the Volkswagen Group invested approximately $700 million for a stake in the company (a distinct milestone compared to Nio or Li Auto), mentions founder He Xiaopeng's background as the co-founder of UCWeb, and sources these facts. Score 5: Provides XPeng Inc. but lacks the specific detail about the Volkswagen investment amount or the founder's UCWeb history. Score 0: Selects another company (e.g., Nio) or fails to link the Volkswagen partnership to the correct entity.",
+        "passed": true,
+        "score": 100,
+        "details": "Found expected answer \"XPeng Inc.\" in output"
+      }
+    },
+    {
+      "id": "AB-Research-S4-T5",
+      "category": "AgencyBench-v2-Research",
+      "status": "completed",
+      "durationMs": 144695,
+      "toolCallCount": 17,
+      "outputLength": 17354,
+      "pushContentCount": 0,
+      "evaluation": {
+        "testCaseId": "AB-Research-S4-T5",
+        "expectedAnswer": "UnitedHealth Group, Broadcom, Citigroup, XPeng",
+        "criteria": "Score 10: Table lists all four correct companies (UnitedHealth Group, Broadcom, Citigroup, XPeng) with accurate revenue figures (within 2% of official filings), correct key executives (Witty, Tan, Fraser, He), and distinct facts (Optum scale, Singapore hub, First female CEO/Rev vs Goldman, VW investment). Overview references primary sources. Score 5: Includes all four companies but contains numeric errors (>5%) or misses the specific 'key milestone' requested in previous subtasks. Score 0: Omits any of the four companies or introduces unverified entities.",
+        "passed": false,
+        "score": 0,
+        "details": "Expected \"UnitedHealth Group, Broadcom, Citigroup, XPeng\" not found in output (first 500 chars: \n\nI'll compile a comprehensive dossier on these four major companies. Let me search for the latest public information on each com\n\nLet me gather more detailed information on each com\n\nLet me gather more specific financial data and leadership details for each com\n\nLet me search for more specific data on XPeng's Volkswagen investment and the UCWeb connec\n\nNow I have sufficient data. Let me compile the comprehensive dossier based on all the information gathered.\n\n---\n\n# Consolidated Corporate Dossi)"
+      }
+    },
+    {
+      "id": "AB-Research-S5-T1",
+      "category": "AgencyBench-v2-Research",
+      "status": "completed",
+      "durationMs": 271467,
+      "toolCallCount": 26,
+      "outputLength": 3310,
+      "pushContentCount": 1,
+      "evaluation": {
+        "testCaseId": "AB-Research-S5-T1",
+        "expectedAnswer": "Paul George",
+        "criteria": "Score 10: Fully matches the Paul George ground truth: cites his 2018-19 All-Star/All-Defensive First Team season, and details the 2019 trade to the Clippers which included Shai Gilgeous-Alexander (All-Rookie Second Team w/ Clippers, shares surname with Alexander the Great). Score 8: Identifies Paul George and the 2018-19 season, but the explanation of the trade return (Shai Gilgeous-Alexander) or the 'Alexander the Great' connection is vague. Score 5: Names Paul George but fails to identify the correct trade package or the specific historical name reference. Score 0: Player is not Paul George or the explanation conflicts with the ground truth.",
+        "passed": true,
+        "score": 100,
+        "details": "Found expected answer \"Paul George\" in output"
+      }
+    }
+  ]
+}

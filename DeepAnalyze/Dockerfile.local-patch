@@ -1,0 +1,14 @@
+# 基于 zhangsan 容器快照（含前端 dist + SetupWizard 409 修复）修补安全相关后端源码
+# 修补内容：
+#   1. auth.ts — 禁用 Bearer token fallback（强制 SSO cookie 路径）
+#   2. hub-jwks.ts — getHubIssuerUrl() 使用 DA_HUB_EXTERNAL_URL
+#
+# 注意：前端 dist 已在 zhangsan 容器内构建完成（含 SetupWizard 409 处理），
+#       此处不覆盖前端源码，避免需要重新 build。
+FROM deepanalyze/da:local-base
+
+# 覆盖 auth 中间件（禁用 Bearer fallback）
+COPY src/server/middleware/auth.ts /app/src/server/middleware/auth.ts
+
+# 覆盖 hub-jwks 模块（issuer 校验修复）
+COPY src/services/auth/hub-jwks.ts /app/src/services/auth/hub-jwks.ts

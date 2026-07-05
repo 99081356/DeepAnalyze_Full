@@ -1,0 +1,68 @@
+{
+  "version": "1.0.0",
+  "models": {
+    "bge-m3": {
+      "version": "1.0.0",
+      "category": "embedding",
+      "size_bytes": 2370000000,
+      "files": [
+        { "path": "pytorch_model.bin", "sha256": "b5e0ce3470abf5ef3831aa1bd5553b486803e83251590ab7ff35a117cf6aad38", "size_bytes": 2370000000 },
+        { "path": "config.json", "sha256": "TODO_FILL", "size_bytes": 1200 },
+        { "path": "tokenizer.json", "sha256": "TODO_FILL", "size_bytes": 8000 }
+      ],
+      "sources": {
+        "huggingface": "https://huggingface.co/BAAI/bge-m3/resolve/main/",
+        "hf_mirror": "https://hf-mirror.com/BAAI/bge-m3/resolve/main/"
+      },
+      "runtime_deps": { "python_packages": ["sentence-transformers>=2.7.0", "torch>=2.1.0"] },
+      "min_disk_mb": 3000,
+      "min_ram_mb": 2048,
+      "recommended_for": ["knowledge_base"]
+    },
+    "whisper-tiny": { "version": "1.0.0", "category": "asr", "size_bytes": 73000000, "files": [], "sources": {} },
+    "whisper-base": {
+      "version": "1.0.0",
+      "category": "asr",
+      "description": "OpenAI Whisper base model",
+      "size_bytes": 139000000,
+      "sources": {
+        "hf_mirror": "https://hf-mirror.com/openai/whisper-base/resolve/main/",
+        "huggingface": "https://huggingface.co/openai/whisper-base/resolve/main/"
+      },
+      "files": [
+        { "path": "pytorch_model.bin", "sha256": "ed3a0b6b1c0edf879ad9b11b1af5a0e6ab5db9205f891f668f8b0e6c6326e34e" },
+        { "path": "config.json" },
+        { "path": "generation_config.json" },
+        { "path": "tokenizer.json" },
+        { "path": "vocab.json" }
+      ]
+    },
+    "docling": { "version": "1.0.0", "category": "doc_parsing", "size_bytes": 500000000, "files": [], "sources": {} },
+    "docling-layout": {
+      "version": "1.0.0",
+      "category": "doc_parsing",
+      "description": "Docling layout + OCR + table models",
+      "sources": {
+        "hf_mirror": "https://hf-mirror.com/docling/resolve/main/",
+        "huggingface": "https://huggingface.co/docling/resolve/main/"
+      },
+      "files": [
+        { "path": "layout/model.onnx" },
+        { "path": "ocr/model.onnx" },
+        { "path": "table/model.onnx" }
+      ]
+    },
+    "paddleocr-vl": { "version": "1.0.0", "category": "vlm", "size_bytes": 2000000000, "files": [], "sources": {} },
+    "mineru": {
+      "version": "1.0.0",
+      "category": "doc_parsing",
+      "description": "MinerU Docker image (no weights to download — image bundles them)",
+      "sources": {},
+      "files": [],
+      "dockerImage": {
+        "cpu": "da/mineru:0.7.6-cpu",
+        "gpu": "da/mineru:0.7.6-gpu"
+      }
+    }
+  }
+}

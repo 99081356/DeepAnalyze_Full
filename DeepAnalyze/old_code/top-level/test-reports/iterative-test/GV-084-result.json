@@ -1,0 +1,93 @@
+{
+  "test_id": "GV-084",
+  "level": 1,
+  "prompt": "Who did the actor who played Ray in the Polish-language version of Everybody Loves Raymond play in Magda M.? Give only the first name.",
+  "expected": "Wojciech",
+  "actual": "Wojciech",
+  "finish_summary": "Wojciech",
+  "tool_calls": [
+    {
+      "tool": "think",
+      "input": {
+        "thought": "I need to find who played Ray in the Polish version of \"Everybody Loves Raymond\" and then find what character that actor played in \"Magda M.\" Let me search for this."
+      }
+    },
+    {
+      "tool": "web_search",
+      "input": {
+        "query": "\"Wszyscy kochają Raymonda\" polski głos Ray aktor"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Wszyscy kochają Raymonda Ray polski lektor"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Everybody Loves Raymond Polish dubbing voice actor Ray"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/wiki/Everybody_Loves_Raymond",
+        "selector": "#mw-content-text"
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "The question asks about the actor who played Ray in the Polish-language version of Everybody Loves Raymond, and what character they played in Magda M.\n\nI saw that \"Wszyscy kochają Raymonda\" is the Polish title. But this seems to be a dubbed version, not a remake. I need to find who voiced Ray in the Polish dub.\n\nLet me try to find this information. The Polish Wikipedia page for \"Wszyscy kochają Raymonda\" might have dubbing credits. Let me check that."
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "title": "Wszyscy kochają Raymonda",
+        "lang": "pl"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "lang": "pl",
+        "title": "Wszyscy kochają Romana"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "lang": "pl",
+        "title": "Bartłomiej Kasprzykowski"
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "From the Wikipedia articles:\n\n1. The Polish-language version of \"Everybody Loves Raymond\" is called \"Wszyscy kochają Romana\" — it's a Polish remake/adaptation (not just a dub).\n\n2. The actor who played Ray (the equivalent character, named \"Roman\") is **Bartłomiej Kasprzykowski**.\n\n3. According to his Wikipedia page, in \"Magda M.\" (2005–2007), he played **Wojciech** (specifically \"Wojciech Płaska, przyjaciel i wspólnik Piotra\" — Wojciech Płaska, friend and business partner of Piotr).\n\nThe answer is: Wojciech"
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "Wojciech"
+      }
+    }
+  ],
+  "tools": [
+    "think",
+    "web_search",
+    "mcp__minimax_websearch__web_search",
+    "web_fetch",
+    "wikipedia",
+    "finish"
+  ],
+  "turns": 11,
+  "elapsed": 67.0
+}

@@ -1,0 +1,348 @@
+{
+  "test_id": "GV-113",
+  "level": "2",
+  "prompt": "Take the gender split from the 2011 Bulgarian census about those who have completed tertiary education. Subtract the smaller number from the larger number, then return the difference in thousands of women. So if there were 30.1 thousand more men, you'd give \"30.1\"",
+  "expected": "234.9",
+  "actual": "234.9",
+  "finish_summary": "234.9",
+  "tool_calls": [
+    {
+      "tool": "think",
+      "input": {
+        "thought": "I need to find the gender split from the 2011 Bulgarian census specifically about those who have completed tertiary education. Let me search for this data."
+      }
+    },
+    {
+      "tool": "web_search",
+      "input": {
+        "query": "Bulgaria 2011 census tertiary education by sex gender numbers"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Bulgaria 2011 census tertiary education completed by gender sex numbers"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Bulgaria 2011 census education level tertiary women men NSI population"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/wiki/Demographics_of_Bulgaria",
+        "max_length": 50000
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "I need to find the education section of the Wikipedia page on Demographics of Bulgaria. The page has an Education section (section 14 in the TOC). Let me try to get that specific section using the Wikipedia tool or web_fetch with a selector. The page content was truncated. Let me try to access the Education section specifically."
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/wiki/Demographics_of_Bulgaria",
+        "selector": "#Education",
+        "max_length": 10000
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "title": "Demographics of Bulgaria",
+        "section": 14
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Bulgaria 2011 census tertiary education completed women men thousands gender statistics"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "site:nsi.bg 2011 census education tertiary"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "\"Bulgaria\" \"2011\" census \"higher education\" OR \"tertiary education\" \"men\" OR \"women\" OR \"male\" OR \"female\" statistics number"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/wiki/Education_in_Bulgaria",
+        "max_length": 50000
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "I need to find specific census data from Bulgaria 2011 about tertiary education by gender. The Wikipedia pages don't have the detailed tables. Let me try to access the NSI (National Statistical Institute) of Bulgaria's census results directly, or try the Wikipedia API to get the Education section of the Demographics page.\n\nI know the TOC showed \"Education\" as section 14 on the Demographics of Bulgaria page. But when I fetched section 14, I got \"Projections\" instead. This suggests the section numbering might be off. Let me try different section numbers, or use the Wikipedia API more carefully.\n\nActually, let me try to use the Wikipedia tool with section numbers around 14 to find the Education section. Or I could try to access the page content via the API with action=raw.\n\nAlternatively, I could try to access the NSI Bulgaria census data directly at nsi.bg."
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://www.nsi.bg/en/content/2994/population-projections-sex-and-age",
+        "max_length": 5000
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 30000,
+        "url": "https://www.nsi.bg/en/statistical-data/181"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Bulgaria 2011 population census \"completed higher\" OR \"completed tertiary\" education males females number"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/wiki/2011_Bulgarian_census",
+        "max_length": 30000
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Bulgaria 2011 census education level gender \"higher\" OR \"tertiary\" \"completed\" number thousands men women statistics NSI"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 30000,
+        "url": "https://bg.wikipedia.org/wiki/%D0%9F%D1%80%D0%B5%D0%B1%D1%80%D0%BE%D1%8F%D0%B2%D0%B0%D0%BD%D0%B5_%D0%BD%D0%B0_%D0%BD%D0%B0%D1%81%D0%B5%D0%BB%D0%B5%D0%BD%D0%B8%D0%B5%D1%82%D0%BE_%D0%B2_%D0%91%D1%8A%D0%BB%D0%B3%D0%B0%D1%80%D0%B8%D1%8F_(2011)"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 30000,
+        "url": "https://censusresults.nsi.bg/Census/Forms/ census_tables_education.aspx"
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "Let me take stock of what I've found and what I need. I need the gender split from the 2011 Bulgarian census for people who completed tertiary education. \n\nFrom the 2011 Bulgarian census Wikipedia page, I found the total population:\n- Total: 7,364,570\n- Women: 3,777,999 (51.3%)\n- Men: 3,586,571 (48.7%)\n\nBut the Wikipedia page doesn't have education data. I need to try accessing the NSI census database directly or find the data from another source. Let me try the NSI census results portal.\n\nLet me try accessing the NSI census database or find a PDF publication with this specific data. The 2011 census in Bulgaria had a publication series that included education data by sex."
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "\"Bulgaria\" census 2011 education level sex \"higher\" OR \"tertiary\" number 1072 OR 879 OR thousand site:nsi.bg"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 10000,
+        "url": "https://www.nsi.bg/en/statistical-data/151"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "\"population aged 7+\" Bulgaria 2011 census education \"completed higher\" OR \"tertiary\" male female persons"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 20000,
+        "url": "https://www.ceicdata.com/en/bulgaria/education-statistics"
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "I've done extensive searching but cannot find the exact gender split numbers for tertiary education from the 2011 Bulgarian census through web searches. The search engines are returning irrelevant results, and the Wikipedia pages for the 2011 Bulgarian census don't include education data - only ethnic composition, age-sex structure, language, and religion.\n\nLet me try one more approach - accessing the NSI's census database directly, or try to find the Wikipedia page for \"Demographics of Bulgaria\" Education section using the API with a different section number.\n\nActually, let me try using the Wikipedia tool to get section 18 (Education) from the Demographics of Bulgaria page - the TOC showed Education was section 14, but the numbering might be off due to subsections. Let me try a few section numbers.\n\nActually, the best approach would be to use the Wikipedia API with the raw wikitext to search for education data. But I can also try fetching the Education section via the Wikipedia tool.\n\nLet me try different section numbers for the Demographics of Bulgaria page."
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "title": "Demographics of Bulgaria",
+        "section": 18
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "curl -s \"https://en.wikipedia.org/w/api.php?action=parse&page=Demographics_of_Bulgaria&prop=sections&format=json\" | python3 -c \"\nimport json, sys\ndata = json.load(sys.stdin)\nfor s in data['parse']['sections']:\n    print(f\\\"{s['number']}: {s['line']} (index={s['index']})\\\")\" 2>/dev/null"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 5000,
+        "url": "https://en.wikipedia.org/w/api.php?action=parse&page=Demographics_of_Bulgaria&prop=sections&format=json"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "section": 24,
+        "title": "Demographics of Bulgaria"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "section": 26,
+        "title": "Demographics of Bulgaria"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 50000,
+        "url": "https://www.nsi.bg/census2011/PDOCS2/Census2011final_en.pdf"
+      }
+    },
+    {
+      "tool": "pdf_read",
+      "input": {
+        "url": "https://www.nsi.bg/census2011/PDOCS2/Census2011final_en.pdf"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Bulgaria 2011 census \"completed higher education\" OR \"completed tertiary\" male female number persons sex"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Bulgaria census 2011 education level sex \"higher\" \"women\" \"men\" thousands NSI statistical"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "\"преброяване 2011\" \"завършено висше\" \"мъже\" \"жени\" образование България"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://www.nsi.bg/census2011/PDOCS2/Census2011final_en.pdf",
+        "max_length": 50000
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "nsi.bg census 2011 education \"higher education\" OR \"tertiary\" male female table"
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "\nLet me try different approaches:\n1. Try the NSI census results database directly\n2. Try accessing the census PDF via a Google cache or similar\n3. Try Eurostat which should have Bulgaria 2011 census education data by sex\n4. Try World Bank data for educational attainment by sex\n"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Eurostat Bulgaria 2011 census educational attainment sex tertiary education completed"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://censusresults.nsi.bg/Census/Forms/R1.aspx"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://nsi.bg/census2011/pageindex_en.html"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "datacommons Bulgaria educational attainment tertiary sex 2011"
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "\nLet me try direct URL access to data sources that might have this data:\n1. Google cache of the NSI PDF\n2. Google datacommons\n3. Direct Eurostat URL\n4. Try to download the PDF with bash and extract text\n"
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "curl -L -o /tmp/census2011.pdf \"https://www.nsi.bg/census2011/PDOCS2/Census2011final_en.pdf\" 2>&1 && file /tmp/census2011.pdf && ls -la /tmp/census2011.pdf",
+        "timeout": 30
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "which pdftotext && pdftotext /tmp/census2011.pdf /tmp/census2011.txt 2>&1 && wc -l /tmp/census2011.txt",
+        "timeout": 30
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "grep -n -i -E \"tertiary|higher|university|education.*sex|sex.*education|male.*female|men.*women|education.*complet\" /tmp/census2011.txt | head -50",
+        "timeout": 15
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "\nFound the exact data in the 2011 Bulgarian Census final report PDF:\n\n**People with completed tertiary education:**\n- Women (females): 791.8 thousand\n- Men (males): 556.9 thousand\n\nThe difference is: 791.8 - 556.9 = 234.9 thousand\n\nThere are 234.9 thousand MORE WOMEN than men who have completed tertiary education.\n\nSince the question asks for the difference \"in thousands of women\" (and specifies that if there were more men you'd give a positive number), the answer is:\n\n234.9\n"
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "echo \"791.8 - 556.9\" | bc",
+        "timeout": 5
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "234.9"
+      }
+    }
+  ],
+  "tools": [
+    "think",
+    "web_search",
+    "mcp__minimax_websearch__web_search",
+    "web_fetch",
+    "wikipedia",
+    "bash",
+    "pdf_read",
+    "finish"
+  ],
+  "turns": 50,
+  "elapsed": 364.5
+}

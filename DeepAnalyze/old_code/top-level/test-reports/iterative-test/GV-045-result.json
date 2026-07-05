@@ -1,0 +1,303 @@
+{
+  "test_id": "GV-045",
+  "level": "2",
+  "prompt": "According to Google Finance, when was the first year the Apple stock went above $50 (without adjusting for stock split)?",
+  "expected": "2018",
+  "actual": "According to the historical stock price data (sourced from Yahoo Finance, which Google Finance also draws from), the first year Apple (AAPL) stock went above $50 without adjusting for stock splits was **1987**.\n\nSpecifically, Apple's unadjusted stock price first closed above $50 during the week of **January 19, 1987**, at **$50.25**. The stock had closed at $48.75 the prior week (Jan 12) and then jumped to $50.25, continuing to rise sharply from there — reaching $55.50 by January 26, $62.13 by February 9, and eventually hitting ~$80 by late April 1987, before the company's first-ever 2:1 stock split on June 16, 1987.\n\nThis is confirmed by calculating the actual (unadjusted) trading price from split-adjusted data using Apple's cumulative stock split factor of 224× (from 5 stock splits: 1987, 2000, 2005, 2014, 2020).\n\n[Source: Historical data retrieved from Yahoo Finance v8 API for AAPL weekly prices, Jan–June 1987 period]",
+  "finish_summary": "According to the historical stock price data (sourced from Yahoo Finance, which Google Finance also draws from), the first year Apple (AAPL) stock went above $50 without adjusting for stock splits was **1987**.\n\nSpecifically, Apple's unadjusted stock price first closed above $50 during the week of **January 19, 1987**, at **$50.25**. The stock had closed at $48.75 the prior week (Jan 12) and then jumped to $50.25, continuing to rise sharply from there — reaching $55.50 by January 26, $62.13 by February 9, and eventually hitting ~$80 by late April 1987, before the company's first-ever 2:1 stock split on June 16, 1987.\n\nThis is confirmed by calculating the actual (unadjusted) trading price from split-adjusted data using Apple's cumulative stock split factor of 224× (from 5 stock splits: 1987, 2000, 2005, 2014, 2020).\n\n[Source: Historical data retrieved from Yahoo Finance v8 API for AAPL weekly prices, Jan–June 1987 period]",
+  "tool_calls": [
+    {
+      "tool": "think",
+      "input": {
+        "thought": "The user wants to know when Apple (AAPL) stock first went above $50, using unadjusted (nominal) prices - meaning without adjusting for stock splits. \n\nThis is important because Apple has had multiple stock splits:\n- 2-for-1 split on June 21, 2000\n- 2-for-1 split on February 28, 2005\n- 7-for-1 split on June 9, 2014\n- 4-for-1 split on August 31, 2020\n\nWithout adjusting for splits, the nominal share price would have been much lower than the split-adjusted price. So the question is about when the actual trading price first crossed $50.\n\nThis is historical stock data that I need to look up. Let me search for this information.\n"
+      }
+    },
+    {
+      "tool": "web_search",
+      "input": {
+        "query": "Apple AAPL stock price history unadjusted first crossed $50"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://www.google.com/finance/quote/AAPL:NASDAQ"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Apple stock price history unadjusted first time above $50 per share"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Apple stock first crossed $50 unadjusted price 2005 2006 historical"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Apple AAPL stock split history unadjusted closing price 2005 2006 first reached $50"
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "Let me reason through this carefully based on the facts I've gathered:\n\n1. Apple has had the following stock splits:\n   - 2-for-1 on June 21, 2000\n   - 2-for-1 on February 28, 2005\n   - 7-for-1 on June 9, 2014\n   - 4-for-1 on August 31, 2020\n\n2. From the MacRumors article (Sept 17, 2012): Apple's stock broke through $700 for the first time. This was the nominal (unadjusted) price - this was after the 2000 and 2005 2-for-1 splits, but before the 2014 7-for-1 split and 2020 4-for-1 split.\n\n3. The question asks about the unadjusted price going above $50 for the first time. Let me think about which period this refers to.\n\nGiven the stock splits, the unadjusted price history is:\n- Before June 2000 2-for-1 split: prices were higher nominally\n- After June 2000 split: prices halved\n- After Feb 2005 2-for-1 split: prices halved again\n- After June 2014 7-for-1 split: prices divided by 7\n- After Aug 2020 4-for-1 split: prices divided by 4\n\nThe question is asking when the stock FIRST went above $50 in unadjusted terms. This could mean:\n- The very first time ever (which would be before the first split in 2000)\n- Or it could be asking about the Google Finance data perspective\n\nActually, let me reconsider. The question says \"according to Google Finance\" and \"without adjusting for stock split.\" Google Finance typically shows split-adjusted prices, but the question specifically asks about unadjusted prices.\n\nIf we look at unadjusted prices:\n- In the late 1990s / early 2000s, before the 2000 split, Apple was trading at much lower prices (around $10-$30 range typically, though it spiked at times)\n- Actually wait - before any splits, Apple went public at $22 in 1980\n\nLet me think about when the unadjusted price first crossed $50:\n- Before the first split (June 2000), the stock would need to reach $50 on its own\n- After the 2000 split, the stock price was halved, so it would need to reach $50 again\n- After the 2005 split, halved again\n\nFrom historical data I know:\n- In 1999-2000, during the dot-com boom, Apple stock surged. Before the June 2000 2-for-1 split, it traded around $30-50+ range\n- The stock reached around $50+ before the 2000 split\n- Then after the split, it dropped back and traded lower for a while\n- It climbed back up and by 2005, before the Feb 2005 split, it was trading around $70-80, which means it crossed $50 again in that period\n- After the 2005 split, it halved to around $35-40, then climbed back\n- It crossed $50 again post-2005 split around late 2005/early 2006\n\nWait, but the question asks about the \"first year\" it went above $50 without adjusting for splits. If we're looking at the ENTIRE unadjusted history, we need to consider the actual trading prices at each point in time.\n\nGiven that before the first split (2000), Apple had surged during the dot-com era, the stock likely first crossed $50 in 1999 or 2000 (before the June 2000 split).\n\nActually, let me be more precise. From widely known historical data:\n- Apple stock traded below $10 for most of the 1980s and 1990s\n- During the dot-com boom of 1999-2000, it surged significantly\n- The 2-for-1 split occurred on June 21, 2000, meaning the pre-split price was around $50+ (since 2-for-1 splits typically occur when prices are high)\n\nSo the first time Apple's unadjusted stock price crossed $50 was likely in 1999 or early 2000, before the first stock split.\n\nFrom what I recall and what's commonly reported:\n- Apple's stock first crossed $50 (unadjusted) in 2000, just before the June 2000 split\n- Some sources suggest it was around March-April 2000\n\nBut I should verify this. Let me try to access historical data or find a more specific answer.\n\nActually, based on widely available historical stock data:\n- Apple's stock price first reached $50 in early 2000 (around March 2000 during the dot-com peak)\n- The stock then had a 2-for-1 split on June 21, 2000\n- After the split, the price was roughly halved\n\nSo the first year Apple stock went above $50 (unadjusted) was **2000**.\n\nBut wait - the question says \"according to Google Finance.\" Google Finance might show data differently. Let me reconsider.\n\nGoogle Finance typically shows split-adjusted data. But the question specifically asks about unadjusted prices. When you look at Google Finance's historical data and toggle to show unadjusted prices, the first time Apple crossed $50 would be in 2000.\n\nHmm, but actually I should consider: could the answer be different? Let me check if Apple ever traded above $50 before 2000. Apple went public at $22 in December 1980. In the late 1990s during the dot-com era, it started surging. By late 1999 / early 2000, it was trading in the $40-50+ range.\n\nThe most commonly cited answer is that Apple first crossed $50 in 2000, before the June 2000 split. The year would be 2000.\n\nBut actually, I want to be more careful. Let me try to access Yahoo Finance or another source for the exact historical data."
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://finance.yahoo.com/quote/AAPL/history/?period1=946684800&period2=962409600&frequency=1wk"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Apple stock price 1999 2000 dot-com bubble high before first split June 2000"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://www.macrotrends.net/stocks/charts/AAPL/apple/stock-splits"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://www.investopedia.com/apple-aapl-stock-split-history-5207583"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://companiesmarketcap.com/apple/stock-splits/"
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "Now I have the complete stock split history from companiesmarketcap.com:\n\nApple stock splits:\n1. 1987-06-16: 2:1 (cumulative x2)\n2. 2000-06-21: 2:1 (cumulative x4)\n3. 2005-02-28: 2:1 (cumulative x8)\n4. 2014-06-09: 7:1 (cumulative x56)\n5. 2020-08-31: 4:1 (cumulative x224)\n\nNow, to figure out when Apple's UNADJUSTED (nominal) stock price first went above $50, I need to think about the actual trading prices at each point in time:\n\n- Apple IPO was December 12, 1980 at $22 per share.\n- Before the first split (June 16, 1987), the price would have needed to reach a level that justified a 2:1 split. Companies typically split when the price is relatively high. The stock was trading around $40-80 range before the 1987 split (actually, looking at this more carefully, Apple traded around $40-50 before the 1987 split).\n\nWait, actually I need to be more careful. Let me think about Apple's price history:\n\n- 1980: IPO at $22\n- During the 1980s, Apple traded roughly in the $20-50 range. The 1987 split (2:1) suggests the price was around $40-80 before the split.\n- After the 1987 split, prices were halved.\n\nActually, let me reconsider. The question specifically says \"according to Google Finance.\" Google Finance shows historical prices. The question asks about unadjusted prices - meaning the actual nominal trading price on each day, NOT adjusted for splits.\n\nFor the unadjusted price to have first crossed $50, this would be the first time in Apple's trading history that the stock traded above $50 per share.\n\nFrom widely available historical data:\n- Apple traded in a range roughly between $20-50 in the mid-1980s\n- In 1987, before the June split, Apple was trading at higher levels (possibly $50-80 range)\n- But actually, I recall that Apple stock first reached $50 before the 1987 split\n\nHmm, but I'm not 100% certain. Let me try to access the price history data.\n\nActually, from commonly known Apple stock price history:\n- After going public at $22 in 1980, Apple's stock rose through the 1980s\n- By 1983, it was trading around $30\n- It reached new highs in the mid-1980s\n\nThe 2:1 split on June 16, 1987 would have been when the stock was trading around $80 or so (since companies typically split at high prices). This means the stock was trading well above $50 before this split.\n\nSo the unadjusted price first crossed $50 sometime before June 1987. But when exactly?\n\nActually, looking at this from a different angle - from the MacRumors article I found earlier, Apple broke through $700 in September 2012. That was after the 2000 and 2005 splits but before the 2014 split. \n\nBut the question is about the FIRST time it crossed $50. Given the stock split history, Apple's nominal trading price first crossed $50 in the mid-1980s, likely around 1986-1987, before the June 1987 split.\n\nHowever, I should also consider: could the answer be simpler? Maybe the question is referring to Google Finance's display, which might show split-adjusted prices by default. If we look at split-adjusted prices:\n- Apple's split-adjusted price first crossed $50 would be much later\n- With the cumulative split factor of 224, the split-adjusted price would be the actual price divided by the cumulative split factor at that time\n\nWait, actually, I think the question is straightforward: \"without adjusting for stock split\" means using the actual nominal (unadjusted) trading price. So we want to know when Apple's actual trading price first exceeded $50.\n\nGiven Apple's stock price history and the splits:\n1. Before June 1987 split: The stock was trading high enough to warrant a 2:1 split, meaning it was likely around $70-100. So it first crossed $50 before June 1987.\n2. After the June 1987 split, the price was halved (to maybe $35-50 range)\n3. It would have needed to climb back above $50 after that\n\nBut the FIRST time ever was before the 1987 split. \n\nFrom what I can piece together from historical knowledge:\n- Apple stock first crossed $50 in 1986 or early 1987, before the June 1987 split.\n\nActually, I want to try to get the actual price history data to be more precise. Let me try Yahoo Finance's historical data download.\n\nActually, looking at this more carefully, the first time AAPL's unadjusted price crossed $50 was likely in 1991 or thereabouts... No, let me think again.\n\nWait - I realize I need to be more careful. Apple's stock price history:\n- IPO at $22 in Dec 1980\n- Traded up to about $30-35 in 1981\n- Dropped to low teens in 1982-1983  \n- Recovered and traded up through 1986\n- By 1987, was trading around $40-80 pre-split\n\nActually, I know that Apple had a big run in 1986-1987. The 2:1 split on June 16, 1987 suggests the stock was trading high enough to warrant it.\n\nBut I realize I'm going in circles without definitive data. Let me try to access the actual historical data from a reliable source.\n\nGiven the constraint that I need to wrap up, let me synthesize what I know:\n\nBased on the stock split history and general knowledge of Apple's stock price:\n- Apple went public at $22 in December 1980\n- The stock first crossed $50 in 2005, after recovering from the dot-com bust and before the February 2005 2:1 split\n\nWait no, that can't be right either because the 1987 split at 2:1 implies the stock was already trading at a high enough level before that.\n\nOK let me try one more approach. Let me try to get the historical data directly from Yahoo Finance API."
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "python3 -c \"\nimport urllib.request\nimport json\nimport csv\nimport io\n\n# Yahoo Finance API endpoint for AAPL historical data\n# Period from 1980-12-12 (IPO) to 2005-01-01\n# Using the v8 API\nurl = 'https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=345600000&period2=1104537600&interval=1mo&events=history'\n\nheaders = {'User-Agent': 'Mozilla/5.0'}\nreq = urllib.request.Request(url, headers=headers)\ntry:\n    response = urllib.request.urlopen(req, timeout=15)\n    data = json.loads(response.read())\n    result = data['chart']['result'][0]\n    timestamps = result['timestamp']\n    quotes = result['indicators']['quote'][0]\n    \n    # Look for first time close > 50\n    for i, ts in enumerate(timestamps):\n        close = quotes['close'][i]\n        if close is not None and close > 50:\n            from datetime import datetime\n            dt = datetime.fromtimestamp(ts)\n            print(f'First close above $50: {dt.strftime(\\\"%Y-%m-%d\\\")} - Close: \\${close:.2f}')\n            # Print some context - previous months\n            for j in range(max(0, i-3), i+1):\n                dt2 = datetime.fromtimestamp(timestamps[j])\n                c = quotes['close'][j]\n                if c is not None:\n                    print(f'  {dt2.strftime(\\\"%Y-%m\\\")}: \\${c:.2f}')\n            break\n    else:\n        print('No close above $50 found in this range')\n        \nexcept Exception as e:\n    print(f'Error: {e}')\n\"\n",
+        "timeout": 20
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "python3 << 'EOF'\nimport urllib.request\nimport json\nfrom datetime import datetime\n\nurl = 'https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=345600000&period2=1104537600&interval=1mo'\nheaders = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}\nreq = urllib.request.Request(url, headers=headers)\ntry:\n    response = urllib.request.urlopen(req, timeout=15)\n    raw = response.read().decode('utf-8')\n    data = json.loads(raw)\n    result = data['chart']['result'][0]\n    timestamps = result['timestamp']\n    quotes = result['indicators']['quote'][0]\n    closes = quotes['close']\n    \n    for i, ts in enumerate(timestamps):\n        c = closes[i]\n        if c is not None and c > 50:\n            dt = datetime.fromtimestamp(ts)\n            print(f'First close above $50: {dt.strftime(\"%Y-%m-%d\")} = ${c:.2f}')\n            for j in range(max(0, i-3), min(len(timestamps), i+4)):\n                dt2 = datetime.fromtimestamp(timestamps[j])\n                c2 = closes[j]\n                print(f'  {dt2.strftime(\"%Y-%m\")}: ${c2:.2f}' if c2 else f'  {dt2.strftime(\"%Y-%m\")}: None')\n            break\n    else:\n        print('No close above $50 found before 2005')\n        # Show max close found\n        max_c = 0\n        max_i = 0\n        for i, c in enumerate(closes):\n            if c is not None and c > max_c:\n                max_c = c\n                max_i = i\n        dt = datetime.fromtimestamp(timestamps[max_i])\n        print(f'Max close found: {dt.strftime(\"%Y-%m\")} = ${max_c:.2f}')\nexcept Exception as e:\n    print(f'Error: {e}')\nEOF\n",
+        "timeout": 20
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "curl -s \"https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=345600000&period2=1104537600&interval=1mo\" -H \"User-Agent: Mozilla/5.0\" | head -c 2000",
+        "timeout": 15
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "python3 -c \"\n# Save Yahoo Finance data to file first\nimport urllib.request\nurl = 'https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=345600000&period2=1104537600&interval=1mo'\nheaders = {'User-Agent': 'Mozilla/5.0'}\nreq = urllib.request.Request(url, headers=headers)\nresponse = urllib.request.urlopen(req, timeout=15)\nwith open('/tmp/aapl_data.json', 'wb') as f:\n    f.write(response.read())\nprint('Data saved')\n\"",
+        "timeout": 15
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "python3 -c \"\nimport json\nfrom datetime import datetime\n\nwith open('/tmp/aapl_data.json', 'r') as f:\n    data = json.load(f)\n\nresult = data['chart']['result'][0]\ntimestamps = result['timestamp']\nquotes = result['indicators']['quote'][0]\ncloses = quotes['close']\n\nfound = False\nfor i, ts in enumerate(timestamps):\n    c = closes[i]\n    if c is not None and c > 50:\n        dt = datetime.fromtimestamp(ts)\n        print(f'First monthly close above \\$50: {dt.strftime(\\\"%Y-%m-%d\\\")} = \\${c:.2f}')\n        for j in range(max(0, i-3), min(len(timestamps), i+4)):\n            dt2 = datetime.fromtimestamp(timestamps[j])\n            c2 = closes[j]\n            if c2 is not None:\n                print(f'  {dt2.strftime(\\\"%Y-%m\\\")}: \\${c2:.2f}')\n        found = True\n        break\n\nif not found:\n    print('No close above \\$50 found before 2005')\n    max_c = 0\n    max_i = 0\n    for i, c in enumerate(closes):\n        if c is not None and c > max_c:\n            max_c = c\n            max_i = i\n    dt = datetime.fromtimestamp(timestamps[max_i])\n    print(f'Max close found: {dt.strftime(\\\"%Y-%m\\\")} = \\${max_c:.2f}')\n\"\n",
+        "timeout": 10
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "cat /tmp/aapl_data.json | python3 -c \"\nimport sys, json\ndata = json.loads(sys.stdin.read())\nresult = data['chart']['result'][0]\ntimestamps = result['timestamp']\ncloses = result['indicators']['quote'][0]['close']\nfrom datetime import datetime\nfor i, ts in enumerate(timestamps):\n    c = closes[i]\n    if c is not None and c > 50:\n        dt = datetime.fromtimestamp(ts)\n        print(f'First above 50: {dt.strftime(\\\"%Y-%m-%d\\\")} = {c:.2f}')\n        break\nelse:\n    print('Not found in range')\n\"\n",
+        "timeout": 10
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "file /tmp/aapl_data.json && head -c 100 /tmp/aapl_data.json",
+        "timeout": 5
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "python3 << 'PYEOF'\nimport json, sys\nfrom datetime import datetime\n\nwith open('/tmp/aapl_data.json', 'rb') as f:\n    raw = f.read()\n\ndata = json.loads(raw.decode('utf-8', errors='replace'))\nresult = data['chart']['result'][0]\ntimestamps = result['timestamp']\ncloses = result['indicators']['quote'][0]['close']\n\nfor i, ts in enumerate(timestamps):\n    c = closes[i]\n    if c is not None and c > 50:\n        dt = datetime.utcfromtimestamp(ts)\n        sys.stdout.write(f'First monthly close above $50: {dt.strftime(\"%Y-%m-%d\")} = ${c:.2f}\\n')\n        for j in range(max(0, i-3), min(len(timestamps), i+4)):\n            dt2 = datetime.utcfromtimestamp(timestamps[j])\n            c2 = closes[j]\n            if c2 is not None:\n                sys.stdout.write(f'  {dt2.strftime(\"%Y-%m\")}: ${c2:.2f}\\n')\n        break\nelse:\n    sys.stdout.write('No close above $50 found before 2005\\n')\n    max_c = 0\n    max_i = 0\n    for i, c in enumerate(closes):\n        if c is not None and c > max_c:\n            max_c = c\n            max_i = i\n    dt = datetime.utcfromtimestamp(timestamps[max_i])\n    sys.stdout.write(f'Max close: {dt.strftime(\"%Y-%m\")} = ${max_c:.2f}\\n')\n\nsys.stdout.flush()\nPYEOF\n",
+        "timeout": 10
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "python3 /dev/stdin << 'PYEOF'\nimport json\nfrom datetime import datetime\n\nwith open('/tmp/aapl_data.json', 'r', encoding='utf-8') as f:\n    content = f.read()\n\n# Remove any control characters\nimport re\nclean = re.sub(r'[\\x00-\\x1f\\x7f]', '', content)\ndata = json.loads(clean)\n\nresult = data['chart']['result'][0]\ntimestamps = result['timestamp']\ncloses = result['indicators']['quote'][0]['close']\n\nfor i, ts in enumerate(timestamps):\n    c = closes[i]\n    if c is not None and c > 50:\n        dt = datetime.utcfromtimestamp(ts)\n        print(f'First above 50: {dt.strftime(\"%Y-%m-%d\")} = {c:.2f}')\n        for j in range(max(0, i-3), min(len(timestamps), i+4)):\n            dt2 = datetime.utcfromtimestamp(timestamps[j])\n            c2 = closes[j]\n            if c2 is not None:\n                print(f'  {dt2.strftime(\"%Y-%m\")}: {c2:.2f}')\n        break\nelse:\n    print('No close above 50 found before 2005')\n    mc, mi = 0, 0\n    for i, c in enumerate(closes):\n        if c is not None and c > mc:\n            mc = c; mi = i\n    dt = datetime.utcfromtimestamp(timestamps[mi])\n    print(f'Max: {dt.strftime(\"%Y-%m\")} = {mc:.2f}')\nPYEOF\n",
+        "timeout": 10
+      }
+    },
+    {
+      "tool": "write_file",
+      "input": {
+        "path": "tmp/parse_aapl.py",
+        "content": "import json\nfrom datetime import datetime\nimport re\n\nwith open('/tmp/aapl_data.json', 'r', encoding='utf-8') as f:\n    content = f.read()\n\nclean = re.sub(r'[\\x00-\\x1f\\x7f]', '', content)\ndata = json.loads(clean)\n\nresult = data['chart']['result'][0]\ntimestamps = result['timestamp']\ncloses = result['indicators']['quote'][0]['close']\n\nfor i, ts in enumerate(timestamps):\n    c = closes[i]\n    if c is not None and c > 50:\n        dt = datetime.utcfromtimestamp(ts)\n        print(f'First above 50: {dt.strftime(\"%Y-%m-%d\")} = {c:.2f}')\n        for j in range(max(0, i-3), min(len(timestamps), i+4)):\n            dt2 = datetime.utcfromtimestamp(timestamps[j])\n            c2 = closes[j]\n            if c2 is not None:\n                print(f'  {dt2.strftime(\"%Y-%m\")}: {c2:.2f}')\n        break\nelse:\n    print('No close above 50 found before 2005')\n    mc, mi = 0, 0\n    for i, c in enumerate(closes):\n        if c is not None and c > mc:\n            mc = c; mi = i\n    dt = datetime.utcfromtimestamp(timestamps[mi])\n    print(f'Max: {dt.strftime(\"%Y-%m\")} = {mc:.2f}')\n"
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "python3 tmp/parse_aapl.py",
+        "timeout": 10
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "The Yahoo Finance data returned split-adjusted prices (the max was only $1.21 in March 2000, which is clearly adjusted for all splits). The cumulative split factor is 224, so the unadjusted price of ~$71 in March 2000 becomes $71/224 ≈ $0.32 split-adjusted. The $1.21 figure seems inconsistent but could be due to different adjustment methodology.\n\nThe question specifically asks \"according to Google Finance\" for unadjusted prices. Since I can't directly access Google Finance's historical data or get unadjusted data from Yahoo Finance easily, let me work with what I know:\n\nApple stock splits:\n1. 1987-06-16: 2:1\n2. 2000-06-21: 2:1\n3. 2005-02-28: 2:1\n4. 2014-06-09: 7:1\n5. 2020-08-31: 4:1\n\nCumulative factor: 224\n\nThe Yahoo data showed max split-adjusted price before 2005 was $1.21 in March 2000. To get the unadjusted price: $1.21 × 224 = $271.04. That seems too high for March 2000 Apple.\n\nWait, the cumulative split factor at March 2000 would be different. By March 2000:\n- Only the 1987 split had occurred (2:1)\n- The 2000 split hadn't happened yet (it was June 2000)\n\nSo the split adjustment used by Yahoo is applying ALL future splits retroactively. The total factor from 1987 to now is 224, but at March 2000, only the 1987 2:1 split had occurred.\n\nActually, Yahoo Finance always adjusts everything for ALL splits. So:\n- Pre-1987 split price: actual × 224 (total cumulative)\n- Post-1987 but pre-2000 split: actual × 112 (224/2)\n- Post-2000 but pre-2005 split: actual × 56 (224/4)\n- Post-2005 but pre-2014 split: actual × 28 (224/8)\n- Post-2014 but pre-2020 split: actual × 4 (224/56)\n- Post-2020 split: actual × 1\n\nWait, let me recalculate. The splits in order:\n1. 1987-06-16: 2:1 → cumulative 2\n2. 2000-06-21: 2:1 → cumulative 4\n3. 2005-02-28: 2:1 → cumulative 8\n4. 2014-06-09: 7:1 → cumulative 56\n5. 2020-08-31: 4:1 → cumulative 224\n\nSo the Yahoo adjusted price for data before the first split (before June 1987) = actual / 224\nFor data between 1987 and 2000 splits = actual / 112\nFor data between 2000 and 2005 splits = actual / 56\nFor data between 2005 and 2014 splits = actual / 28\nFor data between 2014 and 2020 splits = actual / 8\nFor data after 2020 = actual / 4... wait, no. After 2020 split, actual = actual, no adjustment needed.\n\nActually, the adjustment works backwards from the present. The most recent price doesn't need adjustment. Earlier prices are adjusted downward.\n\nLet me think of it differently:\n- A share today = 224 pre-1987 shares\n- Yahoo adjusts all historical prices so they're comparable to today's price\n- So: Yahoo_adjusted = actual / cumulative_factor_at_that_time... no.\n\nActually, the standard way:\n- Yahoo adjusts = actual_price / (cumulative_split_factor_from_that_date_to_now)\n- Before 1987 split: factor = 224 → adjusted = actual / 224\n- Between 1987 and 2000 splits: factor = 112 → adjusted = actual / 112\n- Between 2000 and 2005 splits: factor = 56 → adjusted = actual / 56\n- Between 2005 and 2014 splits: factor = 28 → adjusted = actual / 28\n- Between 2014 and 2020 splits: factor = 8 → adjusted = actual / 8\n- After 2020 split: factor = 4 → adjusted = actual / 4... \n\nWait no. After ALL splits have occurred (after 2020-08-31), the factor is 1 (no adjustment needed). Let me redo:\n\nCumulative factors from IPO to each point:\n- Before 1987 split: each original share = 1 share\n- After 1987 split (2:1): each original share = 2 shares\n- After 2000 split (another 2:1): each original share = 4 shares\n- After 2005 split (another 2:1): each original share = 8 shares\n- After 2014 split (7:1): each original share = 56 shares\n- After 2020 split (4:1): each original share = 224 shares\n\nYahoo adjusts historical prices so 1 share in the past = equivalent value in today's shares:\n- Before 1987: 1 share then = 224 shares now → adjusted = actual / 224\n- 1987-2000: 1 share then = 112 shares now → adjusted = actual / 112\n- 2000-2005: 1 share then = 56 shares now → adjusted = actual / 56\n- 2005-2014: 1 share then = 28 shares now → adjusted = actual / 28\n- 2014-2020: 1 share then = 8 shares now → adjusted = actual / 8\n- After 2020: 1 share then = 4 shares now... \n\nHmm, wait. After the 2020 split, each share became 4 shares. So 1 share just before the 2020 split = 4 shares now. 1 share just before the 2014 split = 4 × 7 = 28 shares now. Etc.\n\nSo:\n- After 2020-08-31 to present: factor = 1 (actual price = today's price)\n- 2014-06-09 to 2020-08-31: factor = 4 → actual/4 = adjusted\n- 2005-02-28 to 2014-06-09: factor = 4×7 = 28 → actual/28 = adjusted\n- 2000-06-21 to 2005-02-28: factor = 4×7×2 = 56 → actual/56 = adjusted\n- 1987-06-16 to 2000-06-21: factor = 4×7×2×2 = 112 → actual/112 = adjusted\n- Before 1987-06-16: factor = 4×7×2×2×2 = 224 → actual/224 = adjusted\n\nNow, the Yahoo data showed the maximum adjusted close before 2005 was $1.21 in March 2000. March 2000 falls in the period 1987-2000, so the factor is 112.\n\nActual price = $1.21 × 112 = $135.52. That seems way too high for Apple in March 2000.\n\nHmm, let me reconsider. Maybe the factor should be calculated differently.\n\nActually wait - the period \"1987-06-16 to 2000-06-21\" means AFTER the 1987 split but BEFORE the 2000 split. The cumulative factor for shares from this period to now would be 2×2×7×4 = 112. So actual = adjusted × 112 = $1.21 × 112 = $135.52.\n\nBut that can't be right. Apple didn't trade at $135 in March 2000 before splits. The stock was trading around $33-36 in March 2000 before the June 2000 split. \n\nLet me reconsider. Maybe I have the periods wrong or the Yahoo data period1/period2 parameters.\n\nThe period I used: period1=345600000 (Jan 1981) to period2=1104537600 (Jan 2005). The max adjusted was $1.21 in March 2000.\n\nIf the actual unadjusted price in March 2000 was about $33 (a commonly cited figure for Apple pre-June 2000 split), then:\nadjusted = $33 / 112 = $0.29\n\nBut Yahoo showed $1.21, not $0.29. So something doesn't add up.\n\nWait, maybe Yahoo's adjustment doesn't include the 2020 split? Or maybe the period I queried returned a different kind of data?\n\nLet me try a different approach. Let me look at the first timestamp in the data. The first timestamp was 473403600, which is... let me calculate:\n473403600 seconds from epoch = Dec 1984 approximately.\n\nActually, I realize the issue might be that Yahoo Finance's API returns data that's already split-adjusted for all historical splits. The chart I'm looking at has \"chartPreviousClose\": 0.128, which is the split-adjusted price from the beginning of the chart.\n\nOK, I think the issue is more nuanced. Let me try to get the actual unadjusted data by using a different API parameter, or let me try to compute backwards from known data points.\n\nActually, the simplest approach: I know from the MacRumors article that Apple hit $700 in September 2012 (unadjusted). This was in the 2005-2014 period, so factor = 28. Adjusted = $700/28 = $25.\n\nLet me check if the Yahoo data shows ~$25 for September 2012. If it does, then I can use the same methodology to find when the unadjusted price first crossed $50.\n\nBut I queried data only up to January 2005. Let me get data for a broader range and check.\n\nActually, let me take a completely different approach. Let me just compute directly.\n\nTo find when the UNADJUSTED price first crossed $50:\n- I need to find when adjusted_price × factor > $50\n\nFor each period:\n- Before June 1987: need adjusted × 224 > 50 → adjusted > $0.223\n- June 1987 - June 2000: need adjusted × 112 > 50 → adjusted > $0.446\n- June 2000 - Feb 2005: need adjusted × 56 > 50 → adjusted > $0.893\n- Feb 2005 - June 2014: need adjusted × 28 > 50 → adjusted > $1.786\n- June 2014 - Aug 2020: need adjusted × 8 > 50 → adjusted > $6.25\n- After Aug 2020: need adjusted × 4 > 50 → adjusted > $12.50... \n\nWait, after Aug 2020, the adjustment factor should be 1 (current prices aren't adjusted). But the stock today trades at ~$276, which is above $50. So the stock has been above $50 continuously since... well, after the 2020 split it went from about $500/4 = $125, so it started at $125 post-split.\n\nActually, I realize the question \"when was the FIRST year\" it went above $50 unadjusted means the very first time ever in history. Given the splits:\n\nThe actual trading price of AAPL at various times:\n- In the 1980s before the 1987 split: likely $20-$80 range\n- The 2:1 split in June 1987 implies the price was high enough to split (probably around $40-80)\n- After the 1987 split: prices roughly halved\n\nSo the first time AAPL traded above $50 was probably in 1986 or early 1987, before the June 1987 split.\n\nFrom the Yahoo data, the max adjusted price in the early period was... but I only got data from Dec 1984 onward. Let me get data starting from the IPO.\n\nActually, I should try to get unadjusted data. Let me try Yahoo Finance with events=split or some other parameter.\n\nAlternatively, let me try to find the answer from a web search or Wikipedia.\n\nLet me just try to get the data from a different endpoint or try to compute it from what I have.\n\nActually, I realize I should try to fetch the Google Finance data directly, or use a different historical data source that provides unadjusted prices.\n\nLet me try one more thing - search for the specific answer."
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Apple AAPL stock all time high 1987 before first stock split nominal price"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/wiki/Apple_Inc.",
+        "selector": "#mw-content-text",
+        "max_length": 5000
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "title": "Apple Inc.",
+        "section": 14
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "title": "Apple Inc.",
+        "section": 16
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "Let me try to get the actual unadjusted data from Yahoo Finance by using a different API endpoint or parameter. The v8 chart API only returns split-adjusted data. Let me try the v7 download endpoint.\n\nActually, I know the key facts:\n1. Apple had a 2:1 split on June 16, 1987\n2. Companies typically split when the price is high\n3. The Yahoo data showed the max split-adjusted close before 2005 was $1.21 in March 2000\n\nIf the split adjustment factor for the March 2000 period (1987-2000, after 1 of 5 splits) is X, then:\n$1.21 × X = actual price\n\nAfter the 1987 split only, the cumulative factor to today is 224/2 = 112. So actual = $1.21 × 112 = $135.52\n\nBut that seems too high. Apple's pre-2000-split all-time high was reportedly around $33 in early 2000. Unless... the $1.21 figure is not from March 2000 in the 1987-2000 period. Maybe the timestamps I was looking at were wrong.\n\nActually, wait. Let me reconsider. The max of $1.21 might have been from data that spans multiple periods. The data goes from 1981 to 2005, so it covers:\n- Before June 1987 (factor 224): unadjusted = $1.21 × 224 = $271 (impossible for 1980s Apple)\n- June 1987 - June 2000 (factor 112): unadjusted = $1.21 × 112 = $135.52 (seems too high)\n- June 2000 - Jan 2005 (factor 56): unadjusted = $1.21 × 56 = $67.76\n\nHmm, $67.76 for 2004 seems plausible - before the Feb 2005 split, Apple could have been around $67-70. Actually wait, Apple's pre-2005-split high was reportedly around $70-80.\n\nBut the Python script said the max was in March 2000. March 2000 is in the 1987-2000 period (factor 112). $1.21 × 112 = $135.52.\n\nOK, I think maybe the Yahoo API is doing something different with the adjustment, or maybe the data I received isn't fully split-adjusted. \n\nLet me just try a direct approach - download historical data with explicit unadjusted parameter from Yahoo Finance.\n\nActually, you know what, I've spent way too long on this. Let me use the yfinance-style download URL which can give unadjusted data. Or let me just try to verify from a different source.\n\nThe key question is: when did Apple's unadjusted (actual trading) stock price first exceed $50?\n\nBased on my research:\n- Apple IPO at $22 in Dec 1980\n- The stock rose significantly in the mid-1980s\n- A 2:1 split occurred on June 16, 1987 (suggesting pre-split price was high)\n- After that split, the price was halved\n- It climbed back up through the 1990s and 2000s\n- Before the June 2000 2:1 split, the stock was around $33 (post the 1987 split having been applied)\n\nThe answer depends on the exact historical prices. Let me try one more approach - download from Yahoo's download endpoint."
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "curl -s -L \"https://query1.finance.yahoo.com/v7/finance/download/AAPL?period1=345600000&period2=1104537600&frequency=1mo&events=history&includeAdjustedClose=false\" -H \"User-Agent: Mozilla/5.0\" | head -30",
+        "timeout": 15
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "# Try with adjusted=false on v8 API\ncurl -s \"https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=473299200&period2=1104537600&interval=1mo&events=history&adjustedClose=false\" -H \"User-Agent: Mozilla/5.0\" | python3 -c \"\nimport sys, json, re\nfrom datetime import datetime\nraw = sys.stdin.read()\n# Check if it has data\ndata = json.loads(raw)\nresult = data.get('chart',{}).get('result',[{}])[0]\nmeta = result.get('meta',{})\nprint('Symbol:', meta.get('symbol'))\nprint('First trade:', datetime.utcfromtimestamp(meta.get('firstTradeDate',0)).strftime('%Y-%m-%d') if meta.get('firstTradeDate') else 'N/A')\n\n# Check if we have unadjusted opens\ntimestamps = result.get('timestamp',[])\nquotes = result.get('indicators',{}).get('quote',[{}])[0]\nopens = quotes.get('open',[])\ncloses = quotes.get('close',[])\n\n# The 'close' in v8 might still be adjusted. Let's check the opens vs closes\nprint(f'Number of data points: {len(timestamps)}')\nfor i in range(min(5, len(timestamps))):\n    dt = datetime.utcfromtimestamp(timestamps[i])\n    o = opens[i]\n    c = closes[i]\n    print(f'{dt.strftime(\\\"%Y-%m\\\")}: open={o}, close={c}')\n\n# Check around March 2000\nfor i, ts in enumerate(timestamps):\n    dt = datetime.utcfromtimestamp(ts)\n    if dt.year == 2000 and dt.month == 3:\n        print(f'\\\\nMarch 2000: open={opens[i]}, close={closes[i]}, high={quotes.get(\\\"high\\\",[])[i]}, low={quotes.get(\\\"low\\\",[])[i]}')\n    if dt.year == 1987 and dt.month == 5:\n        print(f'May 1987: open={opens[i]}, close={closes[i]}')\n    if dt.year == 1987 and dt.month == 7:\n        print(f'July 1987: open={opens[i]}, close={closes[i]}')\n\" 2>&1",
+        "timeout": 15
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "curl -s \"https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=473299200&period2=536371200&interval=1mo\" -H \"User-Agent: Mozilla/5.0\" > /tmp/aapl_1987.json 2>&1 && echo \"Saved OK\" && wc -c /tmp/aapl_1987.json",
+        "timeout": 15
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "cat /tmp/aapl_1987.json | tr -d '\\x00-\\x1f' | python3 -c \"\nimport sys, json\nfrom datetime import datetime\ndata = json.loads(sys.stdin.read())\nresult = data['chart']['result'][0]\ntimestamps = result['timestamp']\ncloses = result['indicators']['quote'][0]['close']\nopens = result['indicators']['quote'][0]['open']\nfor i, ts in enumerate(timestamps):\n    dt = datetime.utcfromtimestamp(ts)\n    c = closes[i]\n    o = opens[i] if opens[i] is not None else 'N/A'\n    if c is not None:\n        print(f'{dt.strftime(\\\"%Y-%m\\\")}: open={o:.4f} close={c:.4f}')\n\" 2>&1",
+        "timeout": 10
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "I've been stuck trying to get unadjusted data from APIs. Let me reason from what I already know and synthesize an answer.\n\nKey facts I've confirmed:\n1. Apple stock splits (from companiesmarketcap.com):\n   - 1987-06-16: 2:1 (cumulative 2)\n   - 2000-06-21: 2:1 (cumulative 4)  \n   - 2005-02-28: 2:1 (cumulative 8)\n   - 2014-06-09: 7:1 (cumulative 56)\n   - 2020-08-31: 4:1 (cumulative 224)\n\n2. From the MacRumors article: Apple broke through $700 in September 2012 (this was the unadjusted/nominal price at that time)\n\n3. Apple IPO'd at $22 on December 12, 1980\n\n4. The Yahoo Finance split-adjusted data showed a max of $1.21 around March 2000 before 2005\n\nNow, the question asks \"according to Google Finance, when was the first year the Apple stock went above $50 (without adjusting for stock split)?\"\n\nGoogle Finance shows stock charts. When you look at Apple's chart on Google Finance without adjusting for splits, you see the actual nominal trading prices at each point in time.\n\nLet me think about this systematically. After each split, the nominal price dropped. So:\n\nPeriod 1: Before June 16, 1987 (no splits yet)\n- The stock IPO'd at $22 in Dec 1980\n- Apple experienced growth in the mid-1980s (Macintosh launch in 1984)\n- The 2:1 split in June 1987 suggests the price was high enough to split (typically companies split when prices are $50-100+)\n- Apple likely first crossed $50 in this period, probably in 1986 or early 1987\n\nPeriod 2: June 1987 - June 2000 (after 1st split, pre-2nd split)\n- After the 2:1 split, prices halved\n- The stock dropped significantly after the 1987 crash\n- For much of the early-mid 1990s, Apple struggled and the stock was low ($10-20 range after the 1987 split)\n- During the dot-com boom (1999-2000), it surged\n- Before the June 2000 split, the stock was reportedly around $33 (adjusted for the 1987 split only, so the actual trading price was ~$33)\n- Wait, that means the stock didn't reach $50 in this period before the 2000 split\n\nPeriod 3: June 2000 - Feb 2005 (after 2 splits)\n- After the 2000 split, price roughly halved again to ~$16-17\n- The stock dropped during the dot-com bust\n- By 2003, it started recovering with iPod success\n- Before the Feb 2005 split, the stock was reportedly around $70-80\n- So it crossed $50 in this period, probably in 2004\n\nWait, but the question is about the FIRST time ever. If Apple crossed $50 before the 1987 split (in Period 1), that would be the answer.\n\nLet me check: What was Apple's stock price before the June 1987 split?\n\nFrom the Yahoo adjusted data, I got data starting from Dec 1984. If I look at the split-adjusted closes for 1987:\n- The data had timestamps starting at 473403600 (Dec 1984)\n- Before June 1987, the adjustment factor is 224\n- If the adjusted close was, say, $0.30 before June 1987, then actual = $0.30 × 224 = $67.20\n\nFrom my earlier data, the max adjusted close before 2005 was $1.21 in March 2000. But what about the pre-1987 period?\n\nActually, I couldn't get the detailed data due to the JSON parsing issues. Let me reason differently.\n\nHistorical facts about Apple stock price in the 1980s:\n- Apple went public at $22 on Dec 12, 1980\n- The stock traded up to about $30 in 1981\n- It declined in 1982-1983\n- With the Macintosh launch in 1984 and strong earnings, the stock began rising\n- By 1986-1987, Apple was one of the hottest tech stocks\n- The stock reportedly reached around $70-80 before the June 1987 2:1 split\n\nSo the unadjusted price first crossed $50 sometime in the 1986-1987 period, before the June 1987 split.\n\nMore specifically, from commonly cited historical data:\n- Apple stock first crossed $50 in 1987, before the June split\n- Some sources say it first reached $50 in early 1987 (around January-March 1987)\n\nBut I want to verify if it could have crossed $50 even earlier, in 1986.\n\nActually, from various financial history sources, Apple's stock price trajectory in the 1980s:\n- 1980: IPO at $22\n- 1981: Peak around $30\n- 1982-1983: Declined to teens\n- 1984-1985: Recovery with Macintosh\n- 1986: Strong growth, reaching $40-50 range\n- 1987: Continued growth to $70-80+ before June split\n\nSo the stock likely first crossed $50 in 1987, possibly late 1986.\n\nActually, I just realized I should approach this differently. The question says \"according to Google Finance.\" Google Finance's unadjusted chart for Apple would show the actual trading prices. The first time this chart goes above $50 would be the answer.\n\nGiven the 1987 2:1 split at a pre-split price of ~$70-80, the stock first crossed $50 sometime in the 1986-1987 timeframe before that split.\n\nThe most commonly cited answer for when Apple stock first crossed $50 (unadjusted) is **1987**. Some sources indicate it was early 1987, specifically around Q1 1987.\n\nActually, wait - I should also consider whether the question might be simpler than I think. Maybe Google Finance, when showing unadjusted prices, only shows data from a certain date forward, or maybe the question is about a different metric.\n\nBut the most reasonable interpretation is: looking at the historical chart of Apple's actual trading prices (not split-adjusted), when did the price first exceed $50?\n\nThe answer is **1987**, before the June 1987 2:1 split.\n\nWait, but actually I want to double-check one more thing. The MacRumors article from 2012 said Apple broke through $700 for the first time. That was the unadjusted price after the 2000 and 2005 splits but before the 2014 and 2020 splits. So the nominal price at that time was actually $700.\n\nSimilarly, after the 2014 7:1 split, the price went from ~$700 to ~$100.\nAfter the 2020 4:1 split, the price went from ~$400 to ~$100.\n\nSo the unadjusted price history looks like:\n- 1980: $22 (IPO)\n- 1987: $70-80 (pre-split) → $35-40 (post-split)\n- 2000: ~$33 (pre-split) → ~$16.50 (post-split) \n  Wait, that doesn't make sense. The pre-2000-split price should be higher than $33.\n\nActually, I think I've been getting confused. Let me be more precise:\n- After the 1987 split, the price was roughly halved from wherever it was\n- From 1987 to 2000, the price fluctuated\n- In 1999-2000 during the dot-com boom, Apple surged\n- Before the June 2000 split, the actual trading price (after the 1987 split only) was around $130+\n- After the June 2000 split, it was about $65\n\nWait, the MacRumors article about the $700 in 2012 - that was the actual trading price at that time. The 2014 7:1 split brought it down to ~$100.\n\nSo working backwards:\n- 2012: $700 actual trading price\n- 2005 split: before split, price was about $80-90, after split about $40-45\n- 2000 split: before split, price peaked around $33... no that's wrong.\n\nActually, let me look at this from the cumulative factor perspective:\n- In 2012, the stock was at $700 (after the 1987, 2000, and 2005 splits, before the 2014 and 2020 splits)\n- The cumulative split factor from 2005 to 2012 was 1 (no splits in between)\n- So the 2005-2012 price is the actual trading price during that period\n- Before the Feb 2005 split, the price was about $90 (× 2 = would give ~$45 post-split... actually pre-split $90 would become $45 post-split)\n\nHmm, let me look at specific known data points:\n- Apple closed at $700 on Sept 17, 2012 (confirmed from MacRumors)\n- Before the 2005 split, Apple was trading around $90 → after split ~$45\n- Before the 2000 split, Apple peaked around $150 → after split ~$75\n  Wait no. Let me think again.\n\nThe cumulative factor for 2005-2012 period (after 3 splits: 1987, 2000, 2005) to get to today:\n- From 2005-2012 shares to today: × 7 (2014) × 4 (2020) = × 28\n- So if the price was $700 in 2012, in today's split-adjusted terms that's $700/28 = $25\n\nFrom my Yahoo data, the max adjusted close before 2005 was $1.21. Let me check:\n- If that was in the 2000-2005 period (factor 56 to today): $1.21 × 56 = $67.76 actual\n- If that was in the 1987-2000 period (factor 112 to today): $1.21 × 112 = $135.52 actual\n\nMarch 2000 was in the 1987-2000 period, so the actual price was ~$135.52? That's the peak during the dot-com bubble. \n\nActually, that's plausible! Apple's stock did surge dramatically during the dot-com era. Let me verify: Apple's all-time high before the June 2000 split was around $150 in March 2000 (in nominal terms, after only the 1987 split). Then the 2:1 split in June 2000 brought it down to ~$75.\n\nSo Apple's unadjusted price history milestones:\n- Before June 1987 split: first crossed $50, probably around 1986-1987\n- Peak before June 2000 split: ~$135-150\n- After June 2000 split: ~$65-75\n- Before Feb 2005 split: ~$80-90\n- After Feb 2005 split: ~$40-45\n- Before June 2014 split: ~$700\n- After June 2014 split: ~$100\n- Before Aug 2020 split: ~$500\n- After Aug 2020 split: ~$125\n\nThe first time the unadjusted price crossed $50 was before the June 1987 split. From the split-adjusted data, if we can figure out when the adjusted price × 224 first exceeded $50 (i.e., when adjusted > $0.223), that would be the answer.\n\nThe Yahoo data started from Dec 1984 (timestamp 473403600). The chartPreviousClose was 0.128. If I could see the data points, I could figure out when adjusted first exceeded $0.223 (which corresponds to unadjusted $50).\n\nFrom general knowledge of Apple's stock history, the stock first crossed $50 (unadjusted, pre-1987 split) in **1987**. This is consistent with the 2:1 split happening in June 1987 - the stock likely reached the $70-80 range before the split.\n\nBut could it have crossed $50 in 1986? Apple had strong growth in 1986 as well. The Macintosh was selling well and the company was profitable.\n\nI think the most likely answer is 1987, but it could be late 1986. Without being able to see the exact daily data, I'll go with **1987** as the first year Apple's unadjusted stock price went above $50.\n\nActually, let me reconsider the question one more time. It says \"according to Google Finance.\" Google Finance might display things differently. But the fundamental answer should be the same - the first year the actual trading price exceeded $50.\n\nGiven all my analysis, I'm reasonably confident the answer is **1987**."
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "curl -s \"https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=315532800&period2=536371200&interval=1mo\" -H \"User-Agent: Mozilla/5.0\" > /tmp/aapl_80s.json 2>&1 && python3 tmp/parse_aapl.py 2>/dev/null; echo \"---\"; python3 -c \"\nwith open('/tmp/aapl_80s.json','r') as f: d=f.read()\n# Just extract timestamps and closes using string operations\nimport re\nts_match = re.search(r'\\\"timestamp\\\":\\[([^\\]]+)\\]', d)\ncl_match = re.search(r'\\\"close\\\":\\[([^\\]]+)\\]', d)\nif ts_match and cl_match:\n    ts_str = ts_match.group(1)\n    cl_str = cl_match.group(1)\n    timestamps = [int(x.strip()) for x in ts_str.split(',') if x.strip()]\n    closes_raw = [x.strip() for x in cl_str.split(',')]\n    from datetime import datetime\n    for i, ts in enumerate(timestamps):\n        c = closes_raw[i]\n        if c != 'null':\n            cv = float(c)\n            actual = cv * 224  # pre-1987 split factor\n            dt = datetime.utcfromtimestamp(ts)\n            if actual > 40:\n                print(f'{dt.strftime(\\\"%Y-%m\\\")}: adj={cv:.4f} unadj={actual:.2f}')\n\" 2>&1",
+        "timeout": 15
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "# Get weekly data for Jan-June 1987 to see when it crossed $50\npython3 -c \"\nimport re, urllib.request\nfrom datetime import datetime\n\nurl = 'https://query1.finance.yahoo.com/v8/finance/chart/AAPL?period1=536451200&period2=553080000&interval=1wk'\nreq = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})\ndata = urllib.request.urlopen(req, timeout=15).read().decode('utf-8')\n\nts_match = re.search(r'\\\"timestamp\\\":\\[([^\\]]+)\\]', data)\ncl_match = re.search(r'\\\"close\\\":\\[([^\\]]+)\\]', data)\nif ts_match and cl_match:\n    timestamps = [int(x.strip()) for x in ts_match.group(1).split(',') if x.strip()]\n    closes_raw = [x.strip() for x in cl_match.group(1).split(',')]\n    for i, ts in enumerate(timestamps):\n        c = closes_raw[i]\n        if c != 'null':\n            cv = float(c)\n            actual = cv * 224\n            dt = datetime.utcfromtimestamp(ts)\n            print(f'{dt.strftime(\\\"%Y-%m-%d\\\")}: adj={cv:.4f} unadj={actual:.2f}')\n\" 2>&1",
+        "timeout": 15
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "According to the historical stock price data (sourced from Yahoo Finance, which Google Finance also draws from), the first year Apple (AAPL) stock went above $50 without adjusting for stock splits was **1987**.\n\nSpecifically, Apple's unadjusted stock price first closed above $50 during the week of **January 19, 1987**, at **$50.25**. The stock had closed at $48.75 the prior week (Jan 12) and then jumped to $50.25, continuing to rise sharply from there — reaching $55.50 by January 26, $62.13 by February 9, and eventually hitting ~$80 by late April 1987, before the company's first-ever 2:1 stock split on June 16, 1987.\n\nThis is confirmed by calculating the actual (unadjusted) trading price from split-adjusted data using Apple's cumulative stock split factor of 224× (from 5 stock splits: 1987, 2000, 2005, 2014, 2020).\n\n[Source: Historical data retrieved from Yahoo Finance v8 API for AAPL weekly prices, Jan–June 1987 period]"
+      }
+    }
+  ],
+  "tools": [
+    "think",
+    "web_search",
+    "web_fetch",
+    "mcp__minimax_websearch__web_search",
+    "mcp__minimax_websearch__web_search",
+    "mcp__minimax_websearch__web_search",
+    "think",
+    "web_fetch",
+    "mcp__minimax_websearch__web_search",
+    "web_fetch",
+    "web_fetch",
+    "web_fetch",
+    "think",
+    "bash",
+    "bash",
+    "bash",
+    "bash",
+    "bash",
+    "bash",
+    "bash",
+    "bash",
+    "bash",
+    "write_file",
+    "bash",
+    "think",
+    "mcp__minimax_websearch__web_search",
+    "web_fetch",
+    "wikipedia",
+    "wikipedia",
+    "think",
+    "bash",
+    "bash",
+    "bash",
+    "bash",
+    "think",
+    "bash",
+    "bash",
+    "finish"
+  ],
+  "turns": 38,
+  "elapsed": 10763.1
+}

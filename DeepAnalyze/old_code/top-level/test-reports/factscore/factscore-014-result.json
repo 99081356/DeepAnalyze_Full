@@ -1,0 +1,39 @@
+{
+  "test_id": "factscore-014",
+  "entity": "Julia Faye",
+  "prompt": "Tell me a bio of Julia Faye",
+  "evaluation_criteria": "Factual accuracy of profession (American actress), film appearances, career period (silent film era), and specific films credited. Page-level verification is needed for filmography claims -- verify each film appearance by checking both the subject's page and the film's page for cross-reference.",
+  "output": "Julia Faye (born Julia Faye Maloney, September 24, 1892 – April 6, 1966) was an American actress of silent and sound films whose career spanned from 1915 to 1957. She appeared in over 30 Cecil B. DeMille productions across four decades, with roles ranging from maids and ingénues to vamps and queens. Born in Richmond, Virginia, and raised in St. Louis, Missouri, she was discovered by director Christy Cabanne in 1915. Her most notable roles include the Wife of Pharaoh in The Ten Commandments (1923), her breakthrough in The Volga Boatman (1926), Hisham in Samson and Delilah (1949), and Elisheba in The Ten Commandments (1956). She was DeMille's long-time companion and appeared in every one of his films from Union Pacific (1939) onward. She died of cancer in 1966 and has a star on the Hollywood Walk of Fame.",
+  "finish_summary": "Julia Faye (born Julia Faye Maloney, September 24, 1892 – April 6, 1966) was an American actress of silent and sound films whose career spanned from 1915 to 1957. She appeared in over 30 Cecil B. DeMille productions across four decades, with roles ranging from maids and ingénues to vamps and queens. Born in Richmond, Virginia, and raised in St. Louis, Missouri, she was discovered by director Christy Cabanne in 1915. Her most notable roles include the Wife of Pharaoh in The Ten Commandments (1923), her breakthrough in The Volga Boatman (1926), Hisham in Samson and Delilah (1949), and Elisheba in The Ten Commandments (1956). She was DeMille's long-time companion and appeared in every one of his films from Union Pacific (1939) onward. She died of cancer in 1966 and has a star on the Hollywood Walk of Fame.",
+  "tool_calls": [
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "search",
+        "query": "Julia Faye actress"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "title": "Julia Faye"
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "Julia Faye (born Julia Faye Maloney, September 24, 1892 – April 6, 1966) was an American actress of silent and sound films whose career spanned from 1915 to 1957. She appeared in over 30 Cecil B. DeMille productions across four decades, with roles ranging from maids and ingénues to vamps and queens. Born in Richmond, Virginia, and raised in St. Louis, Missouri, she was discovered by director Christy Cabanne in 1915. Her most notable roles include the Wife of Pharaoh in The Ten Commandments (1923), her breakthrough in The Volga Boatman (1926), Hisham in Samson and Delilah (1949), and Elisheba in The Ten Commandments (1956). She was DeMille's long-time companion and appeared in every one of his films from Union Pacific (1939) onward. She died of cancer in 1966 and has a star on the Hollywood Walk of Fame."
+      }
+    }
+  ],
+  "tools": [
+    "wikipedia",
+    "wikipedia",
+    "finish"
+  ],
+  "turns": 3,
+  "elapsed": 47.2,
+  "fact_score": 100,
+  "fact_details": "✓ nationality: american\n✓ profession: actor (matched 'actress')"
+}

@@ -1,0 +1,267 @@
+{
+  "id": "KB-TEST-001",
+  "category": "DeepAnalyze-KB",
+  "level": "L1-kb-analysis",
+  "question": "请统计知识库中所有文档的类型分布，按文件类型分类统计数量，输出一个表格。数据必须来自工具查询，不能猜测。",
+  "expectedAnswer": "Any accurate statistics based on actual KB data",
+  "startTime": "2026-05-16T16:40:13.729Z",
+  "events": [
+    {
+      "timestamp": 1778949621429,
+      "data": {
+        "taskId": "ba33da46-096d-4202-8686-4695b02a91d1",
+        "agentType": "general"
+      }
+    },
+    {
+      "timestamp": 1778949623560,
+      "data": {
+        "delta": "\n\n我来查询知识库中文档的类型",
+        "taskId": "ba33da46-096d-4202-8686-4695b02a91d1",
+        "turn": 1
+      }
+    },
+    {
+      "type": "text",
+      "timestamp": 1778949624139,
+      "data": {
+        "turn": 1,
+        "timestamp": "2026-05-16T16:40:24.137Z",
+        "type": "text",
+        "content": "我来查询知识库中文档的类型分布情况。"
+      }
+    },
+    {
+      "timestamp": 1778949624139,
+      "data": {
+        "turn": 1,
+        "taskId": "ba33da46-096d-4202-8686-4695b02a91d1"
+      }
+    },
+    {
+      "timestamp": 1778949624139,
+      "data": {
+        "content": "我来查询知识库中文档的类型分布情况。",
+        "accumulated": "\n\n我来查询知识库中文档的类型"
+      }
+    },
+    {
+      "timestamp": 1778949624139,
+      "data": {
+        "id": "ba33da46-096d-4202-8686-4695b02a91d1-tc-1-0-run_sql",
+        "toolName": "run_sql",
+        "input": {
+          "sql": "SELECT file_type, COUNT(*) as count FROM documents WHERE kb_id IN ('f65cb573-05c7-4098-ba7d-c26c006986ee') GROUP BY file_type ORDER BY count DESC"
+        },
+        "status": "running"
+      }
+    },
+    {
+      "type": "tool_call",
+      "timestamp": 1778949624139,
+      "data": {
+        "turn": 1,
+        "timestamp": "2026-05-16T16:40:24.137Z",
+        "type": "tool_call",
+        "content": "Calling tool: run_sql",
+        "toolName": "run_sql",
+        "toolInput": {
+          "sql": "SELECT file_type, COUNT(*) as count FROM documents WHERE kb_id IN ('f65cb573-05c7-4098-ba7d-c26c006986ee') GROUP BY file_type ORDER BY count DESC"
+        }
+      }
+    },
+    {
+      "timestamp": 1778949624146,
+      "data": {
+        "id": "ba33da46-096d-4202-8686-4695b02a91d1-tc-1-0-run_sql",
+        "toolName": "run_sql",
+        "output": "{\"rowCount\":8,\"showingRows\":8,\"columns\":[\"file_type\",\"count\"],\"rows\":[{\"file_type\":\"jpg\",\"count\":\"36\"},{\"file_type\":\"txt\",\"count\":\"24\"},{\"file_type\":\"pdf\",\"count\":\"19\"},{\"file_type\":\"docx\",\"count\":\"14\"},{\"file_type\":\"xlsx\",\"count\":\"10\"},{\"file_type\":\"png\",\"count\":\"6\"},{\"file_type\":\"markdown\",\"count\":\"2\"},{\"file_type\":\"json\",\"count\":\"1\"}]}"
+      }
+    },
+    {
+      "type": "tool_result",
+      "timestamp": 1778949624146,
+      "data": {
+        "turn": 1,
+        "timestamp": "2026-05-16T16:40:24.143Z",
+        "type": "tool_result",
+        "content": "Tool run_sql completed",
+        "toolName": "run_sql",
+        "toolOutput": {
+          "rowCount": 8,
+          "showingRows": 8,
+          "columns": [
+            "file_type",
+            "count"
+          ],
+          "rows": [
+            {
+              "file_type": "jpg",
+              "count": "36"
+            },
+            {
+              "file_type": "txt",
+              "count": "24"
+            },
+            {
+              "file_type": "pdf",
+              "count": "19"
+            },
+            {
+              "file_type": "docx",
+              "count": "14"
+            },
+            {
+              "file_type": "xlsx",
+              "count": "10"
+            },
+            {
+              "file_type": "png",
+              "count": "6"
+            },
+            {
+              "file_type": "markdown",
+              "count": "2"
+            },
+            {
+              "file_type": "json",
+              "count": "1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "timestamp": 1778949626145,
+      "data": {
+        "delta": "\n\n## 知识库文档类型分布统计\n\n根据数据库查询结果，知识库 **lbctest** 中共有 **112** 个文档，按文件类型分布",
+        "taskId": "ba33da46-096d-4202-8686-4695b02a91d1",
+        "turn": 2
+      }
+    },
+    {
+      "timestamp": 1778949626603,
+      "data": {
+        "delta": "如下：\n\n| 文件类型 | 数量 | 占比 |\n|:--------:|-----:|-----:|\n| jpg      | 36   | 32.1% |\n| txt      | ",
+        "taskId": "ba33da46-096d-4202-8686-4695b02a91d1",
+        "turn": 2
+      }
+    },
+    {
+      "timestamp": 1778949627035,
+      "data": {
+        "delta": "24   | 21.4% |\n| pdf      | 19   | 17.0% |\n| docx     | 14   | 12.5% |\n| xlsx     | 10   |",
+        "taskId": "ba33da46-096d-4202-8686-4695b02a91d1",
+        "turn": 2
+      }
+    },
+    {
+      "timestamp": 1778949627603,
+      "data": {
+        "delta": " 8.9%  |\n| png      | 6    | 5.4%  |\n| markdown | 2    | 1.8%  |\n| json     | 1    | 0.9% ",
+        "taskId": "ba33da46-096d-4202-8686-4695b02a91d1",
+        "turn": 2
+      }
+    },
+    {
+      "timestamp": 1778949628076,
+      "data": {
+        "delta": " |\n\n**数据来源**: 数据库 `documents` 表查询，`kb_id = f65cb573-05c7-4098-ba7d-c26c0069",
+        "taskId": "ba33da46-096d-4202-8686-4695b02a91d1",
+        "turn": 2
+      }
+    },
+    {
+      "timestamp": 1778949628254,
+      "data": {
+        "delta": "86ee`，按 `file_type` 分",
+        "taskId": "ba33da46-096d-4202-8686-4695b02a91d1",
+        "turn": 2
+      }
+    },
+    {
+      "type": "text",
+      "timestamp": 1778949628266,
+      "data": {
+        "turn": 2,
+        "timestamp": "2026-05-16T16:40:28.264Z",
+        "type": "text",
+        "content": "## 知识库文档类型分布统计\n\n根据数据库查询结果，知识库 **lbctest** 中共有 **112** 个文档，按文件类型分布如下：\n\n| 文件类型 | 数量 | 占比 |\n|:--------:|-----:|-----:|\n| jpg      | 36   | 32.1% |\n| txt      | 24   | 21.4% |\n| pdf      | 19   | 17.0% |\n| docx     | 14   | 12.5% |\n| xlsx     | 10   | 8.9%  |\n| png      | 6    | 5.4%  |\n| markdown | 2    | 1.8%  |\n| json     | 1    | 0.9%  |\n\n**数据来源**: 数据库 `documents` 表查询，`kb_id = f65cb573-05c7-4098-ba7d-c26c006986ee`，按 `file_type` 分组聚合统计。"
+      }
+    },
+    {
+      "timestamp": 1778949628266,
+      "data": {
+        "turn": 2,
+        "taskId": "ba33da46-096d-4202-8686-4695b02a91d1"
+      }
+    },
+    {
+      "timestamp": 1778949628266,
+      "data": {
+        "content": "## 知识库文档类型分布统计\n\n根据数据库查询结果，知识库 **lbctest** 中共有 **112** 个文档，按文件类型分布如下：\n\n| 文件类型 | 数量 | 占比 |\n|:--------:|-----:|-----:|\n| jpg      | 36   | 32.1% |\n| txt      | 24   | 21.4% |\n| pdf      | 19   | 17.0% |\n| docx     | 14   | 12.5% |\n| xlsx     | 10   | 8.9%  |\n| png      | 6    | 5.4%  |\n| markdown | 2    | 1.8%  |\n| json     | 1    | 0.9%  |\n\n**数据来源**: 数据库 `documents` 表查询，`kb_id = f65cb573-05c7-4098-ba7d-c26c006986ee`，按 `file_type` 分组聚合统计。",
+        "accumulated": "\n\n我来查询知识库中文档的类型\n\n## 知识库文档类型分布统计\n\n根据数据库查询结果，知识库 **lbctest** 中共有 **112** 个文档，按文件类型分布如下：\n\n| 文件类型 | 数量 | 占比 |\n|:--------:|-----:|-----:|\n| jpg      | 36   | 32.1% |\n| txt      | 24   | 21.4% |\n| pdf      | 19   | 17.0% |\n| docx     | 14   | 12.5% |\n| xlsx     | 10   | 8.9%  |\n| png      | 6    | 5.4%  |\n| markdown | 2    | 1.8%  |\n| json     | 1    | 0.9%  |\n\n**数据来源**: 数据库 `documents` 表查询，`kb_id = f65cb573-05c7-4098-ba7d-c26c006986ee`，按 `file_type` 分"
+      }
+    },
+    {
+      "timestamp": 1778949628266,
+      "data": {
+        "taskId": "ba33da46-096d-4202-8686-4695b02a91d1",
+        "output": "## 知识库文档类型分布统计\n\n根据数据库查询结果，知识库 **lbctest** 中共有 **112** 个文档，按文件类型分布如下：\n\n| 文件类型 | 数量 | 占比 |\n|:--------:|-----:|-----:|\n| jpg      | 36   | 32.1% |\n| txt      | 24   | 21.4% |\n| pdf      | 19   | 17.0% |\n| docx     | 14   | 12.5% |\n| xlsx     | 10   | 8.9%  |\n| png      | 6    | 5.4%  |\n| markdown | 2    | 1.8%  |\n| json     | 1    | 0.9%  |\n\n**数据来源**: 数据库 `documents` 表查询，`kb_id = f65cb573-05c7-4098-ba7d-c26c006986ee`，按 `file_type` 分组聚合统计。",
+        "toolCalls": [
+          {
+            "id": "ba33da46-096d-4202-8686-4695b02a91d1-tc-1-0-run_sql",
+            "toolName": "run_sql",
+            "input": {
+              "sql": "SELECT file_type, COUNT(*) as count FROM documents WHERE kb_id IN ('f65cb573-05c7-4098-ba7d-c26c006986ee') GROUP BY file_type ORDER BY count DESC"
+            },
+            "status": "completed",
+            "output": "{\"rowCount\":8,\"showingRows\":8,\"columns\":[\"file_type\",\"count\"],\"rows\":[{\"file_type\":\"jpg\",\"count\":\"36\"},{\"file_type\":\"txt\",\"count\":\"24\"},{\"file_type\":\"pdf\",\"count\":\"19\"},{\"file_type\":\"docx\",\"count\":\"14\"},{\"file_type\":\"xlsx\",\"count\":\"10\"},{\"file_type\":\"png\",\"count\":\"6\"},{\"file_type\":\"markdown\",\"count\":\"2\"},{\"file_type\":\"json\",\"count\":\"1\"}]}"
+          }
+        ]
+      }
+    },
+    {
+      "timestamp": 1778949628273,
+      "data": {
+        "taskId": "ba33da46-096d-4202-8686-4695b02a91d1",
+        "status": "completed",
+        "turnsUsed": 2,
+        "usage": {
+          "inputTokens": 0,
+          "outputTokens": 0
+        }
+      }
+    }
+  ],
+  "toolCalls": [
+    {
+      "tool": "run_sql",
+      "args": {
+        "sql": "SELECT file_type, COUNT(*) as count FROM documents WHERE kb_id IN ('f65cb573-05c7-4098-ba7d-c26c006986ee') GROUP BY file_type ORDER BY count DESC"
+      },
+      "timestamp": "2026-05-16T16:40:24.139Z"
+    }
+  ],
+  "reasoning": [],
+  "contentOutput": "",
+  "pushContents": [],
+  "endTime": "2026-05-16T16:50:22.378Z",
+  "durationMs": 600965,
+  "status": "timeout",
+  "error": null,
+  "screenshotPaths": [
+    "/mnt/d/code/deepanalyze/deepanalyze/tests/benchmark/iteration-results/KB-TEST-001-pre.png",
+    "/mnt/d/code/deepanalyze/deepanalyze/tests/benchmark/iteration-results/KB-TEST-001-post.png",
+    "/mnt/d/code/deepanalyze/deepanalyze/tests/benchmark/iteration-results/KB-TEST-001-full.png"
+  ],
+  "allOutput": "",
+  "evaluation": {
+    "testCaseId": "KB-TEST-001",
+    "expectedAnswer": "Any accurate statistics based on actual KB data",
+    "criteria": "Must include actual file type counts from KB, format as table, no hallucination",
+    "passed": false,
+    "score": 0,
+    "details": "Test did not complete: timeout"
+  }
+}

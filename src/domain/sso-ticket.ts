@@ -66,8 +66,9 @@ export async function createTicket(
   const { rows: wRows } = await pool().query<{
     host_port: number | null;
     host_id: string | null;
+    da_url: string | null;
   }>(
-    `SELECT host_port, host_id FROM workers
+    `SELECT host_port, host_id, da_url FROM workers
      WHERE id = $1 AND assigned_user_id = $2 AND status IN ('approved', 'online', 'offline')`,
     [input.workerId, input.userId],
   );
@@ -75,21 +76,26 @@ export async function createTicket(
     throw new Error("worker not assigned to user or not in active lifecycle (approved/online/offline)");
   }
   const worker = wRows[0];
-  if (!worker.host_port) {
-    throw new Error("worker has no host_port (deployed before port-allocation rollout?)");
-  }
 
-  // 拿 host_server.ssh_target_host 作为 DA 外部可达地址
-  let daHost: string | null = null;
-  if (worker.host_id) {
-    const { rows: hRows } = await pool().query<{ ssh_target_host: string }>(
-      `SELECT ssh_target_host FROM host_servers WHERE id = $1`,
-      [worker.host_id],
-    );
-    daHost = hRows[0]?.ssh_target_host ?? null;
+  // 构建 DA 外部可达 URL
+  let daUrl: string;
+  if (worker.da_url) {
+    daUrl = worker.da_url;
+  } else if (worker.host_port) {
+    let daHost: string | null = null;
+    if (worker.host_id) {
+      const { rows: hRows } = await pool().query<{ ssh_target_host: string }>(
+        `SELECT ssh_target_host FROM host_servers WHERE id = $1`,
+        [worker.host_id],
+      );
+      daHost = hRows[0]?.ssh_target_host ?? null;
+    }
+    const daHostForUrl = daHost ?? "localhost";
+    daUrl = `http://${daHostForUrl}:${worker.host_port}`;
+  } else {
+    // Fallback: no host_port or da_url — use default port
+    daUrl = "http://localhost:21000";
   }
-  const daHostForUrl = daHost ?? "localhost";
-  const daUrl = `http://${daHostForUrl}:${worker.host_port}`;
 
   await pool().query(
     `INSERT INTO sso_tickets (id, ticket, user_id, da_worker_id, expires_at, client_ip, user_agent)
@@ -159,17 +165,24 @@ export async function exchangeTicket(
       );
     }
 
+    // 防御纵深：校验 ticket 的 user_id 与 worker 的 assigned_user_id 一致
+    if (t.user_id !== worker.assigned_user_id) {
+      throw new Error(
+        `ticket/user mismatch: ticket for user ${t.user_id}, worker assigned to ${worker.assigned_user_id}`,
+      );
+    }
+
     // 3. 标记 consumed
     await client.query(`UPDATE sso_tickets SET consumed_at = now() WHERE id = $1`, [t.id]);
 
-    // 4. 取 user 信息（用真实列名 display_name + organization_id）
+    // 4. 取 user 信息（用 ticket 的 user_id，而非 worker.assigned_user_id，避免 TOCTOU）
     const { rows: uRows } = await client.query<{
       id: string;
       display_name: string | null;
       organization_id: string | null;
     }>(
       `SELECT id, display_name, organization_id FROM users WHERE id = $1`,
-      [worker.assigned_user_id],
+      [t.user_id],
     );
     if (uRows.length === 0) throw new Error("user not found");
     const user = uRows[0];

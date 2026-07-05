@@ -553,7 +553,7 @@ export default function App() {
       <Route path="/login" element={<Login onLogin={setUser} />} />
       <Route path="/" element={<ProtectedRoute user={user} setUser={setUser}><Dashboard /></ProtectedRoute>} />
       <Route path="/orgs" element={<ProtectedRoute user={user} setUser={setUser}><OrgTree /></ProtectedRoute>} />
-      <Route path="/users" element={<ProtectedRoute user={user} setUser={setUser}><UserList /></ProtectedRoute>} />
+      <Route path="/users" element={<ProtectedRoute user={user} setUser={setUser}><UserList user={user!} /></ProtectedRoute>} />
       <Route path="/workers" element={<ProtectedRoute user={user} setUser={setUser}><WorkerApproval /></ProtectedRoute>} />
       <Route path="/workers/:id" element={<ProtectedRoute user={user} setUser={setUser}><WorkerDetailPage /></ProtectedRoute>} />
       <Route path="/host-servers" element={<ProtectedRoute user={user} setUser={setUser}><HostServersPage /></ProtectedRoute>} />

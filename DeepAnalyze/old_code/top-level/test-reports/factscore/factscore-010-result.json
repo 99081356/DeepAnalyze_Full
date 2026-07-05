@@ -1,0 +1,49 @@
+{
+  "test_id": "factscore-010",
+  "entity": "Jack Leach",
+  "prompt": "Tell me a bio of Jack Leach",
+  "evaluation_criteria": "Factual accuracy of nationality (English), profession (cricketer), bowling style (left-arm orthodox), England Test debut details (2018, Christchurch), batting (left-handed), county cricket career. Verify exact debut date, specific squad selection details, and team membership claims.",
+  "output": "Jack Leach (full name: Matthew Jack Leach, born 22 June 1991 in Taunton, Somerset) is an English professional cricketer who plays as a left-arm orthodox spin bowler for England in Test cricket and for Somerset County Cricket Club domestically.\n\nKey highlights of his career:\n- Made his Test debut in March 2018 against New Zealand\n- Became a cult hero during the 2019 Ashes, notably scoring the famous \"1 not out\" in the Headingley miracle alongside Ben Stokes\n- Scored 92 as a nightwatchman against Ireland at Lord's in 2019\n- Became England's first-choice spinner under Ben Stokes's captaincy\n- Ended 2022 as the third-highest wicket-taker in world Test cricket\n- Has 142 Test wickets at an average of 34.07 (as of April 2026)\n- Has 551 first-class wickets for Somerset at an average of 27.76\n- Has managed Crohn's disease since age 14 throughout his career\n- Nicknames: \"Leachy\" and \"The Nut\"",
+  "finish_summary": "Jack Leach (full name: Matthew Jack Leach, born 22 June 1991 in Taunton, Somerset) is an English professional cricketer who plays as a left-arm orthodox spin bowler for England in Test cricket and for Somerset County Cricket Club domestically.\n\nKey highlights of his career:\n- Made his Test debut in March 2018 against New Zealand\n- Became a cult hero during the 2019 Ashes, notably scoring the famous \"1 not out\" in the Headingley miracle alongside Ben Stokes\n- Scored 92 as a nightwatchman against Ireland at Lord's in 2019\n- Became England's first-choice spinner under Ben Stokes's captaincy\n- Ended 2022 as the third-highest wicket-taker in world Test cricket\n- Has 142 Test wickets at an average of 34.07 (as of April 2026)\n- Has 551 first-class wickets for Somerset at an average of 27.76\n- Has managed Crohn's disease since age 14 throughout his career\n- Nicknames: \"Leachy\" and \"The Nut\"",
+  "tool_calls": [
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "search",
+        "query": "Jack Leach cricketer England"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "search",
+        "query": "Jack Leach cricketer",
+        "lang": "en"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "title": "Jack Leach",
+        "lang": "en"
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "Jack Leach (full name: Matthew Jack Leach, born 22 June 1991 in Taunton, Somerset) is an English professional cricketer who plays as a left-arm orthodox spin bowler for England in Test cricket and for Somerset County Cricket Club domestically.\n\nKey highlights of his career:\n- Made his Test debut in March 2018 against New Zealand\n- Became a cult hero during the 2019 Ashes, notably scoring the famous \"1 not out\" in the Headingley miracle alongside Ben Stokes\n- Scored 92 as a nightwatchman against Ireland at Lord's in 2019\n- Became England's first-choice spinner under Ben Stokes's captaincy\n- Ended 2022 as the third-highest wicket-taker in world Test cricket\n- Has 142 Test wickets at an average of 34.07 (as of April 2026)\n- Has 551 first-class wickets for Somerset at an average of 27.76\n- Has managed Crohn's disease since age 14 throughout his career\n- Nicknames: \"Leachy\" and \"The Nut\""
+      }
+    }
+  ],
+  "tools": [
+    "wikipedia",
+    "wikipedia",
+    "wikipedia",
+    "finish"
+  ],
+  "turns": 4,
+  "elapsed": 100.1,
+  "fact_score": 100,
+  "fact_details": "✓ profession: athlete (matched 'cricketer')"
+}

@@ -25,6 +25,17 @@ export interface UserRecord {
   updated_at: Date;
 }
 
+/**
+ * 用户记录 + 关联 Worker 信息（列表查询时 LEFT JOIN workers 得到）。
+ * worker_* / da_url / host_port 在用户没有有效 Worker 时为 null。
+ */
+export interface UserWithWorker extends UserRecord {
+  worker_id: string | null;
+  worker_status: string | null;
+  da_url: string | null;
+  host_port: number | null;
+}
+
 const BCRYPT_ROUNDS = 10;
 
 export async function hashPassword(plain: string): Promise<string> {
@@ -144,24 +155,52 @@ export async function getUserPermissions(
   return rows.rows.map((r) => r.code);
 }
 
-/** 列出组织内用户 */
+/** 列出组织内用户（含关联 Worker 状态） */
 export async function listUsersByOrg(
   orgId: string,
-): Promise<UserRecord[]> {
-  const rows = await query<UserRecord>(
-    `SELECT * FROM users WHERE organization_id = $1 ORDER BY created_at DESC`,
+): Promise<UserWithWorker[]> {
+  const rows = await query<UserWithWorker>(
+    `SELECT * FROM (
+       SELECT DISTINCT ON (u.id)
+              u.*,
+              w.id          AS worker_id,
+              w.status      AS worker_status,
+              w.da_url      AS da_url,
+              w.host_port   AS host_port
+       FROM users u
+       LEFT JOIN workers w
+         ON w.assigned_user_id = u.id
+        AND w.status != 'decommissioned'
+       WHERE u.organization_id = $1
+       ORDER BY u.id, w.registered_at DESC NULLS LAST
+     ) t
+     ORDER BY created_at DESC`,
     [orgId],
   );
   return rows.rows;
 }
 
-/** 列出所有用户 */
+/** 列出所有用户（含关联 Worker 状态） */
 export async function listAllUsers(
   limit = 100,
   offset = 0,
-): Promise<UserRecord[]> {
-  const rows = await query<UserRecord>(
-    `SELECT * FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2`,
+): Promise<UserWithWorker[]> {
+  const rows = await query<UserWithWorker>(
+    `SELECT * FROM (
+       SELECT DISTINCT ON (u.id)
+              u.*,
+              w.id          AS worker_id,
+              w.status      AS worker_status,
+              w.da_url      AS da_url,
+              w.host_port   AS host_port
+       FROM users u
+       LEFT JOIN workers w
+         ON w.assigned_user_id = u.id
+        AND w.status != 'decommissioned'
+       ORDER BY u.id, w.registered_at DESC NULLS LAST
+     ) t
+     ORDER BY created_at DESC
+     LIMIT $1 OFFSET $2`,
     [limit, offset],
   );
   return rows.rows;

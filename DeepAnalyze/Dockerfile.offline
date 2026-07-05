@@ -1,0 +1,70 @@
+FROM oven/bun:1
+
+# Build-time proxy (use --build-arg if needed)
+ARG http_proxy
+ARG https_proxy
+ENV http_proxy=${http_proxy} \
+    https_proxy=${https_proxy} \
+    HTTP_PROXY=${http_proxy} \
+    HTTPS_PROXY=${https_proxy}
+
+WORKDIR /app
+
+# Install Python3 and system libraries
+# libreoffice-writer: required for .doc → .docx conversion (legacy Word format)
+RUN apt-get update -qq && \
+    apt-get install -y -qq --no-install-recommends \
+      python3 python3-pip curl libreoffice-writer && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Python packages for document processing (docling, OCR, etc.)
+# Step 1: Install torch CPU-only first (avoids pulling 2GB+ CUDA libs)
+RUN pip3 install --break-system-packages --no-cache-dir \
+      torch torchvision \
+      --index-url https://download.pytorch.org/whl/cpu && \
+    # Step 2: Install remaining packages from Chinese mirror
+    pip3 install --break-system-packages --no-cache-dir \
+      -i https://mirrors.aliyun.com/pypi/simple/ \
+      --trusted-host mirrors.aliyun.com \
+      opencv-python-headless \
+      docling>=2.89.0 \
+      rapidocr-onnxruntime \
+      onnxruntime \
+      openai-whisper>=20230314 && \
+    # Step 3: Clean up pip cache
+    rm -rf /root/.cache/pip
+
+# Clear proxy env after pip installs (not needed at runtime)
+ENV http_proxy= \
+    https_proxy= \
+    HTTP_PROXY= \
+    HTTPS_PROXY=
+
+# Pre-cache Whisper ASR models (tiny + base) so they're available offline
+# These are downloaded from host's ~/.cache/whisper/ and placed into the container
+RUN mkdir -p /root/.cache/whisper
+COPY whisper-models/tiny.pt /root/.cache/whisper/tiny.pt
+COPY whisper-models/base.pt /root/.cache/whisper/base.pt
+
+COPY package.json bun.lockb* ./
+RUN bun install --frozen-lockfile --production
+
+COPY . .
+
+RUN mkdir -p /app/data
+
+# Air-gapped: no HF downloads
+ENV HF_ENDPOINT=
+ENV NODE_ENV=production
+ENV PORT=21000
+ENV DATA_DIR=/app/data
+
+# In Docker deployment, embedding service hostname is "embedding" (docker-compose service name)
+ENV EMBEDDING_HOST=embedding
+
+EXPOSE 21000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:21000/api/health || exit 1
+
+CMD ["bun", "run", "src/main.ts"]

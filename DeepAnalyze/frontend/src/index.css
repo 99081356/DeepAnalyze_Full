@@ -1,0 +1,51 @@
+@import "tailwindcss";
+@import "./styles/base.css";
+@import "./styles/animations.css";
+@import "./styles/markdown.css";
+@import "./styles/syntax-highlight.css";
+
+/* =============================================================================
+   Tailwind v4 Theme Extension - 映射 CSS 变量到 Tailwind
+   ============================================================================= */
+
+@theme {
+  --color-da-bg: var(--bg-primary);
+  --color-da-bg-secondary: var(--bg-secondary);
+  --color-da-bg-tertiary: var(--bg-tertiary);
+  --color-da-bg-hover: var(--bg-hover);
+  --color-da-surface: var(--surface-primary);
+  --color-da-surface-hover: var(--surface-hover);
+  --color-da-border: var(--border-primary);
+  --color-da-border-hover: var(--border-secondary);
+  --color-da-text: var(--text-primary);
+  --color-da-text-secondary: var(--text-secondary);
+  --color-da-text-muted: var(--text-tertiary);
+  --color-da-accent: var(--interactive);
+  --color-da-accent-hover: var(--interactive-hover);
+  --color-da-accent-dim: var(--interactive);
+  --color-da-cyan: var(--info);
+  --color-da-green: var(--success);
+  --color-da-amber: var(--warning);
+  --color-da-red: var(--error);
+  --color-da-purple: var(--info);
+  --color-da-brand: var(--brand-primary);
+  --color-da-brand-hover: var(--brand-hover);
+  --color-da-brand-light: var(--brand-light);
+}
+
+/* =============================================================================
+   Resizable panel handle
+   ============================================================================= */
+
+.resize-handle {
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background var(--transition-base);
+  flex-shrink: 0;
+}
+
+.resize-handle:hover,
+.resize-handle.active {
+  background: var(--interactive);
+}

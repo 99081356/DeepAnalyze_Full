@@ -1,0 +1,132 @@
+{
+  "id": "GAIA-V-fact-lookup",
+  "category": "GAIA-L1",
+  "level": "L1-reasoning",
+  "question": "What is the capital of Australia? Give just the city name.",
+  "expectedAnswer": "Canberra",
+  "startTime": "2026-05-16T17:50:29.161Z",
+  "events": [
+    {
+      "sseEvent": "start",
+      "taskId": "21b12680-44ca-4283-ad92-ef1acc915cab",
+      "agentType": "general"
+    },
+    {
+      "sseEvent": "content_delta",
+      "delta": "\n\nCa",
+      "taskId": "21b12680-44ca-4283-ad92-ef1acc915cab",
+      "turn": 1
+    },
+    {
+      "sseEvent": "progress",
+      "turn": 1,
+      "timestamp": "2026-05-16T17:50:36.153Z",
+      "type": "text",
+      "content": "Canberra"
+    },
+    {
+      "sseEvent": "turn",
+      "turn": 1,
+      "taskId": "21b12680-44ca-4283-ad92-ef1acc915cab"
+    },
+    {
+      "sseEvent": "content",
+      "content": "Canberra",
+      "accumulated": "\n\nCa"
+    },
+    {
+      "sseEvent": "turn",
+      "turn": 2,
+      "taskId": "21b12680-44ca-4283-ad92-ef1acc915cab"
+    },
+    {
+      "sseEvent": "tool_call",
+      "id": "21b12680-44ca-4283-ad92-ef1acc915cab-tc-2-0-finish",
+      "toolName": "finish",
+      "input": {
+        "summary": "Canberra"
+      },
+      "status": "running"
+    },
+    {
+      "sseEvent": "progress",
+      "turn": 2,
+      "timestamp": "2026-05-16T17:50:37.932Z",
+      "type": "tool_call",
+      "content": "Calling tool: finish",
+      "toolName": "finish",
+      "toolInput": {
+        "summary": "Canberra"
+      }
+    },
+    {
+      "sseEvent": "tool_result",
+      "id": "21b12680-44ca-4283-ad92-ef1acc915cab-tc-2-0-finish",
+      "toolName": "finish",
+      "output": "{\"completed\":true,\"summary\":\"Canberra\"}"
+    },
+    {
+      "sseEvent": "progress",
+      "turn": 2,
+      "timestamp": "2026-05-16T17:50:37.932Z",
+      "type": "tool_result",
+      "content": "Tool finish completed",
+      "toolName": "finish",
+      "toolOutput": {
+        "completed": true,
+        "summary": "Canberra"
+      }
+    },
+    {
+      "sseEvent": "complete",
+      "taskId": "21b12680-44ca-4283-ad92-ef1acc915cab",
+      "output": "Canberra",
+      "toolCalls": [
+        {
+          "id": "21b12680-44ca-4283-ad92-ef1acc915cab-tc-2-0-finish",
+          "toolName": "finish",
+          "input": {
+            "summary": "Canberra"
+          },
+          "status": "completed",
+          "output": "{\"completed\":true,\"summary\":\"Canberra\"}"
+        }
+      ]
+    },
+    {
+      "sseEvent": "done",
+      "taskId": "21b12680-44ca-4283-ad92-ef1acc915cab",
+      "status": "completed",
+      "turnsUsed": 2,
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0
+      }
+    }
+  ],
+  "toolCalls": [
+    {
+      "tool": "finish",
+      "args": {
+        "summary": "Canberra"
+      }
+    }
+  ],
+  "reasoning": [],
+  "contentOutput": "Canberra",
+  "pushContents": [],
+  "endTime": "2026-05-16T17:50:38.204Z",
+  "durationMs": 5026,
+  "status": "completed",
+  "error": null,
+  "screenshotPaths": [],
+  "allOutput": "Canberra",
+  "evaluation": {
+    "testCaseId": "GAIA-V-fact-lookup",
+    "expectedAnswer": "Canberra",
+    "criteria": "Answer should be \"Canberra\"",
+    "passed": false,
+    "score": 0,
+    "details": "Output is empty or too short"
+  }
+}

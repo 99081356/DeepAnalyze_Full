@@ -93,6 +93,12 @@ export interface UserListResponse {
     is_org_admin: boolean;
     organization_id: string | null;
     last_login_at: string | null;
+    // 来自 LEFT JOIN workers（无 Worker 时为 null）
+    status?: string;
+    worker_id: string | null;
+    worker_status: string | null;
+    da_url: string | null;
+    host_port: number | null;
   }>;
   total: number;
 }
@@ -175,6 +181,35 @@ export const api = {
     organization_id?: string | null;
     is_org_admin?: boolean;
   }) => request<{ user: { id: string } }>("POST", "/users", data),
+  updateUser: (
+    id: string,
+    patch: {
+      display_name?: string;
+      email?: string | null;
+      organization_id?: string | null;
+      is_org_admin?: boolean;
+      password?: string;
+    },
+  ) => request<{ user: { id: string } }>("PATCH", `/users/${id}`, patch),
+  // 禁用用户（status -> suspended，软操作可恢复，不动 Worker 容器）
+  disableUser: (id: string) =>
+    request<{ user: { id: string; status: string } }>(
+      "PATCH",
+      `/users/${id}/disable`,
+    ),
+  // 物理删除用户（不可恢复，连带清理 Worker 容器 + 子表数据）
+  deleteUser: (id: string) =>
+    request<{ ok: boolean; id: string }>("DELETE", `/users/${id}`),
+  deployUserWorker: (userId: string) =>
+    request<{
+      worker_id: string;
+      da_url: string;
+      port: number;
+      container_name: string;
+      status: string;
+    }>("POST", `/users/${userId}/deploy-worker`),
+  deleteUserWorker: (userId: string) =>
+    request<{ ok: boolean }>("DELETE", `/users/${userId}/worker`),
 
   // Workers
   getPendingWorkers: () =>

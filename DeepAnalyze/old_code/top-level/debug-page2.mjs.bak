@@ -1,0 +1,50 @@
+import { chromium } from 'playwright';
+
+(async () => {
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  await page.goto('http://localhost:5173', { waitUntil: 'networkidle', timeout: 15000 });
+  await new Promise(r => setTimeout(r, 2000));
+
+  // Click on "知识库" in sidebar
+  const kbNav = await page.$('text=知识库');
+  console.log('KB nav found:', kbNav !== null);
+  if (kbNav) {
+    await kbNav.click();
+    await new Promise(r => setTimeout(r, 2000));
+  }
+
+  // Check all inputs now
+  const inputs = await page.$$eval('input', els => els.map(e => ({
+    type: e.type,
+    placeholder: e.placeholder,
+    visible: e.offsetParent !== null,
+    width: e.getBoundingClientRect().width,
+  })));
+  console.log('All inputs:', JSON.stringify(inputs, null, 2));
+
+  // Check page text for KB content
+  const bodyText = await page.evaluate(() => document.body.textContent.slice(0, 500));
+  console.log('Body text (first 500):', bodyText);
+
+  // Check for search-related elements
+  const searchInput = await page.$('input[placeholder="搜索知识库..."]');
+  console.log('KB search input found:', searchInput !== null);
+
+  // Look for KB items (lbctest or bigtest3)
+  const kbElements = await page.evaluate(() => {
+    const all = document.querySelectorAll('*');
+    const matches = [];
+    for (const el of all) {
+      const text = el.textContent || '';
+      if ((text.includes('lbctest') || text.includes('bigtest3')) && text.length < 100) {
+        matches.push({ tag: el.tagName, text: text.slice(0, 80) });
+      }
+    }
+    return matches.slice(0, 5);
+  });
+  console.log('KB elements:', JSON.stringify(kbElements, null, 2));
+
+  await page.screenshot({ path: '/tmp/debug-kb-view.png' });
+  await browser.close();
+})();

@@ -1,0 +1,61 @@
+{
+  "timestamp": "2026-05-16T23:06:01.252Z",
+  "batchIndex": 2,
+  "cases": 3,
+  "passed": 3,
+  "failed": 0,
+  "totalDurationMs": 786180,
+  "results": [
+    {
+      "id": "AB-Research-S1-T4",
+      "category": "AgencyBench-v2-Research",
+      "status": "completed",
+      "durationMs": 484117,
+      "toolCallCount": 38,
+      "outputLength": 5961,
+      "pushContentCount": 0,
+      "evaluation": {
+        "testCaseId": "AB-Research-S1-T4",
+        "expectedAnswer": "",
+        "criteria": "Score 10: dataset fully matches language/label/size constraints, README + sample saved, metadata descriptions grounded in evidence, and script reruns deterministically. Score 6: dataset fits but metadata is partially generic or sample handling is fragile. Score 2: dataset gated, wrong language, or JSON fails validation. Score 0: deliverables missing.",
+        "passed": true,
+        "score": 100,
+        "details": "Output quality: 5961 chars, 38 tool calls, hasTable=false, hasNumbers=true"
+      }
+    },
+    {
+      "id": "AB-Research-S1-T5",
+      "category": "AgencyBench-v2-Research",
+      "status": "completed",
+      "durationMs": 121744,
+      "toolCallCount": 34,
+      "outputLength": 5850,
+      "pushContentCount": 1,
+      "evaluation": {
+        "testCaseId": "AB-Research-S1-T5",
+        "expectedAnswer": "",
+        "criteria": "Score 10: report enumerates every validation command with outcomes, links to all deliverables, and confirms schema, reproducibility, and requirement coverage. Score 5: report exists but omits one JSON or lacks reproduction notes. Score 1: superficial report without concrete commands or evidence. Score 0: no report or validation performed.",
+        "passed": true,
+        "score": 100,
+        "details": "Output quality: 10867 chars, 34 tool calls, hasTable=true, hasNumbers=true"
+      }
+    },
+    {
+      "id": "AB-Research-S2-T1",
+      "category": "AgencyBench-v2-Research",
+      "status": "completed",
+      "durationMs": 180319,
+      "toolCallCount": 16,
+      "outputLength": 12761,
+      "pushContentCount": 1,
+      "evaluation": {
+        "testCaseId": "AB-Research-S2-T1",
+        "expectedAnswer": "",
+        "criteria": "Must collect 5-10 distinct, trustworthy sources. JSON must be valid UTF-8 with fields: title, source_type, publisher, published_at, url, summary, key_points, notes_for_report. Discard unsupported claims. Explicitly state waiting for next instructions after completing.",
+        "passed": true,
+        "score": 80,
+        "details": "Output quality: 17778 chars, 16 tool calls, hasTable=false, hasNumbers=true"
+      }
+    }
+  ]
+}

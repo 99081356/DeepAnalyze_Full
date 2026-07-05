@@ -1,0 +1,34 @@
+{
+  "test_id": "GV-052",
+  "level": 3,
+  "prompt": "The following numbers function similarly to ISBN 13 numbers, however, their validation methods are slightly different. Rather than using alternate weights of 1 and 3, the checksum digit is calculated with an alternate weight of 1 and some other positive integer less than 10. Otherwise, the checksum digit is calculated as expected. Unfortunately, there is an error in the data. Two adjacent columns have been transposed. These errored columns do not involve the final column or one of the first three columns. Using this information, please provide all potential solutions with the unknown weight and the smaller index of the two errored columns (assume we start our indexing at 0 and ignore hyphens). Give your answer in the form x, y where x is the weight and y is the smaller index of the two transposed columns.\n\n978-354181391-9\n978-946669746-1\n978-398036139-6\n978-447656680-4\n978-279586664-7\n978-595073693-3\n978-976647652-6\n978-591178125-5\n978-728465924-5\n978-414825155-9",
+  "expected": "7, 9",
+  "actual": "7, 9",
+  "finish_summary": "7, 9",
+  "tool_calls": [
+    {
+      "tool": "bash",
+      "input": {
+        "command": "cat << 'EOF' > solve.py\ncodes = [\n    \"9783541813919\",\n    \"9789466697461\",\n    \"9783980361396\",\n    \"9784476566804\",\n    \"9782795866647\",\n    \"9785950736933\",\n    \"9789766476526\",\n    \"9785911781255\",\n    \"9787284659245\",\n    \"9784148251559\",\n]\n\ndef check_valid(digits, w):\n    \"\"\"Check if the code is valid with alternating weights 1, w starting from weight 1.\"\"\"\n    total = sum(d * (1 if i % 2 == 0 else w) for i, d in enumerate(digits[:12]))\n    checksum = (10 - total % 10) % 10\n    return checksum == digits[12]\n\nresults = []\n\nfor w in range(2, 10):  # weight from 2 to 9\n    for j in range(3, 11):  # smaller index of adjacent transposed pair: 3 to 10\n        # j and j+1 are transposed. Valid indices for the 12 non-checksum digits: 0-11.\n        # j+1 must be <= 11, and j >= 3 (not first 3 columns), j+1 != 12 (not last column)\n        if j + 1 > 11:\n            continue\n        valid_count = 0\n        for code in codes:\n            digits = [int(c) for c in code]\n            swapped = list(digits)\n            swapped[j], swapped[j+1] = swapped[j+1], swapped[j]\n            if check_valid(swapped, w):\n                valid_count += 1\n        if valid_count == 10:\n            results.append((w, j))\n            print(f\"Solution found: weight={w}, transpose at indices ({j}, {j+1})\")\n\nif not results:\n    print(\"No solution found with 10/10 valid.\")\n    # Let's also check 9/10 in case\n    for w in range(2, 10):\n        for j in range(3, 11):\n            if j + 1 > 11:\n                continue\n            valid_count = 0\n            for code in codes:\n                digits = [int(c) for c in code]\n                swapped = list(digits)\n                swapped[j], swapped[j+1] = swapped[j+1], swapped[j]\n                if check_valid(swapped, w):\n                    valid_count += 1\n            if valid_count >= 9:\n                print(f\"  Near match: weight={w}, transpose=({j},{j+1}), valid={valid_count}/10\")\n\nprint(f\"\\nTotal solutions: {len(results)}\")\nfor r in results:\n    print(f\"  {r[0]}, {r[1]}\")\nEOF\npython3 solve.py"
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "cat << 'EOF' > verify.py\ncodes = [\n    \"9783541813919\",\n    \"9789466697461\",\n    \"9783980361396\",\n    \"9784476566804\",\n    \"9782795866647\",\n    \"9785950736933\",\n    \"9789766476526\",\n    \"9785911781255\",\n    \"9787284659245\",\n    \"9784148251559\",\n]\n\nw = 7\nj = 9\n\nprint(\"Verification with weight=7, swapping indices 9 and 10:\")\nprint(\"=\"*60)\n\nfor code in codes:\n    digits = [int(c) for c in code]\n    swapped = list(digits)\n    swapped[9], swapped[10] = swapped[10], swapped[9]\n    \n    total = sum(d * (1 if i % 2 == 0 else 7) for i, d in enumerate(swapped[:12]))\n    checksum = (10 - total % 10) % 10\n    \n    print(f\"Code: {code}\")\n    print(f\"  Original digits 9,10: {digits[9]},{digits[10]} -> Swapped: {swapped[9]},{swapped[10]}\")\n    print(f\"  Weighted sum: {total}, Checksum: {checksum}, Expected: {digits[12]}, Valid: {checksum == digits[12]}\")\n    print()\n\n# Also show the original (non-swapped) codes fail\nprint(\"\\nWithout swapping (should fail):\")\nfor code in codes[:2]:\n    digits = [int(c) for c in code]\n    total = sum(d * (1 if i % 2 == 0 else 7) for i, d in enumerate(digits[:12]))\n    checksum = (10 - total % 10) % 10\n    print(f\"Code: {code}, Checksum: {checksum}, Expected: {digits[12]}, Valid: {checksum == digits[12]}\")\nEOF\npython3 verify.py"
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "7, 9"
+      }
+    }
+  ],
+  "tools": [
+    "bash",
+    "finish"
+  ],
+  "turns": 3,
+  "elapsed": 38.7
+}

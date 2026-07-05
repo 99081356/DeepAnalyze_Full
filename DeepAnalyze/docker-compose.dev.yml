@@ -1,0 +1,145 @@
+# =============================================================================
+# DeepAnalyze Development Infrastructure
+# Starts PostgreSQL + Ollama — the backend runs locally via `npm run dev`.
+#
+# Usage:
+#   npm run services:up     # Start infrastructure
+#   npm run dev             # Start backend (in another terminal)
+#   npm run services:down   # Stop infrastructure
+#
+# Or start everything at once:
+#   npm run dev:full        # Start infra + backend in one terminal
+# =============================================================================
+
+version: "3.8"
+
+services:
+  # PostgreSQL with pgvector. Uses the official prebuilt pgvector image so
+  # `docker compose up` works without compiling scws/zhparser from source
+  # (the source build is heavy and frequently fails on unstable WSL2/Docker).
+  # zhparser (Chinese FTS) is optional: without it the app still starts and
+  # full-text search falls back to the default tokenizer (see migration 001
+  # and ensureExtensions in src/store/pg.ts). To restore zhparser, replace
+  # `image:` with the build block below:
+  #   build:
+  #     context: ./config
+  #     dockerfile: pg-zhparser.Dockerfile
+  postgres:
+    image: pgvector/pgvector:pg17
+    ports:
+      - "${PG_PORT:-5432}:5432"
+    environment:
+      - POSTGRES_DB=${PG_DATABASE:-deepanalyze}
+      - POSTGRES_USER=${PG_USER:-deepanalyze}
+      - POSTGRES_PASSWORD=${PG_PASSWORD:-deepanalyze_dev}
+    volumes:
+      - pgdata-dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-deepanalyze} -d ${PG_DATABASE:-deepanalyze}"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data-dev:/root/.ollama
+    restart: unless-stopped
+
+  # PaddleOCR-VL-1.5 standalone inference service (optional, for API mode)
+  # Start with: docker compose -f docker-compose.dev.yml up paddleocr-vl -d
+  paddleocr-vl:
+    build:
+      context: ./paddleocr-vl-service
+      dockerfile: Dockerfile
+    ports:
+      - "8600:8600"
+    volumes:
+      - ./data/models:/app/models:ro
+    environment:
+      - MODEL_PATH=/app/models/docling/vlm/PaddlePaddle--PaddleOCR-VL-1.5
+      - TORCH_DTYPE=bfloat16
+      - MAX_TOKENS=8192
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    profiles:
+      - vlm
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8600/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 120s
+      retries: 3
+    restart: unless-stopped
+
+  # GLM-OCR standalone inference service (optional, second VLM backend)
+  # Start with: docker compose -f docker-compose.dev.yml --profile glm-ocr up glm-ocr -d
+  glm-ocr:
+    build:
+      context: ./glm-ocr-service
+      dockerfile: Dockerfile
+    ports:
+      - "8601:8601"
+    volumes:
+      - ./data/models:/app/models:ro
+    environment:
+      - MODEL_PATH=/app/models/docling/vlm/zai-org--GLM-OCR
+      - TORCH_DTYPE=bfloat16
+      - MAX_TOKENS=8192
+      - HF_ENDPOINT=https://hf-mirror.com
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    profiles:
+      - vlm
+      - glm-ocr
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8601/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 180s
+      retries: 3
+    restart: unless-stopped
+
+  # MinerU local PDF parsing service (optional, CPU or GPU build variant)
+  # Start with: docker compose -f docker-compose.dev.yml --profile mineru up mineru -d
+  mineru:
+    build:
+      context: ./mineru-service
+      dockerfile: Dockerfile
+      args:
+        DEVICE: ${MINERU_DEVICE:-cpu}
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./data/models:/app/models:ro
+      - mineru-cache:/root/.cache
+    environment:
+      - HF_ENDPOINT=https://hf-mirror.com
+      - PORT=8001
+      - MODEL_SOURCE=HF
+    profiles: [mineru]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 180s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  pgdata-dev:
+  ollama-data-dev:
+  mineru-cache:

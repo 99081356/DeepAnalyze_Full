@@ -129,8 +129,8 @@ export function createWorkerRoutes(): Hono {
     await query(
       `INSERT INTO workers (id, name, hostname, endpoint, version, capabilities, worker_token,
                             status, protocol_version, applied_at, organization_id, user_id,
-                            approved_at, approved_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), $10, $11,
+                            assigned_user_id, approved_at, approved_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), $10, $11, $11,
                CASE WHEN $12 THEN NOW() ELSE NULL END,
                CASE WHEN $12 THEN 'join_token' ELSE NULL END)`,
       [workerId, workerName, hostname, endpoint, version, JSON.stringify(capabilities), workerToken,

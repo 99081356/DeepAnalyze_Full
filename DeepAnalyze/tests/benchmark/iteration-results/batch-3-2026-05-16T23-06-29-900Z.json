@@ -1,0 +1,61 @@
+{
+  "timestamp": "2026-05-16T23:12:24.973Z",
+  "batchIndex": 3,
+  "cases": 3,
+  "passed": 3,
+  "failed": 0,
+  "totalDurationMs": 330778,
+  "results": [
+    {
+      "id": "AB-Research-S2-T2",
+      "category": "AgencyBench-v2-Research",
+      "status": "completed",
+      "durationMs": 57296,
+      "toolCallCount": 4,
+      "outputLength": 8204,
+      "pushContentCount": 1,
+      "evaluation": {
+        "testCaseId": "AB-Research-S2-T2",
+        "expectedAnswer": "",
+        "criteria": "Report must restate research question verbatim, include methodology/assumptions, compare Chat vs Agent, discuss capabilities/requirements/future implications. All factual statements must have IEEE-style citations mapping to sources in References. JSON structure: [{id: 46, question: '...', response: '...'}]. JSON must be valid and properly escaped.",
+        "passed": true,
+        "score": 80,
+        "details": "Output quality: 13221 chars, 4 tool calls, hasTable=false, hasNumbers=true"
+      }
+    },
+    {
+      "id": "AB-Research-S3-T1",
+      "category": "AgencyBench-v2-Research",
+      "status": "completed",
+      "durationMs": 224398,
+      "toolCallCount": 17,
+      "outputLength": 14505,
+      "pushContentCount": 0,
+      "evaluation": {
+        "testCaseId": "AB-Research-S3-T1",
+        "expectedAnswer": "",
+        "criteria": "Must collect 5-10 distinct, trustworthy sources. JSON must be valid UTF-8 with fields: title, source_type, publisher, published_at, url, summary, key_points, notes_for_report. Discard unsupported claims. Explicitly state waiting for next instructions after completing.",
+        "passed": true,
+        "score": 100,
+        "details": "Output quality: 14505 chars, 17 tool calls, hasTable=false, hasNumbers=true"
+      }
+    },
+    {
+      "id": "AB-Research-S3-T2",
+      "category": "AgencyBench-v2-Research",
+      "status": "completed",
+      "durationMs": 49084,
+      "toolCallCount": 3,
+      "outputLength": 7669,
+      "pushContentCount": 0,
+      "evaluation": {
+        "testCaseId": "AB-Research-S3-T2",
+        "expectedAnswer": "",
+        "criteria": "Report must restate research question verbatim, include methodology/assumptions, outline key research directions and trends, discuss capabilities/requirements/future implications. All factual statements must have IEEE-style citations mapping to sources in References. JSON structure: [{id: 11, question: '...', response: '...'}]. JSON must be valid and properly escaped.",
+        "passed": true,
+        "score": 80,
+        "details": "Output quality: 7669 chars, 3 tool calls, hasTable=false, hasNumbers=true"
+      }
+    }
+  ]
+}

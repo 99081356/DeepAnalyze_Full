@@ -1,0 +1,229 @@
+{
+  "id": "KB-TEST-001",
+  "category": "DeepAnalyze-KB",
+  "level": "L1-kb-analysis",
+  "question": "请统计知识库中所有文档的类型分布，按文件类型分类统计数量，输出一个表格。数据必须来自工具查询，不能猜测。",
+  "expectedAnswer": "Any accurate statistics based on actual KB data",
+  "startTime": "2026-05-16T17:04:38.630Z",
+  "events": [
+    {
+      "taskId": "598eb828-12e0-4ac6-b947-39f770dde6cf",
+      "agentType": "general"
+    },
+    {
+      "delta": "\n\n我来查询知识库中的文档类型分布。首先执行 SQ",
+      "taskId": "598eb828-12e0-4ac6-b947-39f770dde6cf",
+      "turn": 1
+    },
+    {
+      "turn": 1,
+      "timestamp": "2026-05-16T17:04:49.423Z",
+      "type": "text",
+      "content": "我来查询知识库中的文档类型分布。首先执行 SQL 统计："
+    },
+    {
+      "turn": 1,
+      "taskId": "598eb828-12e0-4ac6-b947-39f770dde6cf"
+    },
+    {
+      "content": "我来查询知识库中的文档类型分布。首先执行 SQL 统计：",
+      "accumulated": "\n\n我来查询知识库中的文档类型分布。首先执行 SQ"
+    },
+    {
+      "id": "598eb828-12e0-4ac6-b947-39f770dde6cf-tc-1-0-run_sql",
+      "toolName": "run_sql",
+      "input": {
+        "sql": "SELECT file_type, COUNT(*) as count FROM documents WHERE kb_id = '89ee4db6-0626-4636-8c66-49a575d05832' GROUP BY file_type ORDER BY count DESC"
+      },
+      "status": "running"
+    },
+    {
+      "turn": 1,
+      "timestamp": "2026-05-16T17:04:49.424Z",
+      "type": "tool_call",
+      "content": "Calling tool: run_sql",
+      "toolName": "run_sql",
+      "toolInput": {
+        "sql": "SELECT file_type, COUNT(*) as count FROM documents WHERE kb_id = '89ee4db6-0626-4636-8c66-49a575d05832' GROUP BY file_type ORDER BY count DESC"
+      }
+    },
+    {
+      "id": "598eb828-12e0-4ac6-b947-39f770dde6cf-tc-1-0-run_sql",
+      "toolName": "run_sql",
+      "output": "{\"rowCount\":12,\"showingRows\":12,\"columns\":[\"file_type\",\"count\"],\"rows\":[{\"file_type\":\"png\",\"count\":\"95\"},{\"file_type\":\"jpg\",\"count\":\"75\"},{\"file_type\":\"pdf\",\"count\":\"46\"},{\"file_type\":\"webp\",\"count\":\"8\"},{\"file_type\":\"mp3\",\"count\":\"5\"},{\"file_type\":\"doc\",\"count\":\"4\"},{\"file_type\":\"docx\",\"count\":\"3\"},{\"file_type\":\"mp4\",\"count\":\"3\"},{\"file_type\":\"jpg@h_1280\",\"count\":\"1\"},{\"file_type\":\"jpeg\",\"count\":\"1\"},{\"file_type\":\"xlsx\",\"count\":\"1\"},{\"file_type\":\"wav\",\"count\":\"1\"}]}"
+    },
+    {
+      "turn": 1,
+      "timestamp": "2026-05-16T17:04:49.429Z",
+      "type": "tool_result",
+      "content": "Tool run_sql completed",
+      "toolName": "run_sql",
+      "toolOutput": {
+        "rowCount": 12,
+        "showingRows": 12,
+        "columns": [
+          "file_type",
+          "count"
+        ],
+        "rows": [
+          {
+            "file_type": "png",
+            "count": "95"
+          },
+          {
+            "file_type": "jpg",
+            "count": "75"
+          },
+          {
+            "file_type": "pdf",
+            "count": "46"
+          },
+          {
+            "file_type": "webp",
+            "count": "8"
+          },
+          {
+            "file_type": "mp3",
+            "count": "5"
+          },
+          {
+            "file_type": "doc",
+            "count": "4"
+          },
+          {
+            "file_type": "docx",
+            "count": "3"
+          },
+          {
+            "file_type": "mp4",
+            "count": "3"
+          },
+          {
+            "file_type": "jpg@h_1280",
+            "count": "1"
+          },
+          {
+            "file_type": "jpeg",
+            "count": "1"
+          },
+          {
+            "file_type": "xlsx",
+            "count": "1"
+          },
+          {
+            "file_type": "wav",
+            "count": "1"
+          }
+        ]
+      }
+    },
+    {
+      "delta": "\n\n根据数据库查询结果，知识库 **bigtest3** 的文档类型分布如下：\n\n| 文件类型 | 数量 | 占比 |\n|----------|------|--",
+      "taskId": "598eb828-12e0-4ac6-b947-39f770dde6cf",
+      "turn": 2
+    },
+    {
+      "delta": "----|\n| PNG（图片） | 95 | 38.9% |\n| JPG（图片） | 75 | 30.7% |\n| PDF（文档） | 4",
+      "taskId": "598eb828-12e0-4ac6-b947-39f770dde6cf",
+      "turn": 2
+    },
+    {
+      "delta": "6 | 18.9% |\n| WEBP（图片） | 8 | 3.3% |\n| MP3（音频） | 5 | 2.0% |\n| DOC（文档） |",
+      "taskId": "598eb828-12e0-4ac6-b947-39f770dde6cf",
+      "turn": 2
+    },
+    {
+      "delta": " 4 | 1.6% |\n| DOCX（文档） | 3 | 1.2% |\n| MP4（视频） | 3 | 1.2% |\n| JPEG（图片） | 1 | 0.4%",
+      "taskId": "598eb828-12e0-4ac6-b947-39f770dde6cf",
+      "turn": 2
+    },
+    {
+      "delta": " |\n| XLSX（表格） | 1 | 0.4% |\n| WAV（音频） | 1 | 0.4% |\n| JPG@H_1280（图片变体） |",
+      "taskId": "598eb828-12e0-4ac6-b947-39f770dde6cf",
+      "turn": 2
+    },
+    {
+      "delta": " 1 | 0.4% |\n| **合计** | **244** | **100%** |\n\n**主要发现：**\n- **",
+      "taskId": "598eb828-12e0-4ac6-b947-39f770dde6cf",
+      "turn": 2
+    },
+    {
+      "delta": "图片类文件占主导**：PNG、JPG、WEBP、JPEG 等图片格式合计 **180 个**，占比约 **73.8%**\n- **文档类次之**：PDF、DOC",
+      "taskId": "598eb828-12e0-4ac6-b947-39f770dde6cf",
+      "turn": 2
+    },
+    {
+      "delta": "、DOCX 合计 **53 个**，占比约 **21.7%**\n- **多媒体文件**：音频（MP3、WAV）共 6 个，视",
+      "taskId": "598eb828-12e0-4ac6-b947-39f770dde6cf",
+      "turn": 2
+    },
+    {
+      "delta": "频（MP4）共 3 个\n- **表格文件**：仅有 1 个 X",
+      "taskId": "598eb828-12e0-4ac6-b947-39f770dde6cf",
+      "turn": 2
+    },
+    {
+      "turn": 2,
+      "timestamp": "2026-05-16T17:04:54.567Z",
+      "type": "text",
+      "content": "根据数据库查询结果，知识库 **bigtest3** 的文档类型分布如下：\n\n| 文件类型 | 数量 | 占比 |\n|----------|------|------|\n| PNG（图片） | 95 | 38.9% |\n| JPG（图片） | 75 | 30.7% |\n| PDF（文档） | 46 | 18.9% |\n| WEBP（图片） | 8 | 3.3% |\n| MP3（音频） | 5 | 2.0% |\n| DOC（文档） | 4 | 1.6% |\n| DOCX（文档） | 3 | 1.2% |\n| MP4（视频） | 3 | 1.2% |\n| JPEG（图片） | 1 | 0.4% |\n| XLSX（表格） | 1 | 0.4% |\n| WAV（音频） | 1 | 0.4% |\n| JPG@H_1280（图片变体） | 1 | 0.4% |\n| **合计** | **244** | **100%** |\n\n**主要发现：**\n- **图片类文件占主导**：PNG、JPG、WEBP、JPEG 等图片格式合计 **180 个**，占比约 **73.8%**\n- **文档类次之**：PDF、DOC、DOCX 合计 **53 个**，占比约 **21.7%**\n- **多媒体文件**：音频（MP3、WAV）共 6 个，视频（MP4）共 3 个\n- **表格文件**：仅有 1 个 XLSX 文件"
+    },
+    {
+      "turn": 2,
+      "taskId": "598eb828-12e0-4ac6-b947-39f770dde6cf"
+    },
+    {
+      "content": "根据数据库查询结果，知识库 **bigtest3** 的文档类型分布如下：\n\n| 文件类型 | 数量 | 占比 |\n|----------|------|------|\n| PNG（图片） | 95 | 38.9% |\n| JPG（图片） | 75 | 30.7% |\n| PDF（文档） | 46 | 18.9% |\n| WEBP（图片） | 8 | 3.3% |\n| MP3（音频） | 5 | 2.0% |\n| DOC（文档） | 4 | 1.6% |\n| DOCX（文档） | 3 | 1.2% |\n| MP4（视频） | 3 | 1.2% |\n| JPEG（图片） | 1 | 0.4% |\n| XLSX（表格） | 1 | 0.4% |\n| WAV（音频） | 1 | 0.4% |\n| JPG@H_1280（图片变体） | 1 | 0.4% |\n| **合计** | **244** | **100%** |\n\n**主要发现：**\n- **图片类文件占主导**：PNG、JPG、WEBP、JPEG 等图片格式合计 **180 个**，占比约 **73.8%**\n- **文档类次之**：PDF、DOC、DOCX 合计 **53 个**，占比约 **21.7%**\n- **多媒体文件**：音频（MP3、WAV）共 6 个，视频（MP4）共 3 个\n- **表格文件**：仅有 1 个 XLSX 文件",
+      "accumulated": "\n\n我来查询知识库中的文档类型分布。首先执行 SQ\n\n根据数据库查询结果，知识库 **bigtest3** 的文档类型分布如下：\n\n| 文件类型 | 数量 | 占比 |\n|----------|------|------|\n| PNG（图片） | 95 | 38.9% |\n| JPG（图片） | 75 | 30.7% |\n| PDF（文档） | 46 | 18.9% |\n| WEBP（图片） | 8 | 3.3% |\n| MP3（音频） | 5 | 2.0% |\n| DOC（文档） | 4 | 1.6% |\n| DOCX（文档） | 3 | 1.2% |\n| MP4（视频） | 3 | 1.2% |\n| JPEG（图片） | 1 | 0.4% |\n| XLSX（表格） | 1 | 0.4% |\n| WAV（音频） | 1 | 0.4% |\n| JPG@H_1280（图片变体） | 1 | 0.4% |\n| **合计** | **244** | **100%** |\n\n**主要发现：**\n- **图片类文件占主导**：PNG、JPG、WEBP、JPEG 等图片格式合计 **180 个**，占比约 **73.8%**\n- **文档类次之**：PDF、DOC、DOCX 合计 **53 个**，占比约 **21.7%**\n- **多媒体文件**：音频（MP3、WAV）共 6 个，视频（MP4）共 3 个\n- **表格文件**：仅有 1 个 X"
+    },
+    {
+      "taskId": "598eb828-12e0-4ac6-b947-39f770dde6cf",
+      "output": "根据数据库查询结果，知识库 **bigtest3** 的文档类型分布如下：\n\n| 文件类型 | 数量 | 占比 |\n|----------|------|------|\n| PNG（图片） | 95 | 38.9% |\n| JPG（图片） | 75 | 30.7% |\n| PDF（文档） | 46 | 18.9% |\n| WEBP（图片） | 8 | 3.3% |\n| MP3（音频） | 5 | 2.0% |\n| DOC（文档） | 4 | 1.6% |\n| DOCX（文档） | 3 | 1.2% |\n| MP4（视频） | 3 | 1.2% |\n| JPEG（图片） | 1 | 0.4% |\n| XLSX（表格） | 1 | 0.4% |\n| WAV（音频） | 1 | 0.4% |\n| JPG@H_1280（图片变体） | 1 | 0.4% |\n| **合计** | **244** | **100%** |\n\n**主要发现：**\n- **图片类文件占主导**：PNG、JPG、WEBP、JPEG 等图片格式合计 **180 个**，占比约 **73.8%**\n- **文档类次之**：PDF、DOC、DOCX 合计 **53 个**，占比约 **21.7%**\n- **多媒体文件**：音频（MP3、WAV）共 6 个，视频（MP4）共 3 个\n- **表格文件**：仅有 1 个 XLSX 文件",
+      "toolCalls": [
+        {
+          "id": "598eb828-12e0-4ac6-b947-39f770dde6cf-tc-1-0-run_sql",
+          "toolName": "run_sql",
+          "input": {
+            "sql": "SELECT file_type, COUNT(*) as count FROM documents WHERE kb_id = '89ee4db6-0626-4636-8c66-49a575d05832' GROUP BY file_type ORDER BY count DESC"
+          },
+          "status": "completed",
+          "output": "{\"rowCount\":12,\"showingRows\":12,\"columns\":[\"file_type\",\"count\"],\"rows\":[{\"file_type\":\"png\",\"count\":\"95\"},{\"file_type\":\"jpg\",\"count\":\"75\"},{\"file_type\":\"pdf\",\"count\":\"46\"},{\"file_type\":\"webp\",\"count\":\"8\"},{\"file_type\":\"mp3\",\"count\":\"5\"},{\"file_type\":\"doc\",\"count\":\"4\"},{\"file_type\":\"docx\",\"count\":\"3\"},{\"file_type\":\"mp4\",\"count\":\"3\"},{\"file_type\":\"jpg@h_1280\",\"count\":\"1\"},{\"file_type\":\"jpeg\",\"count\":\"1\"},{\"file_type\":\"xlsx\",\"count\":\"1\"},{\"file_type\":\"wav\",\"count\":\"1\"}]}"
+        }
+      ]
+    },
+    {
+      "taskId": "598eb828-12e0-4ac6-b947-39f770dde6cf",
+      "status": "completed",
+      "turnsUsed": 2,
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0
+      }
+    }
+  ],
+  "toolCalls": [
+    {
+      "tool": "run_sql",
+      "args": {
+        "sql": "SELECT file_type, COUNT(*) as count FROM documents WHERE kb_id = '89ee4db6-0626-4636-8c66-49a575d05832' GROUP BY file_type ORDER BY count DESC"
+      }
+    }
+  ],
+  "reasoning": [],
+  "contentOutput": "我来查询知识库中的文档类型分布。首先执行 SQL 统计：根据数据库查询结果，知识库 **bigtest3** 的文档类型分布如下：\n\n| 文件类型 | 数量 | 占比 |\n|----------|------|------|\n| PNG（图片） | 95 | 38.9% |\n| JPG（图片） | 75 | 30.7% |\n| PDF（文档） | 46 | 18.9% |\n| WEBP（图片） | 8 | 3.3% |\n| MP3（音频） | 5 | 2.0% |\n| DOC（文档） | 4 | 1.6% |\n| DOCX（文档） | 3 | 1.2% |\n| MP4（视频） | 3 | 1.2% |\n| JPEG（图片） | 1 | 0.4% |\n| XLSX（表格） | 1 | 0.4% |\n| WAV（音频） | 1 | 0.4% |\n| JPG@H_1280（图片变体） | 1 | 0.4% |\n| **合计** | **244** | **100%** |\n\n**主要发现：**\n- **图片类文件占主导**：PNG、JPG、WEBP、JPEG 等图片格式合计 **180 个**，占比约 **73.8%**\n- **文档类次之**：PDF、DOC、DOCX 合计 **53 个**，占比约 **21.7%**\n- **多媒体文件**：音频（MP3、WAV）共 6 个，视频（MP4）共 3 个\n- **表格文件**：仅有 1 个 XLSX 文件",
+  "pushContents": [],
+  "endTime": "2026-05-16T17:04:54.898Z",
+  "durationMs": 12092,
+  "status": "completed",
+  "error": null,
+  "screenshotPaths": [],
+  "allOutput": "我来查询知识库中的文档类型分布。首先执行 SQL 统计：根据数据库查询结果，知识库 **bigtest3** 的文档类型分布如下：\n\n| 文件类型 | 数量 | 占比 |\n|----------|------|------|\n| PNG（图片） | 95 | 38.9% |\n| JPG（图片） | 75 | 30.7% |\n| PDF（文档） | 46 | 18.9% |\n| WEBP（图片） | 8 | 3.3% |\n| MP3（音频） | 5 | 2.0% |\n| DOC（文档） | 4 | 1.6% |\n| DOCX（文档） | 3 | 1.2% |\n| MP4（视频） | 3 | 1.2% |\n| JPEG（图片） | 1 | 0.4% |\n| XLSX（表格） | 1 | 0.4% |\n| WAV（音频） | 1 | 0.4% |\n| JPG@H_1280（图片变体） | 1 | 0.4% |\n| **合计** | **244** | **100%** |\n\n**主要发现：**\n- **图片类文件占主导**：PNG、JPG、WEBP、JPEG 等图片格式合计 **180 个**，占比约 **73.8%**\n- **文档类次之**：PDF、DOC、DOCX 合计 **53 个**，占比约 **21.7%**\n- **多媒体文件**：音频（MP3、WAV）共 6 个，视频（MP4）共 3 个\n- **表格文件**：仅有 1 个 XLSX 文件",
+  "evaluation": {
+    "testCaseId": "KB-TEST-001",
+    "expectedAnswer": "Any accurate statistics based on actual KB data",
+    "criteria": "Must include actual file type counts from KB, format as table, no hallucination",
+    "passed": true,
+    "score": 100,
+    "details": "Output quality: 634 chars, 1 tool calls, hasTable=true, hasNumbers=true"
+  }
+}

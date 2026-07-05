@@ -1,0 +1,63 @@
+{
+  "test_id": "GV-070",
+  "level": 3,
+  "prompt": "According to wikipedia, how many Asian countries still have a monarchy and access to the sea in 2021?",
+  "expected": "12",
+  "actual": "According to Wikipedia's \"Monarchies in Asia\" article, there are **12** Asian countries that have both a monarchy and access to the sea (as of 2021).\n\nWikipedia lists 13 national monarchies in Asia. Of these, only **Bhutan** is landlocked (bordered solely by China and India, with no coastline). The remaining 12 all have access to the sea:\n\n1. **Bahrain** – Island nation in the Persian Gulf\n2. **Brunei** – Coastline on the South China Sea (Borneo island)\n3. **Cambodia** – Coastline on the Gulf of Thailand\n4. **Japan** – Island nation (Pacific Ocean)\n5. **Jordan** – Small coastline on the Gulf of Aqaba (Red Sea)\n6. **Kuwait** – Coastline on the Persian Gulf\n7. **Malaysia** – Coastlines on the South China Sea, Strait of Malacca, etc.\n8. **Oman** – Coastlines on the Arabian Sea, Gulf of Oman, and Persian Gulf\n9. **Qatar** – Peninsula in the Persian Gulf\n10. **Saudi Arabia** – Coastlines on the Red Sea and Persian Gulf\n11. **Thailand** – Coastlines on the Gulf of Thailand and Andaman Sea\n12. **United Arab Emirates** – Coastlines on the Persian Gulf and Gulf of Oman\n\nThe only Asian monarchy without sea access is **Bhutan**, which is landlocked.",
+  "finish_summary": "According to Wikipedia's \"Monarchies in Asia\" article, there are **12** Asian countries that have both a monarchy and access to the sea (as of 2021).\n\nWikipedia lists 13 national monarchies in Asia. Of these, only **Bhutan** is landlocked (bordered solely by China and India, with no coastline). The remaining 12 all have access to the sea:\n\n1. **Bahrain** – Island nation in the Persian Gulf\n2. **Brunei** – Coastline on the South China Sea (Borneo island)\n3. **Cambodia** – Coastline on the Gulf of Thailand\n4. **Japan** – Island nation (Pacific Ocean)\n5. **Jordan** – Small coastline on the Gulf of Aqaba (Red Sea)\n6. **Kuwait** – Coastline on the Persian Gulf\n7. **Malaysia** – Coastlines on the South China Sea, Strait of Malacca, etc.\n8. **Oman** – Coastlines on the Arabian Sea, Gulf of Oman, and Persian Gulf\n9. **Qatar** – Peninsula in the Persian Gulf\n10. **Saudi Arabia** – Coastlines on the Red Sea and Persian Gulf\n11. **Thailand** – Coastlines on the Gulf of Thailand and Andaman Sea\n12. **United Arab Emirates** – Coastlines on the Persian Gulf and Gulf of Oman\n\nThe only Asian monarchy without sea access is **Bhutan**, which is landlocked.",
+  "tool_calls": [
+    {
+      "tool": "think",
+      "input": {
+        "thought": "I need to find Asian countries that have BOTH:\n1. A monarchy (any type: absolute, constitutional, etc.)\n2. Access to the sea (coastline, not landlocked)\n\nAnd the answer should be based on Wikipedia. Let me start by searching for lists of Asian monarchies and Asian landlocked countries.\n\nLet me search Wikipedia for relevant articles."
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "search",
+        "query": "landlocked countries Asia"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "title": "Landlocked country"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "search",
+        "query": "monarchy countries Asia list"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "title": "Monarchies in Asia"
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "From the Wikipedia article \"Monarchies in Asia\", the national monarchies in Asia are:\n\n1. Bahrain - Island nation in the Persian Gulf → has sea access ✓\n2. Bhutan - Landlocked (between China and India) → NO sea access ✗\n3. Brunei - On the island of Borneo, South China Sea coast → has sea access ✓\n4. Cambodia - Gulf of Thailand coastline → has sea access ✓\n5. Japan - Island nation → has sea access ✓\n6. Jordan - Has a small coastline on the Gulf of Aqaba (Red Sea) → has sea access ✓\n7. Kuwait - On the Persian Gulf → has sea access ✓\n8. Malaysia - Peninsula + Borneo island → has sea access ✓\n9. Oman - Arabian Sea, Gulf of Oman, Persian Gulf → has sea access ✓\n10. Qatar - Peninsula in the Persian Gulf → has sea access ✓\n11. Saudi Arabia - Red Sea and Persian Gulf coastlines → has sea access ✓\n12. Thailand - Gulf of Thailand and Andaman Sea → has sea access ✓\n13. United Arab Emirates - Persian Gulf and Gulf of Oman → has sea access ✓\n\nOnly Bhutan is landlocked among these 13 Asian monarchies.\n\nSo the answer is 13 - 1 = 12 Asian countries that have both a monarchy and access to the sea."
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "According to Wikipedia's \"Monarchies in Asia\" article, there are **12** Asian countries that have both a monarchy and access to the sea (as of 2021).\n\nWikipedia lists 13 national monarchies in Asia. Of these, only **Bhutan** is landlocked (bordered solely by China and India, with no coastline). The remaining 12 all have access to the sea:\n\n1. **Bahrain** – Island nation in the Persian Gulf\n2. **Brunei** – Coastline on the South China Sea (Borneo island)\n3. **Cambodia** – Coastline on the Gulf of Thailand\n4. **Japan** – Island nation (Pacific Ocean)\n5. **Jordan** – Small coastline on the Gulf of Aqaba (Red Sea)\n6. **Kuwait** – Coastline on the Persian Gulf\n7. **Malaysia** – Coastlines on the South China Sea, Strait of Malacca, etc.\n8. **Oman** – Coastlines on the Arabian Sea, Gulf of Oman, and Persian Gulf\n9. **Qatar** – Peninsula in the Persian Gulf\n10. **Saudi Arabia** – Coastlines on the Red Sea and Persian Gulf\n11. **Thailand** – Coastlines on the Gulf of Thailand and Andaman Sea\n12. **United Arab Emirates** – Coastlines on the Persian Gulf and Gulf of Oman\n\nThe only Asian monarchy without sea access is **Bhutan**, which is landlocked."
+      }
+    }
+  ],
+  "tools": [
+    "think",
+    "wikipedia",
+    "finish"
+  ],
+  "turns": 7,
+  "elapsed": 40.3
+}

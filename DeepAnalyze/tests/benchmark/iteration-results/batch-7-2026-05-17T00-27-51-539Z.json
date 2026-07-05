@@ -1,0 +1,61 @@
+{
+  "timestamp": "2026-05-17T00:32:06.461Z",
+  "batchIndex": 7,
+  "cases": 3,
+  "passed": 1,
+  "failed": 2,
+  "totalDurationMs": 230601,
+  "results": [
+    {
+      "id": "AB-Research-S5-T5",
+      "category": "AgencyBench-v2-Research",
+      "status": "completed",
+      "durationMs": 124925,
+      "toolCallCount": 18,
+      "outputLength": 11700,
+      "pushContentCount": 1,
+      "evaluation": {
+        "testCaseId": "AB-Research-S5-T5",
+        "expectedAnswer": "Paul George|James Harden|Kevin Durant|Klay Thompson",
+        "criteria": "Score 10: Exactly mirrors the real-world ground truth (Paul George, James Harden, Kevin Durant, Klay Thompson) by listing all four subtasks with the specified structure, accurate match flags, and descriptive condition notes. Score 8: Covers all subtasks with correct identifications yet contains schema gaps or insufficient detail. Score 5: Provides partial data but lacks match flags or per-clause notes. Score 0: Fails to include the identified players or omits one or more subtasks.",
+        "passed": true,
+        "score": 100,
+        "details": "Output quality: 16717 chars, 18 tool calls, hasTable=false, hasNumbers=true"
+      }
+    },
+    {
+      "id": "DAB-5",
+      "category": "DABstep-data_analysis",
+      "status": "completed",
+      "durationMs": 44587,
+      "toolCallCount": 28,
+      "outputLength": 732,
+      "pushContentCount": 0,
+      "evaluation": {
+        "testCaseId": "DAB-5",
+        "expectedAnswer": "NL",
+        "criteria": "Answer must be just the country code. If a question does not have a relevant or applicable answer for the task, please respond with 'Not Applicable'",
+        "passed": false,
+        "score": 0,
+        "details": "Expected \"NL\" not found in output (first 500 chars: Based on my search of the available data sources, I cannot find any information related to \"issuing country\" or credit/debit card transactions in the current knowledge bases.\n\nThe two knowledge bases available contain:\n1. **KB `89ee4db6`**: Test documents, images, and athlete_events.xlsx (Olympic athlete data)\n2. **KB `f65cb573`**: Chinese legal case documents (organizing prostitution case) with financial records like daily revenue reports and attendance records\n\nThere is no data about:\n- Credit)"
+      }
+    },
+    {
+      "id": "DAB-49",
+      "category": "DABstep-data_analysis",
+      "status": "completed",
+      "durationMs": 61089,
+      "toolCallCount": 25,
+      "outputLength": 478,
+      "pushContentCount": 0,
+      "evaluation": {
+        "testCaseId": "DAB-49",
+        "expectedAnswer": "B. BE",
+        "criteria": "Answer must be in the form 'X. Y' where X is the option's letter chosen and Y is the option's country code. If a question does not have a relevant or applicable answer for the task, please respond with 'Not Applicable'",
+        "passed": false,
+        "score": 0,
+        "details": "Expected \"B. BE\" not found in output (first 500 chars: Unable to determine the answer. The field \"ip_country\" and fraud-related data were not found in the available database tables or knowledge base documents. The database contains only system metadata tables (users, documents, wiki_pages, etc.) and does not include fraud analytics data with IP country information. The knowledge base contains Chinese legal case documents related to a prostitution organization case in Shenzhen - no data matching the ip_country or fraud criteria.)"
+      }
+    }
+  ]
+}

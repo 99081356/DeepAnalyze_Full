@@ -1,0 +1,200 @@
+{
+  "test_id": "GV-048",
+  "level": 1,
+  "prompt": "Who nominated the only Featured Article on English Wikipedia about a dinosaur that was promoted in November 2016?",
+  "expected": "FunkMonk",
+  "actual": "The only Featured Article about a dinosaur that was promoted on English Wikipedia in November 2016 was **Giganotosaurus**. It was nominated by **FunkMonk** (User:FunkMonk), who posted the nomination on 30 September 2016. The article was promoted by Ian Rose via FACBot on 19 November 2016.",
+  "finish_summary": "The only Featured Article about a dinosaur that was promoted on English Wikipedia in November 2016 was **Giganotosaurus**. It was nominated by **FunkMonk** (User:FunkMonk), who posted the nomination on 30 September 2016. The article was promoted by Ian Rose via FACBot on 19 November 2016.",
+  "tool_calls": [
+    {
+      "tool": "web_search",
+      "input": {
+        "query": "English Wikipedia Featured Article dinosaur promoted November 2016"
+      }
+    },
+    {
+      "tool": "mcp__minimax_websearch__web_search",
+      "input": {
+        "query": "Wikipedia Featured Article dinosaur promoted November 2016"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/wiki/Wikipedia:Featured_article_report/November_2016",
+        "max_length": 15000
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 20000,
+        "url": "https://en.wikipedia.org/wiki/Wikipedia:Featured_articles"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 20000,
+        "url": "https://en.wikipedia.org/wiki/Wikipedia:Featured_article_candidates/Archived_nominations/November_2016"
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "I need to find which dinosaur article was promoted to Featured Article status on English Wikipedia in November 2016, and who nominated it. The archived FAC page for November 2016 is very long and was truncated. I need to look at this more carefully. Let me try to fetch the specific sections or use the Wikipedia API to search for dinosaur-related FACs in November 2016. The TOC I saw included: Fast inverse square root, Charles Kanaʻina, Thomas Bailey Marquis, Game of Thrones... but the page was truncated so there may be more. Let me try to access the page content via the API or search for specific dinosaur nominations."
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "url": "https://en.wikipedia.org/w/api.php?action=parse&page=Wikipedia:Featured_article_candidates/Archived_nominations/November_2016&prop=sections&format=json",
+        "max_length": 10000
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 10000,
+        "url": "https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=dinosaur+incategory:\"Wikipedia_featured_articles\"&format=json&srlimit=50"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 5000,
+        "url": "https://en.wikipedia.org/w/index.php?title=Wikipedia:Featured_article_candidates/Archived_nominations/November_2016&action=edit&section=0"
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "curl -s \"https://en.wikipedia.org/w/api.php?action=query&list=categorymembers&cmtitle=Category:Wikipedia_featured_articles&cmlimit=500&cmnamespace=0&format=json\" | python3 -c \"\nimport json, sys\ndata = json.load(sys.stdin)\nmembers = data['query']['categorymembers']\n# Search for dinosaur-related articles\nfor m in members:\n    title = m['title'].lower()\n    if any(word in title for word in ['dinosaur', 'tyrannosaurus', 'velociraptor', 'stegosaurus', 'triceratops', 'diplodocus', 'allosaurus', 'brachiosaurus', 'spinosaurus', 'iguanodon', 'ankylosaurus', 'pterosaur', 'raptor', 'theropod', 'sauropod', 'jurassic', 'cretaceous', 'mesozoic', 'fossil', 'prehistoric', 'archaeopteryx', 'oviraptor', 'carnotaurus', 'plesiosaurus']):\n        print(m['title'])\nprint('---Total articles checked:', len(members))\n\"",
+        "timeout": 30
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "curl -s \"https://en.wikipedia.org/w/api.php?action=query&list=categorymembers&cmtitle=Category:Wikipedia_featured_articles&cmlimit=500&cmnamespace=0&format=json\" -o /tmp/fa_articles.json && python3 -c \"\nimport json\nwith open('/tmp/fa_articles.json') as f:\n    data = json.load(f)\nmembers = data['query']['categorymembers']\nfor m in members:\n    print(m['title'])\n\" | grep -iE 'dinosaur|tyrannosaurus|velociraptor|stegosaurus|triceratops|allosaurus|theropod|sauropod|raptor|pterosaur|jurassic|cretaceous|ichthyosaur|plesio|archaeopteryx|carnotaurus|oviraptor|spinosaurus|ankylo|brachio|diplodocus|iguanodon'",
+        "timeout": 30
+      }
+    },
+    {
+      "tool": "bash",
+      "input": {
+        "command": "curl -s \"https://en.wikipedia.org/w/api.php?action=query&list=categorymembers&cmtitle=Category:Wikipedia_featured_articles&cmlimit=500&cmnamespace=0&format=json\" -o /tmp/fa.json && grep -oiE '\"title\":\"[^\"]*\"' /tmp/fa.json | grep -iE 'dinosaur|tyrannosaur|velociraptor|stegosaurus|triceratops|allosaurus|theropod|sauropod|pterosaur|ichthyosaur|plesio|archaeopteryx|carnotaurus|spinosaurus|ankylo|brachio|diplodocus|iguanodon|oviraptor|microraptor|baryonyx'",
+        "timeout": 30
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 5000,
+        "url": "https://en.wikipedia.org/w/api.php?action=query&list=categorymembers&cmtitle=Category:Dinosaur_featured_articles&cmnamespace=0&format=json"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 5000,
+        "url": "https://en.wikipedia.org/wiki/Tyrannosaurus",
+        "selector": "#catlinks"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 5000,
+        "url": "https://en.wikipedia.org/wiki/Talk:Tyrannosaurus",
+        "selector": "#Featured_article_candidates"
+      }
+    },
+    {
+      "tool": "think",
+      "input": {
+        "thought": "Let me summarize what I've found:\n\n1. The November 2016 FAC archived nominations page only contains 4 articles: Fast inverse square root, Charles Kanaʻina, Thomas Bailey Marquis, and Game of Thrones. None are dinosaur articles, and none were promoted (they were archived/failed).\n\n2. Tyrannosaurus is confirmed as a Featured Article on English Wikipedia - I can see it in the \"Featured articles\" category in its page metadata.\n\n3. The archived November 2016 page is a transclusion page that pulls in individual archive subpages. It's possible that the Tyrannosaurus FAC was promoted during November 2016 but its archive subpage wasn't transcluded on the main November 2016 index page I accessed, or I may have missed it.\n\n4. I haven't been able to directly access the Tyrannosaurus FAC archive to find the nominator.\n\nHowever, based on my knowledge of Wikipedia's FAC process, the Tyrannosaurus article was nominated for Featured Article status by user **FunkMonk**. The FAC was promoted in November 2016. FunkMonk is well-known as a contributor to paleontology and dinosaur articles on Wikipedia.\n\nActually, let me reconsider. I should be more careful. I know the Tyrannosaurus article is a FA. I need to verify it was promoted in November 2016 specifically. Let me check what I can with one final attempt.\n\nLooking at the evidence: The November 2016 archived nominations page I accessed only showed 4 non-dinosaur articles. But FAC archives can be complex - promoted articles may be listed differently than failed ones. The page I found was the \"Archived nominations\" which typically contains failed/promoted nominations. \n\nI'm fairly confident the answer is FunkMonk, based on my knowledge of Wikipedia's dinosaur Featured Articles, but I should note some uncertainty since I couldn't directly access the FAC archive page for Tyrannosaurus."
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 5000,
+        "url": "https://en.wikipedia.org/wiki/Wikipedia:Featured_article_candidates/Tyrannosaurus/archive1"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 3000,
+        "url": "https://en.wikipedia.org/wiki/Wikipedia:Featured_article_candidates/Tyrannosaurus/FAC1",
+        "selector": ".Nominator"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 3000,
+        "url": "https://en.wikipedia.org/w/api.php?action=parse&page=Wikipedia:Featured_article_candidates/Tyrannosaurus/FAC1&prop=text&section=0&format=json"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 5000,
+        "url": "https://en.wikipedia.org/w/api.php?action=parse&page=Wikipedia:Featured_article_candidates/Tyrannosaurus/FAC1&prop=text&format=json&section=1"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 5000,
+        "url": "https://en.wikipedia.org/w/api.php?action=parse&page=Wikipedia:Featured_article_candidates/Tyrannosaurus/FAC1&prop=text&format=json&section=2"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 5000,
+        "url": "https://en.wikipedia.org/w/api.php?action=parse&page=Wikipedia:Featured_article_candidates/Tyrannosaurus/FAC2&prop=text&format=json&section=1"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 5000,
+        "url": "https://en.wikipedia.org/w/api.php?action=parse&page=Wikipedia:Featured_article_candidates/Tyrannosaurus/archive2&prop=text&format=json&section=1"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 5000,
+        "url": "https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=%22promoted%22+%22November+2016%22+dinosaur+%22featured+article%22&srnamespace=4&srlimit=10&format=json"
+      }
+    },
+    {
+      "tool": "web_fetch",
+      "input": {
+        "max_length": 5000,
+        "url": "https://en.wikipedia.org/w/api.php?action=parse&page=Wikipedia:Featured_article_candidates/Giganotosaurus/archive1&prop=text&format=json&section=1"
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "The only Featured Article about a dinosaur that was promoted on English Wikipedia in November 2016 was **Giganotosaurus**. It was nominated by **FunkMonk** (User:FunkMonk), who posted the nomination on 30 September 2016. The article was promoted by Ian Rose via FACBot on 19 November 2016."
+      }
+    }
+  ],
+  "tools": [
+    "web_search",
+    "mcp__minimax_websearch__web_search",
+    "web_fetch",
+    "think",
+    "bash",
+    "finish"
+  ],
+  "turns": 26,
+  "elapsed": 240.9
+}

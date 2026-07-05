@@ -1,0 +1,118 @@
+version: "3.8"
+
+services:
+  socat-embedding:
+    image: alpine/socat:latest
+    command: TCP-LISTEN:11436,fork,reuseaddr TCP:host.docker.internal:11435
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.base
+    ports:
+      - "21000:21000"
+    volumes:
+      - deepanalyze-data:/app/data
+      - ./config:/app/config:ro
+      - ./data/models:/app/data/models
+    environment:
+      - DATA_DIR=/app/data
+      - PORT=21000
+      - MODEL_CONFIG=/app/config/default.yaml
+      - PG_HOST=postgres
+      - PG_PORT=5432
+      - PG_DATABASE=deepanalyze
+      - PG_USER=deepanalyze
+      - PG_PASSWORD=deepanalyze_dev
+      - HF_ENDPOINT=https://hf-mirror.com
+    depends_on:
+      socat-embedding:
+        condition: service_started
+      ollama:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:21000
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    restart: unless-stopped
+
+  # PostgreSQL with pgvector + zhparser (full Chinese FTS). Production builds
+  # the custom image from config/pg-zhparser.Dockerfile. zhparser is optional
+  # (the app starts without it, FTS falls back to the default tokenizer), so if
+  # you want to skip the source build you can replace the `build:` block with:
+  #   image: pgvector/pgvector:pg17
+  postgres:
+    build:
+      context: ./config
+      dockerfile: pg-zhparser.Dockerfile
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=deepanalyze
+      - POSTGRES_USER=deepanalyze
+      - POSTGRES_PASSWORD=deepanalyze_dev
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U deepanalyze -d deepanalyze"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # PaddleOCR-VL-1.5 standalone inference service
+  paddleocr-vl:
+    build:
+      context: ./paddleocr-vl-service
+      dockerfile: Dockerfile
+    ports:
+      - "8600:8600"
+    volumes:
+      - deepanalyze-models:/app/models:ro
+    environment:
+      - MODEL_PATH=/app/models/docling/vlm/PaddlePaddle--PaddleOCR-VL-1.5
+      - TORCH_DTYPE=bfloat16
+      - MAX_TOKENS=8192
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    profiles:
+      - vlm
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8600/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 120s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  deepanalyze-data:
+  ollama-data:
+  pgdata:
+  deepanalyze-models:

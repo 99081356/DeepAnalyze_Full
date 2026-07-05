@@ -1,0 +1,132 @@
+{
+  "id": "GAIA-V-fact-lookup",
+  "category": "GAIA-L1",
+  "level": "L1-reasoning",
+  "question": "What is the capital of Australia? Give just the city name.",
+  "expectedAnswer": "Canberra",
+  "startTime": "2026-05-16T17:35:38.234Z",
+  "events": [
+    {
+      "sseEvent": "start",
+      "taskId": "ef28186b-3fcd-483d-bb7f-621ff244faa3",
+      "agentType": "general"
+    },
+    {
+      "sseEvent": "content_delta",
+      "delta": "\n\nCa",
+      "taskId": "ef28186b-3fcd-483d-bb7f-621ff244faa3",
+      "turn": 1
+    },
+    {
+      "sseEvent": "progress",
+      "turn": 1,
+      "timestamp": "2026-05-16T17:35:46.081Z",
+      "type": "text",
+      "content": "Canberra"
+    },
+    {
+      "sseEvent": "turn",
+      "turn": 1,
+      "taskId": "ef28186b-3fcd-483d-bb7f-621ff244faa3"
+    },
+    {
+      "sseEvent": "content",
+      "content": "Canberra",
+      "accumulated": "\n\nCa"
+    },
+    {
+      "sseEvent": "turn",
+      "turn": 2,
+      "taskId": "ef28186b-3fcd-483d-bb7f-621ff244faa3"
+    },
+    {
+      "sseEvent": "tool_call",
+      "id": "ef28186b-3fcd-483d-bb7f-621ff244faa3-tc-2-0-finish",
+      "toolName": "finish",
+      "input": {
+        "summary": "The capital of Australia is Canberra."
+      },
+      "status": "running"
+    },
+    {
+      "sseEvent": "progress",
+      "turn": 2,
+      "timestamp": "2026-05-16T17:35:48.465Z",
+      "type": "tool_call",
+      "content": "Calling tool: finish",
+      "toolName": "finish",
+      "toolInput": {
+        "summary": "The capital of Australia is Canberra."
+      }
+    },
+    {
+      "sseEvent": "tool_result",
+      "id": "ef28186b-3fcd-483d-bb7f-621ff244faa3-tc-2-0-finish",
+      "toolName": "finish",
+      "output": "{\"completed\":true,\"summary\":\"The capital of Australia is Canberra.\"}"
+    },
+    {
+      "sseEvent": "progress",
+      "turn": 2,
+      "timestamp": "2026-05-16T17:35:48.465Z",
+      "type": "tool_result",
+      "content": "Tool finish completed",
+      "toolName": "finish",
+      "toolOutput": {
+        "completed": true,
+        "summary": "The capital of Australia is Canberra."
+      }
+    },
+    {
+      "sseEvent": "complete",
+      "taskId": "ef28186b-3fcd-483d-bb7f-621ff244faa3",
+      "output": "The capital of Australia is Canberra.",
+      "toolCalls": [
+        {
+          "id": "ef28186b-3fcd-483d-bb7f-621ff244faa3-tc-2-0-finish",
+          "toolName": "finish",
+          "input": {
+            "summary": "The capital of Australia is Canberra."
+          },
+          "status": "completed",
+          "output": "{\"completed\":true,\"summary\":\"The capital of Australia is Canberra.\"}"
+        }
+      ]
+    },
+    {
+      "sseEvent": "done",
+      "taskId": "ef28186b-3fcd-483d-bb7f-621ff244faa3",
+      "status": "completed",
+      "turnsUsed": 2,
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0
+      }
+    }
+  ],
+  "toolCalls": [
+    {
+      "tool": "finish",
+      "args": {
+        "summary": "The capital of Australia is Canberra."
+      }
+    }
+  ],
+  "reasoning": [],
+  "contentOutput": "The capital of Australia is Canberra.",
+  "pushContents": [],
+  "endTime": "2026-05-16T17:35:48.480Z",
+  "durationMs": 6063,
+  "status": "completed",
+  "error": null,
+  "screenshotPaths": [],
+  "allOutput": "The capital of Australia is Canberra.",
+  "evaluation": {
+    "testCaseId": "GAIA-V-fact-lookup",
+    "expectedAnswer": "Canberra",
+    "criteria": "Answer should be \"Canberra\"",
+    "passed": true,
+    "score": 100,
+    "details": "Found expected answer \"Canberra\" in output"
+  }
+}

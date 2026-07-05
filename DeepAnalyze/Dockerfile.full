@@ -1,0 +1,34 @@
+# =============================================================================
+# DeepAnalyze - Full Image (~3GB)
+# =============================================================================
+# Inherits from base image and adds all ML dependencies:
+# torch (CPU), sentence-transformers, onnxruntime, whisper, docling, paddleocr.
+# Use this for deployments that need local model inference.
+#
+# Build order:
+#   1. docker build -f Dockerfile.base -t da:base .
+#   2. docker build -f Dockerfile.full -t da:full .
+# =============================================================================
+
+FROM da:base
+
+# Install ML dependencies in stages for better caching
+# Stage 1: torch CPU-only (avoids pulling 2GB+ CUDA libs)
+RUN pip3 install --no-cache-dir --break-system-packages \
+      torch torchvision \
+      --index-url https://download.pytorch.org/whl/cpu
+
+# Stage 2: Document processing + OCR + ASR
+RUN pip3 install --no-cache-dir --break-system-packages \
+      opencv-python-headless \
+      sentence-transformers \
+      onnxruntime \
+      openai-whisper \
+      docling>=2.89.0 \
+      rapidocr-onnxruntime \
+      paddleocr-vl && \
+    rm -rf /root/.cache/pip
+
+# Optional: pre-download embedding model weights at build time
+# Uncomment to bake weights into the image (~2GB larger but no runtime download)
+# RUN python3 -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('BAAI/bge-m3')"

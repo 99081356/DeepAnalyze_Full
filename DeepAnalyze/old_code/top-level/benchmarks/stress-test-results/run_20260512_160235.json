@@ -1,0 +1,78 @@
+{
+  "timestamp": "20260512_160235",
+  "total_tests": 2,
+  "completed": 2,
+  "results": [
+    {
+      "id": 1,
+      "name": "压缩恢复-全KB图片VLM审计",
+      "category": "compaction",
+      "difficulty": 5,
+      "query": "审计知识库中所有图片文档的VLM描述质量。要求：1)先用wiki_browse获取所有图片文档列表 2)分批expand查看L1内容（每批20个） 3)将每张图片的VLM质量评级写入工作文件 tmp/vlm_audit.md 4)最终统计：空白/模板文本/质量差/质量好的各多少张。注意：图片有179张，分批处理时如果上下文被压缩，先读工作文件恢复进度再继续。严禁遗漏任何一张图片。",
+      "ground_truth": "~179 images, must survive multiple compactions",
+      "session_id": "146686d2-4ca7-40fc-9b86-cfcf869fb115",
+      "status": "completed",
+      "output": "我来开始审计知识库中所有图片文档的VLM描述质量。首先创建任务清单并获取图片文档列表。结果被截断了，我需要用SQL来获取所有图片类型文档的完整列表。",
+      "output_length": 74,
+      "tool_calls": [
+        {
+          "tool": "agent_todo",
+          "status": "running",
+          "input_preview": "{'action': 'create', 'todos': [{'id': '1', 'subject': '获取所有图片文档列表', 'description': '用wiki_browse获取所有图片类型文档的docId和文件名', 'status': 'in_progress'}, {'id': '2', 'subject': '分批expand查看L1内容（每批20个）', 'descri",
+          "output_preview": "{\"action\":\"bulk_set\",\"total\":4,\"completed\":0,\"inProgress\":1,\"pending\":3,\"todos\":\"🔄 [1] 获取所有图片文档列表 — 用wiki_browse获取所有图片类型文档的docId和文件名 (in_progress)\\n⬜ [2] 分批expand查看L1内容（每批20个） — 逐批获取图片的VLM描述，共约9批 (pen"
+        },
+        {
+          "tool": "wiki_browse",
+          "status": "running",
+          "input_preview": "{'kbId': '89ee4db6-0626-4636-8c66-49a575d05832', 'listDocuments': True}",
+          "output_preview": "{\"kbId\":\"89ee4db6-0626-4636-8c66-49a575d05832\",\"totalDocuments\":243,\"categories\":[{\"type\":\"Word\",\"count\":4,\"sampleFiles\":[\"test-legacy-doc_1_2_3.doc\",\"test-legacy-doc_1_2.doc\",\"test-legacy-doc_1.doc\"]"
+        },
+        {
+          "tool": "run_sql",
+          "status": "running",
+          "input_preview": "{'sql': \"SELECT doc_id, file_name, folder_path, file_type, status \\nFROM documents \\nWHERE kb_id = '89ee4db6-0626-4636-8c66-49a575d05832' \\nAND file_type IN ('png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp'",
+          "output_preview": "{\"error\":\"SQL error: column \\\"doc_id\\\" does not exist\"}"
+        }
+      ],
+      "tool_call_count": 3,
+      "tool_names": [
+        "agent_todo",
+        "wiki_browse",
+        "run_sql"
+      ],
+      "push_contents": [],
+      "push_count": 0,
+      "compaction_events": [],
+      "compaction_count": 0,
+      "turns_used": 6,
+      "total_input_tokens": 0,
+      "total_output_tokens": 381,
+      "elapsed_seconds": 154.6,
+      "event_count": 73
+    },
+    {
+      "id": 2,
+      "name": "压缩恢复-全量文档摘要目录",
+      "category": "compaction",
+      "difficulty": 5,
+      "query": "为知识库中所有243个文档各写一句话摘要，组成完整文档目录。要求：1)先用wiki_browse获取完整文档列表 2)分批expand查看内容（图片用L1，PDF用L0/L1） 3)每批处理完将结果追加到工作文件 tmp/doc_catalog.md 4)按文件夹分组。如果上下文被压缩导致丢失进度，必须先read_file恢复工作文件再继续。最终输出必须覆盖243个文档，一个不漏。",
+      "ground_truth": "243 entries required, will need 12+ expand batches",
+      "session_id": "706d231c-6aed-4b1c-ba36-2f89df842e40",
+      "status": "completed",
+      "output": "",
+      "output_length": 0,
+      "tool_calls": [],
+      "tool_call_count": 0,
+      "tool_names": [],
+      "push_contents": [],
+      "push_count": 0,
+      "compaction_events": [],
+      "compaction_count": 0,
+      "turns_used": 3,
+      "total_input_tokens": 0,
+      "total_output_tokens": 0,
+      "elapsed_seconds": 1.2,
+      "event_count": 6
+    }
+  ]
+}

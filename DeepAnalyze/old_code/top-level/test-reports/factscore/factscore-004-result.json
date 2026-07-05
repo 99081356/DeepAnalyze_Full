@@ -1,0 +1,39 @@
+{
+  "test_id": "factscore-004",
+  "entity": "Glover Teixeira",
+  "prompt": "Tell me a bio of Glover Teixeira",
+  "evaluation_criteria": "Factual accuracy of nationality (Brazilian/American), profession (MMA fighter), UFC career details, citizenship date (November 2020, not 2023), weight class, notable fights and achievements. Citizenship date and fight records are common error points that must be precisely verified.",
+  "output": "Glover Lucas Teixeira (born October 28, 1979) is a Brazilian-American former professional mixed martial artist who competed in the UFC Light Heavyweight division. Born in Sobrália, Minas Gerais, Brazil, he moved to Danbury, Connecticut in 1999 and worked landscaping before pursuing MMA. He won the UFC Light Heavyweight Championship at UFC 267 (October 30, 2021) by submitting Jan Błachowicz, becoming the oldest first-time champion in UFC history at 42 years old. His professional record stands at 33-9, and he holds numerous UFC Light Heavyweight records including most finishes (13), most submissions (7), and most post-fight bonuses (10). He retired after UFC 283 in January 2023 following a loss to Jamahal Hill. He is known for his exceptional Brazilian Jiu-Jitsu, his epic 2022 Fight of the Year against Jiří Procházka, and currently runs Teixeira MMA & Fitness in Bethel, Connecticut.",
+  "finish_summary": "Glover Lucas Teixeira (born October 28, 1979) is a Brazilian-American former professional mixed martial artist who competed in the UFC Light Heavyweight division. Born in Sobrália, Minas Gerais, Brazil, he moved to Danbury, Connecticut in 1999 and worked landscaping before pursuing MMA. He won the UFC Light Heavyweight Championship at UFC 267 (October 30, 2021) by submitting Jan Błachowicz, becoming the oldest first-time champion in UFC history at 42 years old. His professional record stands at 33-9, and he holds numerous UFC Light Heavyweight records including most finishes (13), most submissions (7), and most post-fight bonuses (10). He retired after UFC 283 in January 2023 following a loss to Jamahal Hill. He is known for his exceptional Brazilian Jiu-Jitsu, his epic 2022 Fight of the Year against Jiří Procházka, and currently runs Teixeira MMA & Fitness in Bethel, Connecticut.",
+  "tool_calls": [
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "search",
+        "query": "Glover Teixeira"
+      }
+    },
+    {
+      "tool": "wikipedia",
+      "input": {
+        "action": "get_page",
+        "title": "Glover Teixeira"
+      }
+    },
+    {
+      "tool": "finish",
+      "input": {
+        "summary": "Glover Lucas Teixeira (born October 28, 1979) is a Brazilian-American former professional mixed martial artist who competed in the UFC Light Heavyweight division. Born in Sobrália, Minas Gerais, Brazil, he moved to Danbury, Connecticut in 1999 and worked landscaping before pursuing MMA. He won the UFC Light Heavyweight Championship at UFC 267 (October 30, 2021) by submitting Jan Błachowicz, becoming the oldest first-time champion in UFC history at 42 years old. His professional record stands at 33-9, and he holds numerous UFC Light Heavyweight records including most finishes (13), most submissions (7), and most post-fight bonuses (10). He retired after UFC 283 in January 2023 following a loss to Jamahal Hill. He is known for his exceptional Brazilian Jiu-Jitsu, his epic 2022 Fight of the Year against Jiří Procházka, and currently runs Teixeira MMA & Fitness in Bethel, Connecticut."
+      }
+    }
+  ],
+  "tools": [
+    "wikipedia",
+    "wikipedia",
+    "finish"
+  ],
+  "turns": 3,
+  "elapsed": 67.3,
+  "fact_score": 100,
+  "fact_details": "✓ nationality: american\n✓ nationality: brazilian"
+}

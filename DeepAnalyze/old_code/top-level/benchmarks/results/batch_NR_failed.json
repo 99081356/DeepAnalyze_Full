@@ -1,0 +1,193 @@
+[
+  {
+    "case_id": "NR-01",
+    "case_name": "无冗余 - 精确数字提取",
+    "category": "no_redundancy",
+    "session_id": "48ea442b-f6ea-4baa-951e-40744a473dac",
+    "input": "请找到「antigravity-rag-2026.pdf」，只回答一个数字：系统处理了多少条Telegram消息？不需要任何解释或额外信息。",
+    "ground_truth": "725,521",
+    "started_at": "2026-05-10T10:43:03.207862",
+    "tool_calls": [
+      {
+        "tool": "bash",
+        "input": {
+          "command": "grep -r \"Telegram\" wiki/681aa199-134b-4812-8559-2f20e3b58ab3/documents/*/parsed.md | head -20"
+        },
+        "status": "completed",
+        "output_preview": "{\"exitCode\":0,\"output\":\"wiki/681aa199-134b-4812-8559-2f20e3b58ab3/documents/1bc9eff1-a592-47c4-bf29-2603d9f393c8/parsed.md:We present Antigravity RAG, a production-grade retrieval-augmented generation"
+      },
+      {
+        "tool": "finish",
+        "input": {
+          "summary": "725,521"
+        },
+        "status": "completed",
+        "output_preview": "{\"completed\":true,\"summary\":\"725,521\"}"
+      }
+    ],
+    "push_contents": [],
+    "content_deltas": [],
+    "turns": 2,
+    "full_content": "",
+    "errors": [],
+    "completed": true,
+    "task_id": "2e560462-75ec-4ec1-b9fd-3175665740db",
+    "finished_at": "2026-05-10T10:43:08.830224",
+    "duration_seconds": 5.622362,
+    "tool_call_summary": {
+      "bash": 1,
+      "finish": 1
+    },
+    "evaluation": {
+      "accuracy_score": 0,
+      "completeness_score": 0,
+      "usefulness_score": 0,
+      "tool_usage_score": 0,
+      "total_score": 0,
+      "verdict": "FAIL",
+      "reason": "Agent未能产生任何输出，导致无法提供正确的数字或任何相关信息。",
+      "issues": [
+        "Agent无输出",
+        "未回答问题"
+      ]
+    }
+  },
+  {
+    "case_id": "NR-02",
+    "case_name": "无冗余 - 简短事实确认",
+    "category": "no_redundancy",
+    "session_id": "52761d72-1507-4a04-be94-1ac6c62901ca",
+    "input": "请确认知识库中是否存在名为「test.txt」的文件？如果存在，其第三行的内容是什么？只需直接回答。",
+    "ground_truth": "存在; 第三行：Line three has some special characters: 中文 English 日本語",
+    "started_at": "2026-05-10T10:43:12.458114",
+    "tool_calls": [
+      {
+        "tool": "wiki_browse",
+        "input": {
+          "kbId": "681aa199-134b-4812-8559-2f20e3b58ab3",
+          "listDocuments": true
+        },
+        "status": "completed",
+        "output_preview": "{\"kbId\":\"681aa199-134b-4812-8559-2f20e3b58ab3\",\"totalDocuments\":239,\"categories\":[{\"type\":\"Image\",\"count\":18,\"sampleFiles\":[\"test_img_3.webp\",\"test_img_2.webp\",\"test_img_1.webp\"]},{\"type\":\"JPG@H_1280\""
+      },
+      {
+        "tool": "run_sql",
+        "input": {
+          "sql": "SELECT docid, filename, filepath FROM documents WHERE kb_id = '681aa199-134b-4812-8559-2f20e3b58ab3' AND filename = 'test.txt'"
+        },
+        "status": "completed",
+        "output_preview": "{\"error\":\"SQL error: column \\\"docid\\\" does not exist\"}"
+      },
+      {
+        "tool": "bash",
+        "input": {
+          "command": "find original/681aa199-134b-4812-8559-2f20e3b58ab3/ -name \"test.txt\" -type f 2>/dev/null"
+        },
+        "status": "completed",
+        "output_preview": "{\"exitCode\":0,\"output\":\"\"}"
+      },
+      {
+        "tool": "bash",
+        "input": {
+          "command": "find original/681aa199-134b-4812-8559-2f20e3b58ab3/ -iname \"test.txt\" 2>/dev/null; find wiki/681aa199-134b-4812-8559-2f20e3b58ab3/ -iname \"test.txt\" 2>/dev/null"
+        },
+        "status": "completed",
+        "output_preview": "{\"exitCode\":0,\"output\":\"\"}"
+      },
+      {
+        "tool": "run_sql",
+        "input": {
+          "sql": "SELECT filename, file_path FROM documents WHERE kb_id = '681aa199-134b-4812-8559-2f20e3b58ab3' AND filename ILIKE '%test.txt%'"
+        },
+        "status": "completed",
+        "output_preview": "{\"rowCount\":0,\"showingRows\":0,\"columns\":[\"filename\",\"file_path\"],\"rows\":[]}"
+      },
+      {
+        "tool": "run_sql",
+        "input": {
+          "sql": "SELECT filename FROM documents WHERE kb_id = '681aa199-134b-4812-8559-2f20e3b58ab3' AND filename ILIKE '%.txt%'"
+        },
+        "status": "completed",
+        "output_preview": "{\"rowCount\":0,\"showingRows\":0,\"columns\":[\"filename\"],\"rows\":[]}"
+      },
+      {
+        "tool": "finish",
+        "input": {
+          "summary": "知识库中不存在名为「test.txt」的文件。通过数据库查询（documents 表）和文件系统搜索（find 命令）双重确认，该知识库中没有任何 .txt 格式的文件。"
+        },
+        "status": "completed",
+        "output_preview": "{\"completed\":true,\"summary\":\"知识库中不存在名为「test.txt」的文件。通过数据库查询（documents 表）和文件系统搜索（find 命令）双重确认，该知识库中没有任何 .txt 格式的文件。\"}"
+      }
+    ],
+    "push_contents": [],
+    "content_deltas": [
+      "知识",
+      "库",
+      "中",
+      "**",
+      "不存在",
+      "**",
+      "名为",
+      "「",
+      "test",
+      ".txt",
+      "」",
+      "的",
+      "文件",
+      "。",
+      "数据库",
+      "查询",
+      "和",
+      "文件",
+      "系统",
+      "搜索",
+      "均",
+      "未",
+      "找到",
+      "任何",
+      "匹配",
+      "结果",
+      "（",
+      "该",
+      "知识",
+      "库",
+      "中",
+      "甚至",
+      "没有任何",
+      " `.",
+      "txt",
+      "`",
+      " 格",
+      "式的",
+      "文件",
+      "）。"
+    ],
+    "turns": 5,
+    "full_content": "知识库中**不存在**名为「test.txt」的文件。数据库查询和文件系统搜索均未找到任何匹配结果（该知识库中甚至没有任何 `.txt` 格式的文件）。",
+    "errors": [],
+    "completed": true,
+    "task_id": "d7957d69-84be-4263-9f88-0bbf8d28fbd1",
+    "finished_at": "2026-05-10T10:43:31.642148",
+    "duration_seconds": 19.184034,
+    "tool_call_summary": {
+      "wiki_browse": 1,
+      "run_sql": 3,
+      "bash": 2,
+      "finish": 1
+    },
+    "evaluation": {
+      "accuracy_score": 0,
+      "completeness_score": 0,
+      "usefulness_score": 0,
+      "tool_usage_score": 0,
+      "total_score": 0,
+      "verdict": "FAIL",
+      "reason": "Agent的回答与参考事实完全相反。它断言知识库中不存在「test.txt」文件，完全未完成提取第三行内容的任务，且未能遵循“直接回答”和“无冗余”的指令。",
+      "issues": [
+        "准确性严重错误：Agent错误地声称知识库中不存在「test.txt」文件。",
+        "完整性缺失：因为未能找到文件，所以完全没有回答“第三行内容是什么”这一核心问题。",
+        "违背简洁指令：Agent不仅没有做到“只需直接回答”，反而添加了“数据库查询和文件系统搜索均未找到……”等冗余的分析过程。"
+      ]
+    }
+  }
+]

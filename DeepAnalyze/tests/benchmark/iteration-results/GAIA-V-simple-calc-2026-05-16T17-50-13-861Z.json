@@ -1,0 +1,185 @@
+{
+  "id": "GAIA-V-simple-calc",
+  "category": "GAIA-L1",
+  "level": "L1-reasoning",
+  "question": "What is 15% of 8 billion? Give just the number.",
+  "expectedAnswer": "1200000000",
+  "startTime": "2026-05-16T17:50:13.861Z",
+  "events": [
+    {
+      "sseEvent": "start",
+      "taskId": "02d54b5b-a146-4715-913e-352e312b1814",
+      "agentType": "general"
+    },
+    {
+      "sseEvent": "turn",
+      "turn": 1,
+      "taskId": "02d54b5b-a146-4715-913e-352e312b1814"
+    },
+    {
+      "sseEvent": "tool_call",
+      "id": "02d54b5b-a146-4715-913e-352e312b1814-tc-1-0-bash",
+      "toolName": "bash",
+      "input": {
+        "command": "python3 -c \"print(0.15 * 8000000000)\""
+      },
+      "status": "running"
+    },
+    {
+      "sseEvent": "progress",
+      "turn": 1,
+      "timestamp": "2026-05-16T17:50:23.364Z",
+      "type": "tool_call",
+      "content": "Calling tool: bash",
+      "toolName": "bash",
+      "toolInput": {
+        "command": "python3 -c \"print(0.15 * 8000000000)\""
+      }
+    },
+    {
+      "sseEvent": "tool_result",
+      "id": "02d54b5b-a146-4715-913e-352e312b1814-tc-1-0-bash",
+      "toolName": "bash",
+      "output": "{\"exitCode\":0,\"output\":\"1200000000.0\"}"
+    },
+    {
+      "sseEvent": "progress",
+      "turn": 1,
+      "timestamp": "2026-05-16T17:50:23.395Z",
+      "type": "tool_result",
+      "content": "Tool bash completed",
+      "toolName": "bash",
+      "toolOutput": {
+        "exitCode": 0,
+        "output": "1200000000.0"
+      }
+    },
+    {
+      "sseEvent": "content_delta",
+      "delta": "\n\n1,200,00",
+      "taskId": "02d54b5b-a146-4715-913e-352e312b1814",
+      "turn": 2
+    },
+    {
+      "sseEvent": "progress",
+      "turn": 2,
+      "timestamp": "2026-05-16T17:50:24.864Z",
+      "type": "text",
+      "content": "1,200,000,000"
+    },
+    {
+      "sseEvent": "turn",
+      "turn": 2,
+      "taskId": "02d54b5b-a146-4715-913e-352e312b1814"
+    },
+    {
+      "sseEvent": "content",
+      "content": "1,200,000,000",
+      "accumulated": "\n\n1,200,00"
+    },
+    {
+      "sseEvent": "tool_call",
+      "id": "02d54b5b-a146-4715-913e-352e312b1814-tc-2-0-finish",
+      "toolName": "finish",
+      "input": {
+        "summary": "15% of 8 billion is 1.2 billion (1,200,000,000)."
+      },
+      "status": "running"
+    },
+    {
+      "sseEvent": "progress",
+      "turn": 2,
+      "timestamp": "2026-05-16T17:50:24.864Z",
+      "type": "tool_call",
+      "content": "Calling tool: finish",
+      "toolName": "finish",
+      "toolInput": {
+        "summary": "15% of 8 billion is 1.2 billion (1,200,000,000)."
+      }
+    },
+    {
+      "sseEvent": "tool_result",
+      "id": "02d54b5b-a146-4715-913e-352e312b1814-tc-2-0-finish",
+      "toolName": "finish",
+      "output": "{\"completed\":true,\"summary\":\"15% of 8 billion is 1.2 billion (1,200,000,000).\"}"
+    },
+    {
+      "sseEvent": "progress",
+      "turn": 2,
+      "timestamp": "2026-05-16T17:50:24.864Z",
+      "type": "tool_result",
+      "content": "Tool finish completed",
+      "toolName": "finish",
+      "toolOutput": {
+        "completed": true,
+        "summary": "15% of 8 billion is 1.2 billion (1,200,000,000)."
+      }
+    },
+    {
+      "sseEvent": "complete",
+      "taskId": "02d54b5b-a146-4715-913e-352e312b1814",
+      "output": "15% of 8 billion is 1.2 billion (1,200,000,000).",
+      "toolCalls": [
+        {
+          "id": "02d54b5b-a146-4715-913e-352e312b1814-tc-1-0-bash",
+          "toolName": "bash",
+          "input": {
+            "command": "python3 -c \"print(0.15 * 8000000000)\""
+          },
+          "status": "completed",
+          "output": "{\"exitCode\":0,\"output\":\"1200000000.0\"}"
+        },
+        {
+          "id": "02d54b5b-a146-4715-913e-352e312b1814-tc-2-0-finish",
+          "toolName": "finish",
+          "input": {
+            "summary": "15% of 8 billion is 1.2 billion (1,200,000,000)."
+          },
+          "status": "completed",
+          "output": "{\"completed\":true,\"summary\":\"15% of 8 billion is 1.2 billion (1,200,000,000).\"}"
+        }
+      ]
+    },
+    {
+      "sseEvent": "done",
+      "taskId": "02d54b5b-a146-4715-913e-352e312b1814",
+      "status": "completed",
+      "turnsUsed": 2,
+      "usage": {
+        "inputTokens": 0,
+        "outputTokens": 0
+      }
+    }
+  ],
+  "toolCalls": [
+    {
+      "tool": "bash",
+      "args": {
+        "command": "python3 -c \"print(0.15 * 8000000000)\""
+      }
+    },
+    {
+      "tool": "finish",
+      "args": {
+        "summary": "15% of 8 billion is 1.2 billion (1,200,000,000)."
+      }
+    }
+  ],
+  "reasoning": [],
+  "contentOutput": "15% of 8 billion is 1.2 billion (1,200,000,000).",
+  "pushContents": [],
+  "endTime": "2026-05-16T17:50:25.149Z",
+  "durationMs": 7136,
+  "status": "completed",
+  "error": null,
+  "screenshotPaths": [],
+  "allOutput": "15% of 8 billion is 1.2 billion (1,200,000,000).",
+  "evaluation": {
+    "testCaseId": "GAIA-V-simple-calc",
+    "expectedAnswer": "1200000000",
+    "criteria": "Answer should be 1,200,000,000 or 1.2 billion",
+    "passed": true,
+    "score": 100,
+    "details": "Found expected answer \"1200000000\" in output"
+  }
+}
