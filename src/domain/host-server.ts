@@ -2,6 +2,33 @@
 import type { Pool, QueryResultRow } from "pg";
 import { randomUUID } from "node:crypto";
 
+type HostServerFieldName = keyof HostServer | keyof CreateHostServerInput;
+
+/**
+ * 允许通过 PATCH 更新的 host_servers 列白名单。
+ * 防御 SQL 注入：列名虽然走字符串插值进 SET 子句，但只接受这个 Set 里的编译期常量。
+ * 与 routes/host-servers.ts 的 zod schema 配合（路由层先过滤未知 key）。
+ */
+const UPDATEABLE_HOST_SERVER_FIELDS: ReadonlySet<HostServerFieldName> = Object.freeze(new Set<HostServerFieldName>([
+  "hostname",
+  "ssh_target_host",
+  "ssh_target_port",
+  "ssh_user",
+  "ssh_key_encrypted",
+  "ssh_key_salt",
+  "port_range_start",
+  "port_range_end",
+  "port_block_size",
+  "cpu_cores",
+  "memory_gb",
+  "gpu_count",
+  "gpu_vram_mb",
+  "gpu_model",
+  "labels",
+  "notes",
+  "status",
+]));
+
 export interface HostServer {
   id: string;
   hostname: string;
@@ -90,16 +117,24 @@ export class HostServerRepo {
     return rows;
   }
 
-  async update(id: string, patch: Partial<CreateHostServerInput>): Promise<HostServer | null> {
+  async update(id: string, patch: Partial<CreateHostServerInput> & { status?: HostServer["status"] }): Promise<HostServer | null> {
     const fields: string[] = [];
     const values: unknown[] = [];
     let i = 1;
     for (const [k, v] of Object.entries(patch)) {
+      // 列名白名单：拒绝任何不在白名单内的 key（防 SQL 注入）
+      if (!UPDATEABLE_HOST_SERVER_FIELDS.has(k as HostServerFieldName)) continue;
       if (k === "labels") {
         fields.push(`labels = $${i++}`); values.push(JSON.stringify(v));
       } else {
         fields.push(`${k} = $${i++}`); values.push(v);
       }
+    }
+    // 没有可更新字段：返回当前行（PATCH 空对象 = 不变）
+    if (fields.length === 0) {
+      const { rows } = await this.pool().query<HostServer>(
+        `SELECT * FROM host_servers WHERE id = $1`, [id]);
+      return rows[0] ?? null;
     }
     fields.push(`updated_at = now()`);
     values.push(id);
