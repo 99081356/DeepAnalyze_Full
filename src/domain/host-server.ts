@@ -68,9 +68,9 @@ export interface CreateHostServerInput {
   memory_gb?: number;
   gpu_count?: number;
   gpu_vram_mb?: number;
-  gpu_model?: string;
+  gpu_model?: string | null;
   labels?: Record<string, unknown>;
-  notes?: string;
+  notes?: string | null;
 }
 
 export class HostServerRepo {

@@ -178,4 +178,40 @@ describe("PATCH /api/v1/host-servers/:id", () => {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
   });
+
+  test("HostServerRepo.update 直接调用时拒绝未知列名（domain-layer 防御）", async () => {
+    // 直接构造 HostServerRepo 而不经过路由层 zod — 验证 Set 白名单兜底
+    const { HostServerRepo } = await import("../../src/domain/host-server");
+    const { getPool } = await import("../../src/store/pg");
+    const repo = new HostServerRepo(getPool);
+
+    // 先创建一个 host
+    const created = await repo.create({
+      hostname: "domain-allowlist-test",
+      ssh_target_host: "10.0.0.96",
+    });
+    const originalId = created.id;
+    const originalHostname = created.hostname;
+
+    try {
+      // 直接调用 update，绕过 zod — Set 应该过滤掉未知列
+      const result = await repo.update(created.id, {
+        "id = 'hst_evil'; DROP TABLE workers--": "x",
+        hostname: "should-still-work",
+      } as any);
+
+      // 已知列 hostname 应该被更新
+      expect(result?.hostname).toBe("should-still-work");
+      // id 不应该被改（虽然不在白名单，但 SQL 也没注入）
+      expect(result?.id).toBe(originalId);
+
+      // 验证 DB 里 workers 表还在（注入没生效）
+      const { rows: workersCheck } = await getPool().query(
+        "SELECT COUNT(*)::int AS n FROM workers"
+      );
+      expect(workersCheck[0].n).toBeGreaterThanOrEqual(0);  // 表存在即可
+    } finally {
+      await repo.delete(created.id);
+    }
+  });
 });

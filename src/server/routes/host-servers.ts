@@ -22,6 +22,8 @@ export function createHostServerRoutes(): Hono {
     ssh_target_host: z.string().min(1).optional(),
     ssh_target_port: z.number().int().min(1).max(65535).optional(),
     ssh_user: z.string().min(1).optional(),
+    // ssh_key_* intentionally NOT .nullable() — clearing SSH keys via PATCH is disallowed;
+    // rotate via explicit re-PUT with new key material. See security note in spec backlog.
     ssh_key_encrypted: z.string().optional(),
     ssh_key_salt: z.string().optional(),
     port_range_start: z.number().int().min(1).max(65535).optional(),
@@ -31,9 +33,9 @@ export function createHostServerRoutes(): Hono {
     memory_gb: z.number().int().positive().optional(),
     gpu_count: z.number().int().nonnegative().optional(),
     gpu_vram_mb: z.number().int().nonnegative().optional(),
-    gpu_model: z.string().optional(),
+    gpu_model: z.string().nullable().optional(),
     labels: z.record(z.string(), z.unknown()).optional(),
-    notes: z.string().optional(),
+    notes: z.string().nullable().optional(),
     status: z.enum(["active", "maintenance", "retired"]).optional(),
   }).strict();
 
