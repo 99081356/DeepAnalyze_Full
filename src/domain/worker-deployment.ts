@@ -17,6 +17,13 @@ import {
   getBackup,
 } from "./worker-backup.js";
 
+// Re-export SshExecutor abstraction (T2). New code should use connectRealSsh +
+// RealSshExecutor (or MockSshExecutor in tests) instead of the legacy
+// connectSsh/execRemote helpers below. The deployWorker body is NOT refactored
+// here — T6 will switch it over to the new abstraction.
+export { connectRealSsh, RealSshExecutor, MockSshExecutor } from "./ssh-executor.js";
+export type { SshExecutor, SshExecResult, ConnectSshOpts } from "./ssh-executor.js";
+
 export interface DeployOpts {
   workerId: string;
   sshHost: string;
@@ -172,6 +179,8 @@ export async function deployWorker(opts: DeployOpts): Promise<DeployResult> {
   }
 }
 
+// DEPRECATED: 用 connectRealSsh + RealSshExecutor 替代；保留是为了不破坏
+// deployWorker 现有逻辑（T6 才重构为 deployWorkerStack）。
 // FIX #3: connectSsh listener leak. The original brief used:
 //   conn.on("ready", () => resolve());
 //   conn.on("error", reject);
