@@ -7,7 +7,7 @@ export const HUB_CONFIG = {
   appName: "DeepAnalyze Hub",
 
   /** Semantic version */
-  version: "0.7.7",
+  version: "0.8.0",
 
   /** HTTP server port */
   port: parseInt(process.env.PORT || "22000", 10),
@@ -69,6 +69,16 @@ export const HUB_CONFIG = {
   /** Docker registry for worker-side images (da-postgres etc.) */
   docker: {
     registry: process.env.HUB_DOCKER_REGISTRY ?? "",
+  },
+
+  /** Backup lifecycle (Spec 2.2) */
+  backup: {
+    retentionDays: parseInt(process.env.HUB_BACKUP_RETENTION_DAYS || "30", 10),
+    cleanupIntervalHours: parseInt(
+      process.env.HUB_BACKUP_CLEANUP_INTERVAL_HOURS || "24",
+      10,
+    ),
+    storageDir: process.env.HUB_BACKUP_DIR || "./data/backups",
   },
 } as const;
 

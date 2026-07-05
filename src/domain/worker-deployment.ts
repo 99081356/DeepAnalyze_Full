@@ -14,6 +14,7 @@ import { decryptString } from "../core/crypto.js";
 import {
   createBackupRecord,
   updateBackupStatus,
+  updateBackupPaths,
   getBackup,
 } from "./worker-backup.js";
 import {
@@ -28,6 +29,8 @@ import {
 import { ensurePgCredentials } from "./worker-pg-credentials.js";
 import { connectRealSsh } from "./ssh-executor.js";
 import type { SshExecutor } from "./ssh-executor.js";
+import { executeWorkerBackup } from "./worker-backup-executor.js";
+import { HUB_CONFIG } from "../core/config.js";
 
 // Re-export SshExecutor abstraction (T2). New code should use connectRealSsh +
 // RealSshExecutor (or MockSshExecutor in tests) instead of the legacy
@@ -275,16 +278,46 @@ async function pollHealth(conn: Client, port: number, timeoutSec: number): Promi
 
 // --- 升级/停止/重启 包装函数 ---
 
+// ─── DI surface for upgradeWorker (Spec 2.2) ─────────────────────────
+// 同 Plan 2.1 T6/T7 的 pattern：生产 caller 不传 deps，测试传 mock。
+// query/pool/connectRealSsh/executeWorkerBackup/deployWorker/decryptSshKey
+// 都是测试可注入的接缝。生产代码用 `??` 兜底真实实现。
+export interface UpgradeWorkerDeps {
+  query?: <T extends Record<string, unknown> = Record<string, unknown>>(
+    text: string,
+    params?: unknown[],
+  ) => Promise<{ rows: T[] }>;
+  pool?: () => import("pg").Pool;
+  decryptSshKey?: (encrypted: string) => Promise<string>;
+  connectRealSsh?: (opts: {
+    host: string; port: number; username: string; privateKey: string;
+  }) => Promise<SshExecutor>;
+  executeWorkerBackup?: typeof executeWorkerBackup;
+  deployWorker?: typeof deployWorker;
+  /** 测试用：覆盖 HUB_CONFIG.backup */
+  backupConfig?: {
+    storageDir: string;
+    retentionDays: number;
+    cleanupIntervalHours: number;
+  };
+}
+
 export async function upgradeWorker(
   workerId: string, newTag: string, initiatedBy: string,
   opts?: { skipBackup?: boolean },
+  deps?: UpgradeWorkerDeps,
 ): Promise<DeployResult & { backupId?: string }> {
   const skipBackup = opts?.skipBackup ?? false;
-  // 注意：domain 函数签名是 pool: () => Pool，所以这里赋函数引用
-  const pool = getPool;
+  const q = deps?.query ?? query;
+  const pool = deps?.pool ?? getPool;
+  const decryptKey = deps?.decryptSshKey ?? decryptSshKey;
+  const connect = deps?.connectRealSsh ?? connectRealSsh;
+  const runBackup = deps?.executeWorkerBackup ?? executeWorkerBackup;
+  const deploy = deps?.deployWorker ?? deployWorker;
+  const backupCfg = deps?.backupConfig ?? HUB_CONFIG.backup;
 
   // ─── 1. 预检：worker 存在 + SSH 凭据 ───
-  const w = await query<{
+  const w = await q<{
     ssh_target_host: string; ssh_target_port: number; ssh_user: string;
     ssh_key_encrypted: string | null; current_image_tag: string;
   }>(`SELECT ssh_target_host, ssh_target_port, ssh_user, ssh_key_encrypted, current_image_tag
@@ -301,14 +334,13 @@ export async function upgradeWorker(
   // 的无意义备份污染 worker_backups 表。
   let backupId: string | undefined;
   if (!skipBackup) {
-    const ts = new Date().toISOString().replace(/[:.]/g, "-");
     const backup = await createBackupRecord(pool, {
       workerId,
       backupType: "pre_upgrade",
       fromTag,
       toTag: newTag,
-      pgDumpPath: `/opt/da/${workerId}/backups/${ts}.dump`,
-      dataArchivePath: `/opt/da/${workerId}/backups/${ts}-data.tar.gz`,
+      pgDumpPath: null,        // 由 executor 填
+      dataArchivePath: null,
       deployJobId: null,
       createdBy: initiatedBy,
     });
@@ -316,14 +348,57 @@ export async function upgradeWorker(
   }
 
   // ─── 3. 解密私钥（AES）— 见 Task F3 ───
-  const privateKey = await decryptSshKey(row.ssh_key_encrypted);
+  const privateKey = await decryptKey(row.ssh_key_encrypted);
 
-  // ─── 4. 调用现有 deployWorker（保留原有行为） ───
-  // deployWorker 内部 catch 所有错误并返回 { success: false, ... }，不 throw。
-  // 我们需要在 success=false 时标记 backup=failed，在 success=true 时关联+verified。
+  // ─── 4. 执行真实备份（skipBackup=true 跳过）─────────────────────────
+  if (!skipBackup && backupId) {
+    let ssh: SshExecutor | null = null;
+    try {
+      ssh = await connect({
+        host: row.ssh_target_host,
+        port: row.ssh_target_port,
+        username: row.ssh_user,
+        privateKey,
+      });
+      const result = await runBackup(ssh, {
+        workerId,
+        backupId,
+        workerImageTag: fromTag,
+        hubBackupDir: backupCfg.storageDir,
+        retentionDays: backupCfg.retentionDays,
+      });
+
+      if (!result.success) {
+        // 备份失败：abort upgrade（不调 deployWorker）
+        await updateBackupStatus(pool, backupId, "failed");
+        return {
+          jobId: "",
+          success: false,
+          error: `pre-upgrade backup failed: ${result.error ?? "unknown"}`,
+          logs: [],
+          backupId,
+        };
+      }
+
+      // 成功：写入真实路径到 backup 记录
+      await updateBackupPaths(pool, backupId, {
+        pgDumpPath: result.pgDumpPath,
+        dataArchivePath: result.dataArchivePath,
+        manifestPath: result.manifestPath,
+        sizeBytes: result.sizeBytes,
+        pgVersion: result.pgVersion,
+      });
+    } finally {
+      if (ssh) {
+        try { ssh.close(); } catch {}
+      }
+    }
+  }
+
+  // ─── 5. 调用现有 deployWorker ───
   let result: DeployResult;
   try {
-    result = await deployWorker({
+    result = await deploy({
       workerId,
       sshHost: row.ssh_target_host,
       sshPort: row.ssh_target_port,
@@ -339,30 +414,25 @@ export async function upgradeWorker(
       initiatedBy,
     });
   } catch (e) {
-    // deployWorker 内部不应抛出（有自己的 catch），但为安全起见
     if (backupId) {
       await updateBackupStatus(pool, backupId, "failed");
     }
     throw e;
   }
 
-  // ─── 5. 根据 deploy 结果链接 backup ↔ deploy_job ───
+  // ─── 6. 根据 deploy 结果链接 backup ↔ deploy_job ───
   if (backupId) {
     if (result.success && result.jobId) {
-      // 链接 deploy_jobs.backup_id → backup
       await pool().query(
         `UPDATE deploy_jobs SET backup_id = $1 WHERE id = $2`,
         [backupId, result.jobId],
       );
-      // 反向链接 worker_backups.deploy_job_id → deploy_job
       await pool().query(
         `UPDATE worker_backups SET deploy_job_id = $1 WHERE id = $2`,
         [result.jobId, backupId],
       );
-      // 标记 backup 为 verified
       await updateBackupStatus(pool, backupId, "verified");
     } else {
-      // 部署失败：标记 backup 为 failed
       await updateBackupStatus(pool, backupId, "failed");
     }
   }

@@ -17,8 +17,10 @@ export interface WorkerBackup {
   to_tag: string | null;
   pg_dump_path: string | null;
   data_archive_path: string | null;
+  manifest_path: string | null;
+  pg_version: string | null;
   size_bytes: number | null;
-  status: "created" | "verified" | "restored" | "failed" | "expired";
+  status: "created" | "verified" | "restored" | "failed" | "expired" | "deletion_failed";
   deploy_job_id: string | null;
   created_by: string;
   created_at: string;
@@ -53,6 +55,8 @@ function mapRow(row: unknown): WorkerBackup {
     to_tag: (r.to_tag as string | null) ?? null,
     pg_dump_path: (r.pg_dump_path as string | null) ?? null,
     data_archive_path: (r.data_archive_path as string | null) ?? null,
+    manifest_path: (r.manifest_path as string | null) ?? null,
+    pg_version: (r.pg_version as string | null) ?? null,
     size_bytes: r.size_bytes != null ? Number(r.size_bytes) : null,
     status: r.status as WorkerBackup["status"],
     deploy_job_id: (r.deploy_job_id as string | null) ?? null,
@@ -156,4 +160,37 @@ export async function deleteBackup(pool: () => Pool, backupId: string): Promise<
     [backupId],
   );
   return (rowCount ?? 0) > 0;
+}
+
+/**
+ * Update backup record with real backup execution paths + size + pg_version.
+ *
+ * 由 upgradeWorker 在 backup executor 完成后调用 — 把 metadata-only 记录变成
+ * 带真实路径的记录。
+ */
+export async function updateBackupPaths(
+  pool: () => Pool,
+  backupId: string,
+  paths: {
+    pgDumpPath: string | null;
+    dataArchivePath: string | null;
+    manifestPath: string | null;
+    sizeBytes: number | null;
+    pgVersion: string | null;
+  },
+): Promise<void> {
+  await pool().query(
+    `UPDATE worker_backups
+       SET pg_dump_path = $2,
+           data_archive_path = $3,
+           manifest_path = $4,
+           size_bytes = $5,
+           pg_version = $6
+     WHERE id = $1`,
+    [
+      backupId,
+      paths.pgDumpPath, paths.dataArchivePath, paths.manifestPath,
+      paths.sizeBytes, paths.pgVersion,
+    ],
+  );
 }
