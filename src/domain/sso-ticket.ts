@@ -124,7 +124,7 @@ export async function createTicket(
  * - 用 ticket 找 sso_tickets 行（FOR UPDATE 防并发兑换）
  * - 校验未消费、未过期、worker 匹配
  * - 标记 consumed_at = now()
- * - 用 issueTokenPair(userId) 签发 access_token
+ * - 用 issueTokenPair(userId, {name, org_id}) 签发带用户信息的 access_token
  */
 export async function exchangeTicket(
   pool: () => Pool,
@@ -187,8 +187,13 @@ export async function exchangeTicket(
     if (uRows.length === 0) throw new Error("user not found");
     const user = uRows[0];
 
-    // 5. 签发 access_token（复用现有 issueTokenPair — RS256 + kid）
-    const { access_token } = issueTokenPair(user.id);
+    // 5. 签发 access_token，把 display_name/org_id 作为 claim 写入。
+    //    DA 端 verifyHubJwt 直接从 JWT payload 读 name/org_id，无需再调 Hub /users/:id。
+    //    display_name 为空时回退到 user.id（保证 DA UI 不显示 "unknown"）。
+    const { access_token } = issueTokenPair(user.id, {
+      name: user.display_name || user.id,
+      org_id: user.organization_id,
+    });
 
     return {
       accessToken: access_token,

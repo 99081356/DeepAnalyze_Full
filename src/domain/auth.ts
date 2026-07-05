@@ -23,11 +23,28 @@ export interface TokenPair {
   expires_in: number;
 }
 
-/** 签发 JWT 双 token */
-export function issueTokenPair(userId: string): TokenPair {
+/**
+ * 签发 JWT 双 token。
+ * extraClaims 仅写入 access_token（refresh_token 只用于换发，不需要业务字段）。
+ * 目前 SSO exchange 把 name/org_id 带过来，让 DA 端 verifyHubJwt 能直接拿到用户名。
+ */
+export function issueTokenPair(
+  userId: string,
+  extraClaims?: { name?: string; org_id?: string | null },
+): TokenPair {
   const { privateKeyPem, kid } = getKeyPair();
+  const accessPayload: Record<string, unknown> = {
+    sub: userId,
+    type: "access",
+    iss: JWT_ISSUER,
+  };
+  if (extraClaims?.name !== undefined) accessPayload.name = extraClaims.name;
+  if (extraClaims?.org_id !== undefined && extraClaims.org_id !== null) {
+    accessPayload.org_id = extraClaims.org_id;
+  }
+
   const access_token = jwt.sign(
-    { sub: userId, type: "access", iss: JWT_ISSUER },
+    accessPayload,
     privateKeyPem,
     { algorithm: "RS256", expiresIn: ACCESS_EXPIRY, keyid: kid } as jwt.SignOptions,
   );
