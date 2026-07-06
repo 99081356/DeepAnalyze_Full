@@ -115,3 +115,182 @@
 .btn-primary:hover:not(:disabled) { background: #2563eb; }
 .btn-stop { background: #ef4444; color: white; }
 .btn-secondary { background: transparent; color: var(--text-muted, #6b7280); border: 1px solid var(--border-color, #d1d5db); }
+
+/* ---------------------------------------------------------------------------
+   MinerU 配置（MinerUConfig.tsx）—— 后端模式选择按钮组 + 开关
+   注意：这些类名在 MinerUConfig.tsx 引用但历史上从未定义，
+   导致三个 <button> 渲染成一坨文字、选中态无高亮，看起来"选不了"。
+   --------------------------------------------------------------------------- */
+
+/* 后端按钮容器：横向排列、自动换行 */
+.mineru-backend-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* 单个后端按钮：卡片样式，标题+说明上下两行 */
+.mineru-backend-btn {
+  flex: 1 1 30%;
+  min-width: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color, #d1d5db);
+  border-radius: 6px;
+  background: var(--bg-card, #fff);
+  color: var(--text-primary, #111827);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+.mineru-backend-btn:hover {
+  border-color: #3b82f6;
+}
+/* 选中态：高亮边框 + 浅蓝底 */
+.mineru-backend-btn.active {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  box-shadow: 0 0 0 1px #3b82f6 inset;
+}
+.mineru-backend-btn strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+.mineru-backend-btn small {
+  font-size: 11px;
+  color: var(--text-muted, #6b7280);
+  line-height: 1.3;
+}
+
+/* ===========================================================================
+   iOS 风滑块开关 + toggle 行布局
+   用于：启用 MinerU（强调版）/ 公式识别 / 表格识别 / 图片分析
+   结构：<label class="mineru-switch"><input type="checkbox"><span class="mineru-slider"/></label>
+   ===========================================================================*/
+
+/* 滑块开关基础 —— input 视觉隐藏，用 .slider 画轨道+圆点 */
+.mineru-switch {
+  position: relative;
+  display: inline-block;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.mineru-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+.mineru-slider {
+  position: absolute;
+  inset: 0;
+  background: #cbd5e1;
+  border-radius: 999px;
+  transition: background 0.2s ease;
+  /* 用 flex 让圆点天然垂直居中，避免 top 像素偏移导致溢出 */
+  display: flex;
+  align-items: center;
+  padding: 0 2px;
+}
+.mineru-slider::before {
+  content: "";
+  /* 不再用 absolute + top/left，宽度由 flex 控制，位移用 transform */
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease;
+}
+/* 选中态：蓝底 + 圆点右移（位移 = 容器宽 - 圆点宽 - 左右 padding，自适应） */
+.mineru-switch input:checked + .mineru-slider {
+  background: #3b82f6;
+}
+.mineru-switch input:checked + .mineru-slider::before {
+  transform: translateX(calc(100% + 0px));
+  /* translateX(100%) 相对圆点自身宽度；slider 是 flex，justify-content 默认 flex-start，
+     圆点初始在左 padding(2px) 处，位移 100%(=圆点宽) 后正好贴右 padding(2px)，居中且不溢出 */
+}
+.mineru-switch input:focus-visible + .mineru-slider {
+  outline: 2px solid rgba(59, 130, 246, 0.35);
+  outline-offset: 2px;
+}
+/* 强调版（启用总开关）：更大 */
+.mineru-switch--lg {
+  width: 44px;
+  height: 24px;
+}
+.mineru-switch--lg .mineru-slider::before {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+}
+
+/* toggle 行：左边标题+说明，右边滑块 */
+.mineru-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 6px;
+  background: var(--bg-card, #fff);
+  transition: border-color 0.15s, background 0.15s;
+}
+.mineru-toggle-row:hover {
+  border-color: #93c5fd;
+}
+/* 行内被启用时（通过 :has 检测 checkbox 选中）—— 给整行加高亮 */
+.mineru-toggle-row:has(input:checked) {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+.mineru-toggle-label {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.mineru-toggle-label strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+}
+.mineru-toggle-label small {
+  font-size: 11px;
+  color: var(--text-muted, #6b7280);
+  line-height: 1.3;
+}
+
+/* "启用 MinerU" 强调行：顶部、整行可点、视觉与下方选项拉开 */
+.mineru-enable-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #f8fafc 0%, var(--bg-card, #fff) 100%);
+}
+.mineru-enable-row:has(input:checked) {
+  border-color: #3b82f6;
+  background: linear-gradient(180deg, #eff6ff 0%, #f8fafc 100%);
+}
+
+/* 公式/表格/图片分析 容器：纵向堆叠的 toggle 行 */
+.mineru-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}

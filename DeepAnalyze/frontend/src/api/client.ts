@@ -33,6 +33,7 @@ import type {
   ChannelsConfig,
   ChannelStatus,
   AnalysisScope,
+  MinerUConfig,
   DoclingConfig,
   DoclingModels,
   VlmContainerInfo,
@@ -809,8 +810,8 @@ export const api = {
 
   // --- MinerU Configuration ---
   getMinerUConfig: () =>
-    request<Record<string, unknown>>("/api/settings/mineru-config"),
-  saveMinerUConfig: (config: Record<string, unknown>) =>
+    request<MinerUConfig>("/api/settings/mineru-config"),
+  saveMinerUConfig: (config: MinerUConfig) =>
     request<{ success: boolean }>("/api/settings/mineru-config", {
       method: "PUT",
       body: JSON.stringify(config),

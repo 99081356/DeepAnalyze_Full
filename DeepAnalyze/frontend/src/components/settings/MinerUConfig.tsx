@@ -202,14 +202,20 @@ function MinerUAdvancedOptions() {
         </div>
       )}
 
-      <label className="module-card__field">
-        <span>启用 MinerU</span>
-        <input
-          type="checkbox"
-          checked={config.enabled}
-          onChange={(e) => updateField("enabled", e.target.checked)}
-        />
-      </label>
+      <div className="mineru-enable-row">
+        <div className="mineru-toggle-label">
+          <strong>启用 MinerU</strong>
+          <small>开启后才会实际调用 MinerU 服务解析文档</small>
+        </div>
+        <label className="mineru-switch mineru-switch--lg">
+          <input
+            type="checkbox"
+            checked={config.enabled}
+            onChange={(e) => updateField("enabled", e.target.checked)}
+          />
+          <span className="mineru-slider" />
+        </label>
+      </div>
 
       <label className="module-card__field">
         <span>API 服务地址</span>
@@ -254,31 +260,52 @@ function MinerUAdvancedOptions() {
         </select>
       </label>
 
-      <div className="module-card__field mineru-toggles">
-        <label>
-          <input
-            type="checkbox"
-            checked={config.formulaEnable}
-            onChange={(e) => updateField("formulaEnable", e.target.checked)}
-          />
-          公式识别
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={config.tableEnable}
-            onChange={(e) => updateField("tableEnable", e.target.checked)}
-          />
-          表格识别
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={config.imageAnalysis}
-            onChange={(e) => updateField("imageAnalysis", e.target.checked)}
-          />
-          图片分析
-        </label>
+      <div className="module-card__field">
+        <span>识别选项</span>
+        <div className="mineru-toggles">
+          <div className="mineru-toggle-row">
+            <div className="mineru-toggle-label">
+              <strong>公式识别</strong>
+              <small>LaTeX 数学公式</small>
+            </div>
+            <label className="mineru-switch">
+              <input
+                type="checkbox"
+                checked={config.formulaEnable}
+                onChange={(e) => updateField("formulaEnable", e.target.checked)}
+              />
+              <span className="mineru-slider" />
+            </label>
+          </div>
+          <div className="mineru-toggle-row">
+            <div className="mineru-toggle-label">
+              <strong>表格识别</strong>
+              <small>表格结构与单元格</small>
+            </div>
+            <label className="mineru-switch">
+              <input
+                type="checkbox"
+                checked={config.tableEnable}
+                onChange={(e) => updateField("tableEnable", e.target.checked)}
+              />
+              <span className="mineru-slider" />
+            </label>
+          </div>
+          <div className="mineru-toggle-row">
+            <div className="mineru-toggle-label">
+              <strong>图片分析</strong>
+              <small>插图内容理解</small>
+            </div>
+            <label className="mineru-switch">
+              <input
+                type="checkbox"
+                checked={config.imageAnalysis}
+                onChange={(e) => updateField("imageAnalysis", e.target.checked)}
+              />
+              <span className="mineru-slider" />
+            </label>
+          </div>
+        </div>
       </div>
 
       <label className="module-card__field">
