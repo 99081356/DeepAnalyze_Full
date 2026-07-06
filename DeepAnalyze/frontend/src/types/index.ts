@@ -669,6 +669,19 @@ export interface ChannelStatus {
   displayName: string;
 }
 
+// --- MinerU Document Processing Config ---
+
+export interface MinerUConfig {
+  apiUrl: string;
+  defaultBackend: "hybrid-auto-engine" | "pipeline" | "vlm-auto-engine" | string;
+  defaultLang: "ch" | "en" | "japan" | "korean" | string;
+  formulaEnable: boolean;
+  tableEnable: boolean;
+  imageAnalysis: boolean;
+  timeout: number;
+  enabled: boolean;
+}
+
 // --- Docling Document Processing Config ---
 
 export interface DoclingConfig {
