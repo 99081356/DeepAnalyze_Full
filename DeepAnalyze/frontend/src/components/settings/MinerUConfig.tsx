@@ -268,7 +268,7 @@ function MinerUAdvancedOptions() {
               <strong>公式识别</strong>
               <small>LaTeX 数学公式</small>
             </div>
-            <label className="mineru-switch">
+            <label className="mineru-switch mineru-switch--lg">
               <input
                 type="checkbox"
                 checked={config.formulaEnable}
@@ -282,7 +282,7 @@ function MinerUAdvancedOptions() {
               <strong>表格识别</strong>
               <small>表格结构与单元格</small>
             </div>
-            <label className="mineru-switch">
+            <label className="mineru-switch mineru-switch--lg">
               <input
                 type="checkbox"
                 checked={config.tableEnable}
@@ -296,7 +296,7 @@ function MinerUAdvancedOptions() {
               <strong>图片分析</strong>
               <small>插图内容理解</small>
             </div>
-            <label className="mineru-switch">
+            <label className="mineru-switch mineru-switch--lg">
               <input
                 type="checkbox"
                 checked={config.imageAnalysis}
