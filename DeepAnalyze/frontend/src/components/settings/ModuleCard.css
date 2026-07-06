@@ -186,6 +186,11 @@
   width: 0;
   height: 0;
   position: absolute;
+  /* 彻底清零 —— 抵消 .module-card__field input 注入的 padding/border/margin，
+     否则隐藏的 input 仍会占据空间、破坏 .mineru-slider 的 flex 布局，导致圆点不可见 */
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 .mineru-slider {
   position: absolute;
