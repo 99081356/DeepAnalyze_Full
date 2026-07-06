@@ -810,7 +810,7 @@ export interface DoclingConfig {
 }
 
 export const DEFAULT_DOCLING_CONFIG: DoclingConfig = {
-  layout_model: "docling-project/docling-layout-egret-xlarge",
+  layout_model: "docling-project/docling-layout-heron",
   ocr_engine: "rapidocr",
   ocr_backend: "torch",
   table_mode: "accurate",

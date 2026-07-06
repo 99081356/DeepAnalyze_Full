@@ -1,4 +1,7 @@
+import { existsSync, readdirSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { downloadModel, verifyModel, removeModel } from '../services/model-downloader.ts';
+import { getPool } from '../store/pg.ts';
 import { PgModuleStatesRepo } from '../store/repos/module-states.ts';
 import type { ModuleId, ModuleState } from '../store/repos/module-states.ts';
 import type { GpuInfo } from './gpu-detector.ts';
@@ -133,3 +136,61 @@ export async function uninstallModule(
     lastError: null,
   });
 }
+
+/**
+ * Detect docling weights pre-bundled into the image (by the Dockerfile build-time
+ * download_models() step) and mark the module as installed in module_states so
+ * the UI reflects the real state without requiring a manual "install" click.
+ *
+ * Bundled weights live in a FLAT layout: data/models/docling/<org>--<model>/
+ * (e.g. docling-project--docling-layout-heron/, docling-project--docling-models/,
+ * RapidOcr/). We probe for any model-like directory directly under docling/.
+ *
+ * Only fires when the module_states row for docling does NOT exist yet (first
+ * boot of a fresh database). This way a user's later explicit uninstall is
+ * respected — the row persists with status=not_installed and we never overwrite
+ * an existing record.
+ */
+export async function ensureBundledDoclingState(): Promise<void> {
+  const dataDir = process.env.DATA_DIR ?? 'data';
+  const doclingDir = resolve(dataDir, 'models', 'docling');
+
+  // Probe for bundled weights: any subdirectory under docling/ that looks like a
+  // model dir (contains "--" for org/model namespacing, or known families).
+  let weightsPresent = false;
+  try {
+    if (existsSync(doclingDir)) {
+      weightsPresent = readdirSync(doclingDir, { withFileTypes: true }).some((e) => {
+        if (!e.isDirectory() && !e.isSymbolicLink()) return false;
+        const n = e.name.toLowerCase();
+        // Category subdirs (layout/ocr/table/vlm) don't count — only model dirs do.
+        if (['layout', 'ocr', 'table', 'vlm'].includes(n)) return false;
+        return n.includes('--') || n.includes('rapidocr') || n.includes('docling');
+      });
+    }
+  } catch {
+    weightsPresent = false;
+  }
+
+  if (!weightsPresent) return; // Not a bundled image — leave state untouched.
+
+  const repo = new PgModuleStatesRepo(await getPool());
+
+  // Only seed when the row is entirely absent (first boot). An existing row —
+  // whether installed, not_installed (user uninstalled), running, or error —
+  // represents an explicit user/system state we must not clobber.
+  if (await repo.get('docling')) return;
+
+  await repo.upsert({
+    moduleId: 'docling',
+    status: 'installed',
+    mode: 'local',
+    processType: 'subprocess',
+    weightsPath: MODULE_DEFAULTS.docling.weightsPath,
+    gpuRequired: false,
+    installedAt: new Date(),
+    lastError: null,
+  });
+  console.log('[Modules] Docling marked installed (weights bundled in image)');
+}
+

@@ -23,7 +23,7 @@ import {
 import { getAuthMode } from "../middleware/auth.js";
 
 const DEFAULT_DOCLING_CONFIG: DoclingConfig = {
-  layout_model: "docling-project/docling-layout-egret-xlarge",
+  layout_model: "docling-project/docling-layout-heron",
   ocr_engine: "rapidocr",
   ocr_backend: "torch",
   table_mode: "accurate",
@@ -754,34 +754,67 @@ export function createSettingsRoutes(): Hono {
     return c.json({ success: true, config: merged });
   });
 
-  /** Scan data/models/docling/ directory for available models */
+  /** Scan data/models/docling/ directory for available models.
+   *  Supports two layouts:
+   *    (1) Category layout:  data/models/docling/{layout,table,vlm,ocr}/<org>--<model>/
+   *    (2) Flat layout:      data/models/docling/<org>--<model>/  (produced by docling's
+   *        download_models(), and the layout the docling engine reads via
+   *        PdfPipelineOptions.artifacts_path — see parser.py:137-140).
+   *  Flat-layout entries are classified by recognizing known model families:
+   *    - "docling-layout" in name  → layout
+   *    - "docling-models" in name  → table (TableFormer lives in this repo)
+   *    - "RapidOcr"/"rapidocr"     → ocr
+   *    - everything else           → layout (default, safest)
+   */
   router.get("/docling-models", (c) => {
     const dataDir = process.env.DATA_DIR ?? "data";
     const doclingDir = path.resolve(dataDir, "models", "docling");
 
     const categories = ["layout", "table", "vlm", "ocr"] as const;
     const result: Record<string, Array<{ id: string; name: string; path: string }>> = {};
+    for (const cat of categories) result[cat] = [];
 
+    const addEntry = (cat: typeof categories[number], dirName: string, fullPath: string) => {
+      const repoId = dirName.replace("--", "/");
+      result[cat].push({ id: repoId, name: dirName, path: fullPath });
+    };
+
+    // (1) Category layout: data/models/docling/<cat>/<org>--<model>/
     for (const cat of categories) {
-      result[cat] = [];
       const catDir = path.join(doclingDir, cat);
       try {
         const entries = fs.readdirSync(catDir, { withFileTypes: true });
         for (const entry of entries) {
           if (entry.isDirectory() || entry.isSymbolicLink()) {
-            const fullPath = path.join(catDir, entry.name);
-            // Convert directory name back to repo_id format (first -- to /)
-            const repoId = entry.name.replace("--", "/");
-            result[cat].push({
-              id: repoId,
-              name: entry.name,
-              path: fullPath,
-            });
+            addEntry(cat, entry.name, path.join(catDir, entry.name));
           }
         }
       } catch {
-        // Directory doesn't exist, return empty
+        // Directory doesn't exist, skip
       }
+    }
+
+    // (2) Flat layout: data/models/docling/<org>--<model>/  (download_models output)
+    try {
+      const entries = fs.readdirSync(doclingDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (!entry.isDirectory() && !entry.isSymbolicLink()) continue;
+        const name = entry.name;
+        // Skip the category subdirectories themselves (handled above)
+        if ((categories as readonly string[]).includes(name)) continue;
+        // Only treat as a model dir if it looks like one (contains "--" for org/model
+        // namespacing, or is a known model family like RapidOcr).
+        const fullPath = path.join(doclingDir, name);
+        const lower = name.toLowerCase();
+        let cat: typeof categories[number];
+        if (lower.includes("rapidocr")) cat = "ocr";
+        else if (lower.includes("docling-models") || lower.includes("tableformer")) cat = "table";
+        else if (lower.includes("vlm") || lower.includes("glm-ocr") || lower.includes("paddleocr")) cat = "vlm";
+        else cat = "layout"; // default: docling-layout-* and anything unrecognized
+        addEntry(cat, name, fullPath);
+      }
+    } catch {
+      // docling dir doesn't exist, nothing to add
     }
 
     return c.json(result);

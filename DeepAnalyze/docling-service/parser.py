@@ -87,7 +87,7 @@ def _resolve_layout_model_spec(model_config: dict):
         LayoutModelConfig,
     )
 
-    layout_model = model_config.get("layout_model", "docling-project/docling-layout-egret-xlarge")
+    layout_model = model_config.get("layout_model", "docling-project/docling-layout-heron")
 
     # Map repo_id to built-in spec
     spec_map = {

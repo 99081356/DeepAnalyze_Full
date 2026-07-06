@@ -32,6 +32,7 @@ import {
 import { getAuthMode } from "./server/middleware/auth.js";
 import { refreshHubJwks, startJwksRefreshTimer } from "./services/auth/hub-jwks.js";
 import { getModelSupervisor } from "./server/model-supervisor.ts";
+import { ensureBundledDoclingState } from "./server/module-lifecycle.ts";
 
 // ---------------------------------------------------------------------------
 // Generate recovery.key on first startup (for emergency-reset CLI)
@@ -172,6 +173,7 @@ initDatabase().then(async () => {
   await autoConfigureVLM();
   await autoConfigureASR();
   await ensureDoclingConfig();
+  await ensureBundledDoclingState();
   await restoreProcessingConcurrency();
   profileCheckpoint("providers_configured");
   await recoverAndWatchStuckDocuments();

@@ -41,16 +41,9 @@
     "docling-layout": {
       "version": "1.0.0",
       "category": "doc_parsing",
-      "description": "Docling layout + OCR + table models",
-      "sources": {
-        "hf_mirror": "https://hf-mirror.com/docling/resolve/main/",
-        "huggingface": "https://huggingface.co/docling/resolve/main/"
-      },
-      "files": [
-        { "path": "layout/model.onnx" },
-        { "path": "ocr/model.onnx" },
-        { "path": "table/model.onnx" }
-      ]
+      "description": "Docling layout + OCR + table models (bundled into the worker image at build time via docling's native HF download; no separate download needed)",
+      "sources": {},
+      "files": []
     },
     "paddleocr-vl": { "version": "1.0.0", "category": "vlm", "size_bytes": 2000000000, "files": [], "sources": {} },
     "mineru": {

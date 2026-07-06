@@ -118,7 +118,7 @@ export class DoclingProcessor implements DocumentProcessor {
     const repos = await getRepos();
     const rawDoclingConfig = await repos.settings.get("docling_config");
     const defaultDoclingConfig = {
-      layout_model: "docling-project/docling-layout-egret-xlarge",
+      layout_model: "docling-project/docling-layout-heron",
       ocr_engine: "rapidocr" as const,
       ocr_backend: "torch" as const,
       table_mode: "accurate" as const,
