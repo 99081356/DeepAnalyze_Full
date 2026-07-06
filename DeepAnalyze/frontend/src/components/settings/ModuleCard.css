@@ -180,6 +180,10 @@
   height: 20px;
   flex-shrink: 0;
   cursor: pointer;
+  /* 用 CSS 变量统一控制圆点大小与四周间隙，保证上下左右均匀 */
+  --switch-gap: 3px;
+  --dot-size: 14px;
+  --switch-width: 36px;
 }
 .mineru-switch input {
   opacity: 0;
@@ -204,37 +208,39 @@
   content: "";
   position: absolute;
   top: 50%;
-  left: 2px;
-  width: 16px;
-  height: 16px;
+  left: var(--switch-gap);
+  width: var(--dot-size);
+  height: var(--dot-size);
   background: #fff;
   border-radius: 50%;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
   transition: transform 0.2s ease;
   transform: translateY(-50%);
 }
-/* 选中态：蓝底 + 圆点右移（圆点宽度自身 100%，即 16px） */
+/* 选中态：蓝底 + 圆点右移（右移 = 轨道宽 - 圆点宽 - 左右间隙） */
 .mineru-switch input:checked + .mineru-slider {
   background: #3b82f6;
 }
 .mineru-switch input:checked + .mineru-slider::before {
-  transform: translateY(-50%) translateX(calc(100%));
+  transform: translateY(-50%) translateX(calc(var(--switch-width) - var(--dot-size) - 2 * var(--switch-gap)));
 }
 .mineru-switch input:focus-visible + .mineru-slider {
   outline: 2px solid rgba(59, 130, 246, 0.35);
   outline-offset: 2px;
 }
-/* 强调版（启用总开关）：圆点更大 */
+/* 强调版（启用总开关）：轨道更大、圆点也更大，但四周间隙保持 3px */
 .mineru-switch--lg {
+  --switch-width: 44px;
+  --dot-size: 18px;
   width: 44px;
   height: 24px;
 }
 .mineru-switch--lg .mineru-slider::before {
-  width: 20px;
-  height: 20px;
+  width: var(--dot-size);
+  height: var(--dot-size);
 }
 .mineru-switch--lg input:checked + .mineru-slider::before {
-  transform: translateY(-50%) translateX(calc(100%));
+  transform: translateY(-50%) translateX(calc(var(--switch-width) - var(--dot-size) - 2 * var(--switch-gap)));
 }
 
 /* toggle 行：左边标题+说明，右边滑块 */
