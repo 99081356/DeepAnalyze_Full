@@ -198,36 +198,33 @@
   background: #cbd5e1;
   border-radius: 999px;
   transition: background 0.2s ease;
-  /* 用 flex 让圆点天然垂直居中，避免 top 像素偏移导致溢出 */
-  display: flex;
-  align-items: center;
-  padding: 0 2px;
+  /* 用 absolute 定位圆点，兼容性最好，避免某些浏览器下 flex 布局的 ::before 不渲染 */
 }
 .mineru-slider::before {
   content: "";
-  /* 不再用 absolute + top/left，宽度由 flex 控制，位移用 transform */
+  position: absolute;
+  top: 50%;
+  left: 2px;
   width: 16px;
   height: 16px;
-  flex: 0 0 16px;
   background: #fff;
   border-radius: 50%;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
   transition: transform 0.2s ease;
+  transform: translateY(-50%);
 }
-/* 选中态：蓝底 + 圆点右移（位移 = 容器宽 - 圆点宽 - 左右 padding，自适应） */
+/* 选中态：蓝底 + 圆点右移（圆点宽度自身 100%，即 16px） */
 .mineru-switch input:checked + .mineru-slider {
   background: #3b82f6;
 }
 .mineru-switch input:checked + .mineru-slider::before {
-  transform: translateX(calc(100% + 0px));
-  /* translateX(100%) 相对圆点自身宽度；slider 是 flex，justify-content 默认 flex-start，
-     圆点初始在左 padding(2px) 处，位移 100%(=圆点宽) 后正好贴右 padding(2px)，居中且不溢出 */
+  transform: translateY(-50%) translateX(calc(100%));
 }
 .mineru-switch input:focus-visible + .mineru-slider {
   outline: 2px solid rgba(59, 130, 246, 0.35);
   outline-offset: 2px;
 }
-/* 强调版（启用总开关）：更大 */
+/* 强调版（启用总开关）：圆点更大 */
 .mineru-switch--lg {
   width: 44px;
   height: 24px;
@@ -235,7 +232,9 @@
 .mineru-switch--lg .mineru-slider::before {
   width: 20px;
   height: 20px;
-  flex: 0 0 20px;
+}
+.mineru-switch--lg input:checked + .mineru-slider::before {
+  transform: translateY(-50%) translateX(calc(100%));
 }
 
 /* toggle 行：左边标题+说明，右边滑块 */
