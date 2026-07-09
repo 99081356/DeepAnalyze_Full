@@ -11,6 +11,8 @@ import { useToast } from "../../hooks/useToast";
 import { useConfirm } from "../../hooks/useConfirm";
 import { selectFolder, openFileDialog } from "../../hooks/useFileUpload";
 import { useDocProcessing } from "../../hooks/useDocProcessing";
+import { useMarkdown } from "../../hooks/useMarkdown";
+import { useKnowledgeMarkdown } from "../../hooks/useKnowledgeMarkdown";
 import { useUIStore } from "../../store/ui";
 import type { KnowledgeBase, DocumentInfo } from "../../types/index";
 import { DocumentCard } from "./DocumentCard";
@@ -20,6 +22,7 @@ import { KnowledgeSearchBar } from "./KnowledgeSearchBar";
 import type { SearchMode } from "./KnowledgeSearchBar";
 import { EntityPage } from "./EntityPage";
 import { DropZone } from "../ui/DropZone";
+import { ToggleSwitch } from "../ui/ToggleSwitch";
 import {
   Database,
   Plus,
@@ -219,6 +222,12 @@ export function KnowledgePanel() {
   const [expandedResult, setExpandedResult] = useState<string | null>(null);
   const [expandedContent, setExpandedContent] = useState<string | null>(null);
   const [expandedLoading, setExpandedLoading] = useState(false);
+  // Shared L0/L1/L2 Markdown-render preference (persisted, synced across the KB).
+  const { markdownEnabled, setMarkdownEnabled } = useKnowledgeMarkdown();
+  // Pre-render the expanded search-result content to sanitized HTML.
+  const expandedMarkdownHtml = useMarkdown(
+    markdownEnabled && expandedContent ? expandedContent : "",
+  );
 
   // --- Load knowledge bases ---
   const loadKnowledgeBases = useCallback(async () => {
@@ -676,7 +685,8 @@ export function KnowledgePanel() {
   return (
     <div
       style={{
-        height: "100%",
+        flex: 1,
+        minHeight: 0,
         display: "flex",
         flexDirection: "column",
         backgroundColor: "var(--bg-primary)",
@@ -824,9 +834,34 @@ export function KnowledgePanel() {
             padding: "var(--space-2) var(--space-4)",
             borderBottom: "1px solid var(--border-primary)",
             backgroundColor: "var(--bg-secondary)",
+            display: "flex",
+            alignItems: "center",
+            gap: "var(--space-3)",
           }}
         >
-          <KnowledgeSearchBar onSearch={handleSearch} loading={isSearching} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <KnowledgeSearchBar onSearch={handleSearch} loading={isSearching} />
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "var(--space-2)",
+              flexShrink: 0,
+              marginLeft: "auto",
+            }}
+            title="开启后 L0/L1/L2 内容按 Markdown 渲染"
+          >
+            <span style={{ fontSize: "var(--text-xs)", color: "var(--text-tertiary)", whiteSpace: "nowrap" }}>
+              Markdown 渲染
+            </span>
+            <ToggleSwitch
+              size="sm"
+              checked={markdownEnabled}
+              onChange={setMarkdownEnabled}
+              aria-label="切换 Markdown 渲染"
+            />
+          </div>
         </div>
       )}
 
@@ -1775,22 +1810,37 @@ export function KnowledgePanel() {
                           {result.docId}
                         </span>
                       </div>
-                      <p
-                        style={{
-                          fontSize: "var(--text-sm)",
-                          color: "var(--text-secondary)",
-                          margin: 0,
-                          lineHeight: 1.6,
-                          display: isExpanded ? "block" : "-webkit-box",
-                          WebkitLineClamp: isExpanded ? undefined : 3,
-                          WebkitBoxOrient: "vertical",
-                          overflow: isExpanded ? "auto" : "hidden",
-                          maxHeight: isExpanded ? 400 : undefined,
-                          whiteSpace: isExpanded ? "pre-wrap" : undefined,
-                        }}
-                      >
-                        {isExpanded && expandedLoading ? "加载中..." : isExpanded && expandedContent ? expandedContent : result.content}
-                      </p>
+                      {markdownEnabled && isExpanded && !expandedLoading && expandedMarkdownHtml ? (
+                        <div
+                          className="markdown-content"
+                          style={{
+                            fontSize: "var(--text-sm)",
+                            color: "var(--text-secondary)",
+                            margin: 0,
+                            lineHeight: 1.6,
+                            overflowY: "auto",
+                            maxHeight: 400,
+                          }}
+                          dangerouslySetInnerHTML={{ __html: expandedMarkdownHtml }}
+                        />
+                      ) : (
+                        <p
+                          style={{
+                            fontSize: "var(--text-sm)",
+                            color: "var(--text-secondary)",
+                            margin: 0,
+                            lineHeight: 1.6,
+                            display: isExpanded ? "block" : "-webkit-box",
+                            WebkitLineClamp: isExpanded ? undefined : 3,
+                            WebkitBoxOrient: "vertical",
+                            overflow: isExpanded ? "auto" : "hidden",
+                            maxHeight: isExpanded ? 400 : undefined,
+                            whiteSpace: isExpanded ? "pre-wrap" : undefined,
+                          }}
+                        >
+                          {isExpanded && expandedLoading ? "加载中..." : isExpanded && expandedContent ? expandedContent : result.content}
+                        </p>
+                      )}
                     </div>
                   );
                 })

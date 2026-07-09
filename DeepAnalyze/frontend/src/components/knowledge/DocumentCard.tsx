@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { api } from "../../api/client";
 import { formatFileSize } from "../../utils/format";
+import { useMarkdown } from "../../hooks/useMarkdown";
+import { useKnowledgeMarkdown } from "../../hooks/useKnowledgeMarkdown";
 import { VirtualizedContent } from "../common/VirtualizedContent";
 import type { DocumentInfo } from "../../types/index";
 import { MediaPlayer } from "./MediaPlayer";
@@ -214,6 +216,15 @@ export function DocumentCard({
   const [regeneratingAbstract, setRegeneratingAbstract] = useState(false);
   // L1 format toggle: "md" (Markdown) or "dt" (DocTags)
   const [l1Format, setL1Format] = useState<"md" | "dt">("md");
+  // Shared L0/L1/L2 Markdown-render preference (persisted, synced across the KB).
+  const { markdownEnabled } = useKnowledgeMarkdown();
+  // Pre-render the currently-expanded level's content to sanitized HTML.
+  // `useMarkdown` is a hook, so it must run at the component top level; the
+  // currently displayed content depends on expandedLevel + l1Format, mirrored
+  // from renderLevelContent's cache lookup key.
+  const lookupKey = expandedLevel === "L1" ? `L1:${l1Format}` : expandedLevel;
+  const activeContent = expandedLevel ? levelCache[lookupKey]?.content ?? "" : "";
+  const activeMarkdownHtml = useMarkdown(markdownEnabled ? activeContent : "");
   // Processor selector: "auto" | "docling" | "native" | "asr"
   const [processor, setProcessor] = useState<string>("auto");
   const [rebuilding, setRebuilding] = useState(false);
@@ -596,6 +607,8 @@ export function DocumentCard({
         }}>
           <VirtualizedContent
             content={cached.content}
+            markdown={markdownEnabled}
+            markdownHtml={activeMarkdownHtml}
             maxHeight={400}
             fontSize={13}
             style={{ color: "var(--text-primary)" }}
