@@ -632,14 +632,44 @@ export async function createApp(): Promise<Hono> {
           typeof ep === "string" && /\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)/i.test(ep);
         const LOCAL_OR_HASH = new Set(["hash-fallback", "local-bge-m3", "local-whisper"]);
 
+        // Resolve the effective embedding provider id directly from the DB
+        // (the source of truth), rather than trusting the runtime
+        // EmbeddingManager's possibly-stale `s.provider`. The runtime manager
+        // only re-resolves its provider on the first embed()/embedBatch()
+        // call after a config bump (see EmbeddingManager.ensureCurrent), so a
+        // freshly-saved API key would not clear this banner until the server
+        // was restarted. Reading DB state here makes the banner reflect what
+        // the user just saved.
         let mainProviderHasKey = true;
+        let healthProviderId: string | null = s.provider; // observed at runtime
         try {
-          if (s.provider && !LOCAL_OR_HASH.has(s.provider)) {
-            const { getRepos } = await import("../store/repos/index.js");
-            const repos = await getRepos();
-            const settings = await repos.settings.getProviderSettings();
-            const cfg = (settings.providers ?? []).find(
-              (p) => p && p.id === s.provider && p.enabled,
+          const { getRepos } = await import("../store/repos/index.js");
+          const repos = await getRepos();
+          const settings = await repos.settings.getProviderSettings();
+          const providers = settings.providers ?? [];
+
+          // Priority 1: explicit embedding default in DB
+          // Priority 2: auto-discover an enabled provider with "embedding"
+          //              in its id/name (mirrors tryDiscoverEmbeddingProvider)
+          let effectiveId: string | null = settings.defaults?.embedding || null;
+          if (!effectiveId) {
+            const discovered = providers.find(
+              (p) =>
+                p &&
+                p.enabled &&
+                (p.id.toLowerCase().includes("embedding") ||
+                  p.name.toLowerCase().includes("embedding")),
+            );
+            effectiveId = discovered?.id ?? null;
+          }
+          // Priority 3: runtime provider name (e.g. YAML-only configs whose
+          //              name is the model key, not a provider id)
+          if (!effectiveId) effectiveId = s.provider;
+          healthProviderId = effectiveId;
+
+          if (effectiveId && !LOCAL_OR_HASH.has(effectiveId)) {
+            const cfg = providers.find(
+              (p) => p && p.id === effectiveId && p.enabled,
             );
             const apiKey = cfg?.apiKey ?? "";
             const endpoint = cfg?.endpoint ?? "";
@@ -663,7 +693,11 @@ export async function createApp(): Promise<Hono> {
 
         embedding = {
           status,
-          provider: s.provider,
+          // Prefer the DB-resolved id (what the user actually configured) over
+          // the possibly-stale runtime provider name. s.dimension/degraded
+          // still come from the runtime manager since only it tracks the live
+          // hash-cooldown state.
+          provider: healthProviderId ?? s.provider,
           dimension: s.dimension,
           degraded: s.degraded,
           cooldownRemainingMs: s.cooldownRemainingMs,
