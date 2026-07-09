@@ -84,6 +84,22 @@ export class HubClient {
         if (resp.workerToken) {
           this.config.workerToken = resp.workerToken;
         }
+        // Persist connection state so the Settings → Hub Connection panel
+        // reports "connected". Only connectToHub() previously wrote this row,
+        // leaving the register() startup path forever showing "未连接" even
+        // though the worker was registered and heartbeating fine.
+        try {
+          const { getRepos } = await import("../../store/repos/index.js");
+          const repo = (await getRepos()).settings;
+          await repo.set("hub_connection", JSON.stringify({
+            connected: true,
+            hubUrl: this.config.serverUrl,
+            workerId: resp.workerId,
+            workerToken: this.config.workerToken,
+          }));
+        } catch (e) {
+          console.warn("[Hub] Failed to persist hub_connection setting:", e);
+        }
       }
       return resp;
     } catch (err) {
@@ -98,7 +114,11 @@ export class HubClient {
    */
   startHeartbeat(intervalMs = 30_000): void {
     if (this.heartbeatTimer) return;
-    this.heartbeatTimer = setInterval(async () => {
+    // Fire one heartbeat immediately on start instead of waiting a full
+    // interval — the old code used setInterval alone, so the first beat was
+    // delayed by 30s, and if payload assembly threw before the HTTP call,
+    // the silent catch masked it entirely (last_heartbeat_at stayed NULL).
+    const beat = async () => {
       try {
         const resp = await this.heartbeat();
         if (resp) {
@@ -110,10 +130,16 @@ export class HubClient {
         } else {
           this.syncState.serverReachable = false;
         }
-      } catch {
+      } catch (e) {
+        // Surface the failure instead of swallowing it silently — a masked
+        // exception here was the root cause of last_heartbeat_at never being
+        // set while manual curls to the same endpoint succeeded.
         this.syncState.serverReachable = false;
+        console.error("[Hub] Heartbeat failed:", e instanceof Error ? e.message : e);
       }
-    }, intervalMs);
+    };
+    void beat();
+    this.heartbeatTimer = setInterval(() => void beat(), intervalMs);
     // Don't prevent process exit
     if (this.heartbeatTimer.unref) {
       this.heartbeatTimer.unref();
@@ -574,7 +600,31 @@ export class HubClient {
   }
 
   private async heartbeat(): Promise<HeartbeatResponse | null> {
-    const status = await this.getLocalStatus(0, 0);
+    // getLocalStatus previously ran OUTSIDE any try/catch. If it threw (e.g.
+    // collectWorkerStatus or the config import failed), the exception bubbled
+    // up to the setInterval callback and was silently swallowed — so the
+    // heartbeat never reached Hub while a manual curl to the same endpoint
+    // succeeded. Wrap it so status-collection failures degrade gracefully
+    // instead of aborting the whole heartbeat.
+    let status: { status: "online" | "busy" | "idle"; activeSessions: number; activeTasks: number; resourceUsage: HeartbeatRequest["resourceUsage"]; uptime: number };
+    try {
+      status = await this.getLocalStatus(0, 0);
+    } catch (e) {
+      console.warn("[Hub] getLocalStatus failed, sending degraded heartbeat:", e);
+      status = {
+        status: "idle",
+        activeSessions: 0,
+        activeTasks: 0,
+        resourceUsage: {
+          cpuPercent: 0,
+          memoryUsedGB: 0,
+          memoryTotalGB: 0,
+          diskUsedGB: 0,
+          diskTotalGB: 0,
+        },
+        uptime: Math.floor((Date.now() - this.startTime) / 1000),
+      };
+    }
 
     // v2: 获取本地缓存的 skill 清单和 policy_version
     const cachedSkills = await this.getLocalSkillCache();
