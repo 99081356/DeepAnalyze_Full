@@ -459,6 +459,7 @@ export function createWorkerRoutes(): Hono {
         DA_AUTH_MODE: "hub",
         DA_HUB_URL: hubBaseUrl,
         DA_JOIN_TOKEN: joinToken.token,
+        DA_WORKER_ID: workerId,
         DA_ORG_ID: body.organization_id,
         ...(body.cpu_limit != null ? { DA_CPU_LIMIT: String(body.cpu_limit) } : {}),
         ...(body.mem_limit_mb != null ? { DA_MEM_LIMIT_MB: String(body.mem_limit_mb) } : {}),

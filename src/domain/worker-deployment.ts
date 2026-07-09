@@ -20,6 +20,7 @@ import {
 import {
   ensureWorkerNetwork,
   removeWorkerNetwork,
+  workerNetworkName,
 } from "./worker-network.js";
 import {
   ensurePgContainer,
@@ -31,6 +32,7 @@ import { connectRealSsh } from "./ssh-executor.js";
 import type { SshExecutor } from "./ssh-executor.js";
 import { executeWorkerBackup } from "./worker-backup-executor.js";
 import { HUB_CONFIG } from "../core/config.js";
+import { upgradeLocalWorker } from "./local-deployment.js";
 
 // Re-export SshExecutor abstraction (T2). New code should use connectRealSsh +
 // RealSshExecutor (or MockSshExecutor in tests) instead of the legacy
@@ -52,6 +54,8 @@ export interface DeployOpts {
   containerPort?: number;    // 默认 21000
   envVars: Record<string, string>;  // DA_AUTH_MODE, DA_JOIN_TOKEN, DA_HUB_URL, ...
   volumeMounts: string[];    // ["da-data-alice:/data"]
+  /** Docker network to attach the app container to (e.g. da-net-<workerId>). */
+  dockerNetwork?: string;
   initiatedBy: string;
   healthTimeout?: number;    // 秒，默认 180
 }
@@ -95,6 +99,7 @@ export async function deployWorker(opts: DeployOpts): Promise<DeployResult> {
     .join(" ");
   const volFlags = opts.volumeMounts.map(v => `-v ${v}`).join(" ");
   const portFlag = `-p ${opts.containerPort ?? 21000}:${opts.containerPort ?? 21000}`;
+  const netFlag = opts.dockerNetwork ? `--network ${opts.dockerNetwork}` : "";
 
   const conn = new Client();
   const port = opts.sshPort ?? 22;
@@ -131,7 +136,7 @@ export async function deployWorker(opts: DeployOpts): Promise<DeployResult> {
       (line) => addLog("remote", line));
 
     // Step 3: 启动新容器
-    const runCmd = `docker run -d --name ${opts.containerName} ${envFlags} ${volFlags} ${portFlag} --restart unless-stopped ${opts.imageTag}`;
+    const runCmd = `docker run -d --name ${opts.containerName} ${netFlag} ${envFlags} ${volFlags} ${portFlag} --restart unless-stopped ${opts.imageTag}`;
     addLog("info", `starting: ${runCmd}`);
     const containerId = (await execRemote(conn, runCmd, (line) => addLog("remote", line))).trim();
     addLog("info", `container started: ${containerId.slice(0, 12)}`);
@@ -173,7 +178,7 @@ export async function deployWorker(opts: DeployOpts): Promise<DeployResult> {
       try {
         await execRemote(conn, `docker rm -f ${opts.containerName} 2>/dev/null || true`, () => {});
         await execRemote(conn,
-          `docker run -d --name ${opts.containerName} ${envFlags} ${volFlags} ${portFlag} --restart unless-stopped ${previousImageTag}`,
+          `docker run -d --name ${opts.containerName} ${netFlag} ${envFlags} ${volFlags} ${portFlag} --restart unless-stopped ${previousImageTag}`,
           (line) => addLog("remote", line));
       } catch (rollbackErr) {
         addLog("error", `rollback failed: ${rollbackErr instanceof Error ? rollbackErr.message : String(rollbackErr)}`);
@@ -294,6 +299,8 @@ export interface UpgradeWorkerDeps {
   }) => Promise<SshExecutor>;
   executeWorkerBackup?: typeof executeWorkerBackup;
   deployWorker?: typeof deployWorker;
+  /** 测试用：覆盖 deployWorkerStack（升级走 B 模式栈） */
+  deployWorkerStack?: typeof deployWorkerStack;
   /** 测试用：覆盖 HUB_CONFIG.backup */
   backupConfig?: {
     storageDir: string;
@@ -313,21 +320,59 @@ export async function upgradeWorker(
   const decryptKey = deps?.decryptSshKey ?? decryptSshKey;
   const connect = deps?.connectRealSsh ?? connectRealSsh;
   const runBackup = deps?.executeWorkerBackup ?? executeWorkerBackup;
-  const deploy = deps?.deployWorker ?? deployWorker;
   const backupCfg = deps?.backupConfig ?? HUB_CONFIG.backup;
 
-  // ─── 1. 预检：worker 存在 + SSH 凭据 ───
+  // ─── 1. 预检：worker 存在 ───
   const w = await q<{
     ssh_target_host: string; ssh_target_port: number; ssh_user: string;
     ssh_key_encrypted: string | null; current_image_tag: string;
-  }>(`SELECT ssh_target_host, ssh_target_port, ssh_user, ssh_key_encrypted, current_image_tag
+    host_id: string | null; organization_id: string | null;
+  }>(`SELECT ssh_target_host, ssh_target_port, ssh_user, ssh_key_encrypted, current_image_tag, host_id, organization_id
       FROM workers WHERE id = $1`, [workerId]);
   if (w.rows.length === 0) throw new Error("worker not found");
   const row = w.rows[0];
-  if (!row.ssh_target_host || !row.ssh_key_encrypted) {
-    throw new Error("worker missing ssh credentials");
-  }
   const fromTag = row.current_image_tag;
+
+  // ─── 1b. Local worker 检测 ──
+  // 没有 SSH 凭据的 worker 是通过 deployLocalWorker（local-deployment.ts）
+  // 在本机直接创建的。升级走 upgradeLocalWorker，保持命名/卷一致。
+  const isLocalWorker = !row.ssh_target_host || !row.ssh_key_encrypted;
+  if (isLocalWorker) {
+    const hubBaseUrl = process.env.HUB_EXTERNAL_URL ?? "http://localhost:22000";
+    const envVars: Record<string, string> = {
+      DA_AUTH_MODE: "hub",
+      DA_HUB_URL: "http://host.docker.internal:22000",
+      DA_HUB_EXTERNAL_URL: hubBaseUrl,
+      DA_SSO_ALLOW_HTTP: "1",
+      DA_WORKER_ID: workerId,
+      ...(row.organization_id ? { DA_ORG_ID: row.organization_id } : {}),
+      HF_ENDPOINT: "https://hf-mirror.com",
+      NODE_ENV: "production",
+    };
+    let result: DeployResult;
+    try {
+      const r = await upgradeLocalWorker(workerId, newTag, envVars);
+      result = {
+        jobId: "",
+        success: true,
+        logs: [{ ts: new Date().toISOString(), level: "info",
+          msg: `local worker upgraded: ${r.containerName} on port ${r.port}` }],
+      };
+    } catch (e) {
+      result = {
+        jobId: "",
+        success: false,
+        error: e instanceof Error ? e.message : String(e),
+        logs: [],
+      };
+    }
+    // 更新 image tag
+    if (result.success) {
+      await q(`UPDATE workers SET current_image_tag = $1, status = 'approved' WHERE id = $2`,
+        [newTag, workerId]);
+    }
+    return result;
+  }
 
   // ─── 2. 创建 backup 记录（pre_upgrade, deploy_job_id=NULL 先占位） ───
   // skipBackup=true（如 restartWorker）时跳过备份记录创建，避免 from_tag==to_tag
@@ -349,7 +394,9 @@ export async function upgradeWorker(
   }
 
   // ─── 3. 解密私钥（AES）— 见 Task F3 ───
-  const privateKey = await decryptKey(row.ssh_key_encrypted);
+  // 本地 worker（无 SSH 凭据）已在上面 isLocalWorker 分支 early-return，
+  // 能执行到这里的 row.ssh_key_encrypted 必非空。
+  const privateKey = await decryptKey(row.ssh_key_encrypted!);
 
   // ─── 4. 执行真实备份（skipBackup=true 跳过）─────────────────────────
   if (!skipBackup && backupId) {
@@ -396,23 +443,21 @@ export async function upgradeWorker(
     }
   }
 
-  // ─── 5. 调用现有 deployWorker ───
+  // ─── 5. 调用 deployWorkerStack（B 模式完整栈）──
+  // 走 deployWorkerStack 而非底层 deployWorker，确保：
+  //   - 复用已有 da-pg-<id> 容器 + da-pg-data-<id> 卷（知识库/配置不丢）
+  //   - 复用已有 da-app-data-<id> 卷（上传文件/config.yaml 不丢）
+  //   - 正确传递 PG_* + DA_* env vars
+  //   - 容器加入 da-net-<id> 网络
+  const stackFn = deps?.deployWorkerStack ?? deployWorkerStack;
   let result: DeployResult;
   try {
-    result = await deploy({
+    result = await stackFn({
       workerId,
-      sshHost: row.ssh_target_host,
-      sshPort: row.ssh_target_port,
-      sshUser: row.ssh_user,
-      sshPrivateKeyPem: privateKey,
       imageTag: newTag,
-      source: "hub_stream",
-      hubBaseUrl: process.env.HUB_EXTERNAL_URL || "http://localhost:22000",
-      containerName: `da-${workerId.slice(0, 12)}`,
-      containerPort: 21000,
-      envVars: {},  // 已有的容器配置在 workers 表，按需补充
-      volumeMounts: [`da-data-${workerId.slice(0, 12)}:/app/data`],
       initiatedBy,
+      hostServerId: row.host_id ?? undefined,
+      source: "hub_stream",
     });
   } catch (e) {
     if (backupId) {
@@ -459,6 +504,25 @@ export async function stopWorker(workerId: string, initiatedBy: string): Promise
   );
   if (w.rows.length === 0) throw new Error("worker not found");
 
+  // Local worker（无 SSH 凭据）— 直接在本机 docker stop
+  if (!w.rows[0].ssh_target_host || !w.rows[0].ssh_key_encrypted) {
+    try {
+      const { stopLocalWorker } = await import("./local-deployment.js");
+      await stopLocalWorker(workerId);
+      addLog("info", `local worker containers stopped`);
+      await query(`UPDATE workers SET status = 'offline' WHERE id = $1`, [workerId]);
+      await query(`UPDATE deploy_jobs SET status = 'success', completed_at = NOW(), logs = $2::jsonb WHERE id = $1`,
+        [jobId, JSON.stringify(logs)]);
+      return { jobId, success: true, logs };
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      addLog("error", errMsg);
+      await query(`UPDATE deploy_jobs SET status = 'failed', completed_at = NOW(), error = $2, logs = $3::jsonb WHERE id = $1`,
+        [jobId, errMsg, JSON.stringify(logs)]);
+      return { jobId, success: false, error: errMsg, logs };
+    }
+  }
+
   const conn = new Client();
   try {
     const privateKey = await decryptSshKey(w.rows[0].ssh_key_encrypted!);
@@ -470,9 +534,15 @@ export async function stopWorker(workerId: string, initiatedBy: string): Promise
       readyTimeout: 60000,
     });
     addLog("info", "ssh connected");
-    const containerName = `da-${workerId.slice(0, 12)}`;
-    await execRemote(conn, `docker stop ${containerName}`, (l) => addLog("remote", l));
-    addLog("info", `container ${containerName} stopped`);
+    // 兼容两种容器命名：B 模式 da-app-<fullId>（当前标准）+ A 模式 da-<12chars>（历史遗留）
+    const bName = `da-app-${workerId}`;
+    const aName = `da-${workerId.slice(0, 12)}`;
+    await execRemote(
+      conn,
+      `docker stop ${bName} 2>/dev/null || docker stop ${aName} 2>/dev/null || true`,
+      (l) => addLog("remote", l),
+    );
+    addLog("info", `container stopped (tried ${bName} / ${aName})`);
 
     await query(`UPDATE workers SET status = 'offline' WHERE id = $1`, [workerId]);
     await query(`UPDATE deploy_jobs SET status = 'success', completed_at = NOW(), logs = $2::jsonb WHERE id = $1`,
@@ -680,6 +750,8 @@ export interface WorkerStackOpts {
   hostServerId?: string;     // 优先用 host_server 凭据；fallback worker.ssh_*
   healthTimeout?: number;
   skipBackup?: boolean;
+  /** 镜像来源：hub_stream（从 Hub 拉 tar）| docker_pull（docker pull）。默认 docker_pull */
+  source?: "hub_stream" | "docker_pull";
 }
 
 /** 依赖注入容器 — 生产用默认值，测试传 mock。 */
@@ -793,7 +865,24 @@ export async function deployWorkerStack(
     addLog("info", `ensuring PG container da-pg-${opts.workerId}`);
     await ensurePgContainer(ssh, opts.workerId, pgCreds);
 
-    // ─── 5. 构造 envVars (含 PG_*) + 调底层 deployWorker ───────────────
+    // ─── 4.5 清理历史 A 模式遗留容器（避免端口冲突）──────────────────
+    // 旧版 deployWorker 用容器名 da-<12chars>，B 模式用 da-app-<fullId>。
+    // 升级时如果存在旧的 A 模式容器（占 21000 端口），新容器启动会失败。
+    const legacyContainer = `da-${opts.workerId.slice(0, 12)}`;
+    await ssh.exec(`docker rm -f ${legacyContainer} 2>/dev/null || true`);
+
+    // ─── 5. 查 worker 的 org（DA_ORG_ID env 需要）─────────────────────
+    // 注意：不传 DA_JOIN_TOKEN — 那是一次性注册令牌（join_tokens 表），
+    // 升级时 worker 已注册过（.worker-id 持久化在 da-app-data 卷上），
+    // 重复传会导致 DA 尝试二次注册。DA_AUTH_MODE/DA_HUB_URL/DA_ORG_ID
+    // 是持续运行所需的 SSO/认证配置。
+    const wInfo = await q<{ organization_id: string | null }>(
+      `SELECT organization_id FROM workers WHERE id = $1`,
+      [opts.workerId],
+    );
+    const hubBaseUrl = process.env.HUB_EXTERNAL_URL ?? "http://localhost:22000";
+
+    // ─── 6. 构造 envVars (PG_* + DA_*) + 调底层 deployWorker ───────────
     const pgHost = pgContainerName(opts.workerId);
     const envVars: Record<string, string> = {
       PG_HOST: pgHost,
@@ -801,8 +890,13 @@ export async function deployWorkerStack(
       PG_USER: pgCreds.username,
       PG_PASSWORD: pgCreds.password,
       PG_DATABASE: pgCreds.database,
-      // 其他 DA_* env (DA_AUTH_MODE / DA_JOIN_TOKEN / DA_HUB_URL 等) 由
-      // caller 在切到 deployWorkerStack 后补充 — T9 迁移脚本处理
+      // DA_* — 与 routes/workers.ts 初始部署保持一致（不含 DA_JOIN_TOKEN）
+      DA_AUTH_MODE: "hub",
+      DA_HUB_URL: hubBaseUrl,
+      DA_WORKER_ID: opts.workerId,
+      ...(wInfo.rows[0]?.organization_id
+        ? { DA_ORG_ID: wInfo.rows[0]?.organization_id }
+        : {}),
     };
 
     addLog("info", `calling deployWorker for da-app-${opts.workerId}`);
@@ -811,10 +905,11 @@ export async function deployWorkerStack(
       sshHost, sshPort, sshUser,
       sshPrivateKeyPem: privateKey,
       imageTag: opts.imageTag,
-      source: "docker_pull",  // 默认 docker pull；hub_stream 由 caller 包装
-      hubBaseUrl: process.env.HUB_EXTERNAL_URL ?? "http://localhost:22000",
+      source: opts.source ?? "docker_pull",
+      hubBaseUrl,
       containerName: `da-app-${opts.workerId}`,
       containerPort: 21000,  // TODO: 从 host_server 端口分配读 (T03)
+      dockerNetwork: workerNetworkName(opts.workerId),
       envVars,
       volumeMounts: [`da-app-data-${opts.workerId}:/app/data`],
       initiatedBy: opts.initiatedBy,

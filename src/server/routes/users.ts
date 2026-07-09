@@ -21,6 +21,7 @@ import {
   deployLocalWorker,
   deleteLocalWorker,
   allocateLocalPort,
+  readOldPgCreds,
 } from "../../domain/local-deployment.js";
 
 export function createUserRoutes() {
@@ -277,19 +278,15 @@ export function createUserRoutes() {
     );
     const oldWorker = existing.rows[0] ?? null;
 
-    // 3. 如果已有 Worker，先删除旧容器
-    if (oldWorker) {
-      try {
-        await deleteLocalWorker(oldWorker.id);
-      } catch {
-        // 忽略删除失败（容器可能已不存在）
-      }
-    }
+    // 3. 如果已有 Worker，deployLocalWorker 内部会 docker rm -f 旧容器（不删卷），
+    //    所以这里不需要预先清理。关键是绝不能调 deleteLocalWorker（它会删卷！）。
+    //    旧容器如果占用端口，deployLocalWorker 的 rm -f 会先释放。
 
     // 4. 生成 Worker ID 和 token
     const workerId = `wkr_${randomUUID().replace(/-/g, "")}`;
     const workerToken = `wkt_${randomUUID().replace(/-/g, "")}`;
-    const port = allocateLocalPort();
+    // 重新部署时复用旧端口，避免每次换端口
+    const port = oldWorker?.host_port ?? allocateLocalPort();
 
     // 5. 如果已有 Worker 记录则更新，否则创建新记录
     if (oldWorker) {
@@ -335,6 +332,17 @@ export function createUserRoutes() {
     }
 
     // 7. 部署容器栈
+    //    重新部署时复用旧 PG 密码（卷里已有数据用的是旧密码，
+    //    新密码会导致 DA app 连不上 PG）
+    let pgPassword = `da_pg_${randomUUID().replace(/-/g, "").slice(0, 16)}`;
+    if (oldWorker) {
+      try {
+        const oldCreds = readOldPgCreds(oldWorker.id);
+        if (oldCreds) pgPassword = oldCreds.password;
+      } catch {
+        // 读不到旧密码（容器已删），用新密码（首次初始化场景）
+      }
+    }
     try {
       const result = await deployLocalWorker({
         workerId: finalWorkerId,
@@ -343,7 +351,7 @@ export function createUserRoutes() {
         pgCreds: {
           database: "deepanalyze",
           username: "deepanalyze",
-          password: `da_pg_${randomUUID().replace(/-/g, "").slice(0, 16)}`,
+          password: pgPassword,
         },
       });
 
