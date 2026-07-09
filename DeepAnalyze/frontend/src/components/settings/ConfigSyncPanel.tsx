@@ -37,7 +37,14 @@ export function ConfigSyncPanel() {
     } finally {
       setLoadingStatus(false);
     }
-  }, [showError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // showError comes from useToast(), which returns a fresh object every
+    // render — including it here made refreshStatus change identity each
+    // render, which re-triggered the useEffect below in an infinite loop
+    // (~660 req/s to /api/hub/config/sync-status, causing the "加载中..."
+    // card to flicker forever). The addToast it ultimately calls is a stable
+    // zustand action, so the closure is safe to capture once.
+  }, []);
 
   useEffect(() => {
     void refreshStatus();
