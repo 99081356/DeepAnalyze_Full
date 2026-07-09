@@ -348,7 +348,9 @@ export function ChatWindow() {
       style={{
         display: "flex",
         flexDirection: "column",
-        height: "100%",
+        // 在 <main>(flex column) 中占满剩余高度，确保输入框不被挤出可视区。
+        flex: 1,
+        minHeight: 0,
         background: "var(--bg-primary)",
         position: "relative",
       }}

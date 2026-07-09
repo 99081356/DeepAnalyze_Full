@@ -128,7 +128,7 @@ export function SystemStatusBanner() {
   if (banners.length === 0 && serviceEntries.length === 0) return null;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)", flexShrink: 0 }}>
       {serviceEntries.length > 0 && (
         <div style={{
           display: "flex",
