@@ -69,6 +69,16 @@ export async function recordHeartbeat(
     [payload.workerId, status, moduleHealthJson, resourceUsageJson, payload.daVersion ?? null],
   );
 
+  // Map the worker-reported runtime status onto a value that satisfies the
+  // workers.status CHECK constraint. DA reports fine-grained runtime states
+  // (online/busy/idle) from collectWorkerStatus, but the column only accepts
+  // lifecycle values (online/offline/deactivated/...). Writing "idle"/"busy"
+  // directly raised a 23514 CHECK violation on every heartbeat, so
+  // last_heartbeat_at never updated. A received heartbeat always means the
+  // worker is online; its load (busy/idle) is already captured by the
+  // active_tasks / current_task columns.
+  const dbStatus = normalizeWorkerStatus(payload.status);
+
   await pool().query(
     `UPDATE workers SET
       last_heartbeat_at = now(),
@@ -87,13 +97,30 @@ export async function recordHeartbeat(
       status === "healthy",
       payload.daVersion ?? null,
       payload.uptime ?? 0,
-      payload.status ?? "online",
+      dbStatus,
       payload.activeSessions ?? 0,
       payload.activeTasks ?? 0,
       JSON.stringify(payload.resourceUsage ?? {}),
       payload.currentTask ?? null,
     ],
   );
+}
+
+/**
+ * Values allowed by the workers.status CHECK constraint (migration 001/040).
+ * DA's runtime states (online/busy/idle) are a superset that partly overlaps;
+ * only "online" is directly valid. Any unknown/non-lifecycle value collapses
+ * to "online" — a heartbeat reaching Hub proves the worker is up.
+ */
+const LIFECYCLE_STATUSES = new Set([
+  "pending", "approved", "rejected", "revoked",
+  "online", "offline", "draining", "deactivated",
+  "deploying", "error", "decommissioned",
+]);
+
+function normalizeWorkerStatus(reported?: string): string {
+  if (reported && LIFECYCLE_STATUSES.has(reported)) return reported;
+  return "online";
 }
 
 export interface HealthHistoryEntry {
