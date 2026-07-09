@@ -1,24 +1,43 @@
 import type { Pool } from "pg";
 
 /**
- * RecommendedConfig — 模板内容 shape（与 design doc §5.2 对齐）
- * Stored as JSONB; T15 on DA side will consume the merged result.
+ * RecommendedConfig — 模板内容 shape。
+ *
+ * Stored as JSONB; DA's `sync-from-hub.ts` consumes the merged result by
+ * matching these top-level keys against its `SYNC_KEYS` (providers /
+ * agentSettings / doclingConfig / enhancedModels / hooks) plus `moduleStates`.
+ *
+ * IMPORTANT: the top-level key names must stay aligned with the Worker's
+ * `SYNC_KEYS` (see DeepAnalyze/src/services/hub/sync-from-hub.ts) — the
+ * previous shape used model-role names (main/thinking/...) which the Worker
+ * never recognized, silently making every non-empty template a no-op.
  *
  * Top-level fields are all optional at the storage layer (a template may
- * override just one role). T15's DA-side type may enforce stricter shape.
+ * override just one key).
  */
 export interface RecommendedConfig {
-  main?: unknown;
-  thinking?: unknown;
-  background?: unknown;
-  subagent?: unknown;
-  websearch?: unknown;
-  embeddings?: unknown;
-  rerank?: unknown;
-  vision?: unknown;
-  webfetch?: unknown;
-  moduleStates?: Record<string, unknown>;
+  providers?: {
+    providers: unknown[];
+    defaults: Record<string, string>;
+  };
+  agentSettings?: Record<string, unknown>;
+  doclingConfig?: Record<string, unknown>;
+  enhancedModels?: unknown[];
+  hooks?: unknown[];
+  moduleStates?: Record<string, ModuleStateTemplate>;
   fieldLocks?: { lockedPaths: string[] };
+}
+
+/**
+ * ModuleStateTemplate — per-module state authored by a Hub admin.
+ * The Hub stores arbitrary JSON; this is the shape the Worker coerces into.
+ * `endpoint` matches the admin perspective; the Worker maps it to
+ * `remoteEndpoint` when upserting (sync-from-hub.ts).
+ */
+export interface ModuleStateTemplate {
+  status?: "not_installed" | "installing" | "installed" | "running" | "error";
+  mode?: "local" | "remote" | "disabled";
+  endpoint?: string;
 }
 
 /**
