@@ -71,10 +71,14 @@ const DEFAULT_TEMPLATE = {
     proactiveCompactUpperRatio: 0.85,
   },
   doclingConfig: {
-    pipeline: "rapidocr",
-    table_mode: "accurate",
-    parallelism: 5,
+    layout_model: "docling-project/docling-layout-heron",
     ocr_engine: "rapidocr",
+    ocr_backend: "torch",
+    table_mode: "accurate",
+    use_vlm: false,
+    vlm_model: "zai-org/GLM-OCR",
+    vlm_mode: "inline",
+    parallelism: 5,
   },
   moduleStates: {
     embedding: { status: "not_installed", mode: "disabled" },

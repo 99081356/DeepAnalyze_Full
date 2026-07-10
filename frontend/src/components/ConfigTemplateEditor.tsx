@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "./ui/Button.js";
 import { api } from "../api/client.js";
 import { useUIStore } from "../store/ui.js";
+import { ConfigTemplateGuide } from "./ConfigTemplateGuide.js";
 import type {
   ConfigTemplate,
   ConfigTemplateHistoryEntry,
@@ -148,6 +149,9 @@ export function ConfigTemplateEditor({ scope, orgId }: ConfigTemplateEditorProps
         </span>
         {updatedLabel && <span>更新于: {updatedLabel}</span>}
       </div>
+
+      {/* Guidance UI: preset templates + collapsible field reference */}
+      <ConfigTemplateGuide onApply={setJsonText} />
 
       {/* JSON editor — raw textarea with inline style (NOT Tailwind className) */}
       <textarea
