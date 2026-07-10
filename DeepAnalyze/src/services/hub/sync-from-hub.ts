@@ -36,17 +36,21 @@ const SETTINGS_KEY_MAP: Record<SyncKey, string> = {
 
 /**
  * Decide whether to apply a hub-side field to local.
- * - locked: always apply (admin force-override)
+ * - locked or force-selected: always apply (override)
  * - local null/undefined: apply (fill empty)
  * - otherwise: skip (preserve local custom value)
+ *
+ * forceFields are the per-sync overrides the user selected in the confirm
+ * dialog (transient — not persisted in the template's fieldLocks).
  */
 export function shouldApplyField(
   fieldPath: string,
   localValue: unknown,
   hubValue: unknown,
   lockedPaths: string[],
+  forceFields: string[] = [],
 ): boolean {
-  if (lockedPaths.includes(fieldPath)) return true;
+  if (lockedPaths.includes(fieldPath) || forceFields.includes(fieldPath)) return true;
   if (localValue == null) return true;
   return false;
 }
@@ -62,15 +66,22 @@ export interface SyncResult {
  *
  * @param fetcher - injected so tests don't need to mock HubClient.
  *                  T16 wraps it as `() => hubClient.fetchMergedTemplate()`.
+ * @param opts.dryRun     - when true, compute applied/skipped but write nothing.
+ *                         Used by the confirm dialog's pre-check.
+ * @param opts.forceFields - per-sync overrides the user selected in the confirm
+ *                         dialog (transient; not persisted in fieldLocks).
  */
 export async function syncConfigFromHub(
   fetcher: () => Promise<RecommendedConfig | null>,
+  opts?: { dryRun?: boolean; forceFields?: string[] },
 ): Promise<SyncResult> {
   const template = await fetcher();
   if (!template) {
     return { appliedFields: [], skippedFields: [] };
   }
 
+  const dryRun = opts?.dryRun ?? false;
+  const forceFields = opts?.forceFields ?? [];
   const lockedPaths = template.fieldLocks?.lockedPaths ?? [];
   const repos = await getRepos();
   const pool = await getPool();
@@ -87,13 +98,15 @@ export async function syncConfigFromHub(
     const localRaw = await repos.settings.get(SETTINGS_KEY_MAP[key]);
     const localValue = localRaw ? JSON.parse(localRaw) : null;
 
-    if (shouldApplyField(key, localValue, hubValue, lockedPaths)) {
-      if (key === "providers") {
-        await repos.settings.saveProviderSettings(
-          hubValue as RecommendedConfig["providers"],
-        );
-      } else {
-        await repos.settings.set(SETTINGS_KEY_MAP[key], JSON.stringify(hubValue));
+    if (shouldApplyField(key, localValue, hubValue, lockedPaths, forceFields)) {
+      if (!dryRun) {
+        if (key === "providers") {
+          await repos.settings.saveProviderSettings(
+            hubValue as RecommendedConfig["providers"],
+          );
+        } else {
+          await repos.settings.set(SETTINGS_KEY_MAP[key], JSON.stringify(hubValue));
+        }
       }
       applied.push(key);
     } else {
@@ -109,17 +122,23 @@ export async function syncConfigFromHub(
       const local = await moduleStatesRepo.get(moduleId as any);
 
       const localIsEmpty = !local || local.status === "not_installed";
-      const isLocked = lockedPaths.some(
+      // Locked paths (from template) OR user-selected force fields both trigger
+      // an override. Use the same prefix-match as lockedPaths so locking a
+      // parent ("moduleStates") or a specific module works identically.
+      const overridePaths = [...lockedPaths, ...forceFields];
+      const isOverridden = overridePaths.some(
         (p) => p === fieldPath || p.startsWith(`${fieldPath}.`),
       );
 
-      if (isLocked || localIsEmpty) {
-        await moduleStatesRepo.upsert({
-          moduleId: moduleId as any,
-          status: hubState.status,
-          mode: hubState.mode,
-          remoteEndpoint: hubState.endpoint ?? null,
-        });
+      if (isOverridden || localIsEmpty) {
+        if (!dryRun) {
+          await moduleStatesRepo.upsert({
+            moduleId: moduleId as any,
+            status: hubState.status,
+            mode: hubState.mode,
+            remoteEndpoint: hubState.endpoint ?? null,
+          });
+        }
         applied.push(fieldPath);
       } else {
         skipped.push(fieldPath);
@@ -127,13 +146,15 @@ export async function syncConfigFromHub(
     }
   }
 
-  // ─── Hot-reload trigger + sync timestamp ───
-  if (applied.length > 0) {
-    bumpConfigVersion();
+  // ─── Hot-reload trigger + sync timestamp (skip in dry-run) ───
+  if (!dryRun) {
+    if (applied.length > 0) {
+      bumpConfigVersion();
+    }
+    await query(
+      `UPDATE config_versions SET last_hub_sync_at = now(), updated_at = now() WHERE id = 'singleton'`,
+    );
   }
-  await query(
-    `UPDATE config_versions SET last_hub_sync_at = now(), updated_at = now() WHERE id = 'singleton'`,
-  );
 
   return { appliedFields: applied, skippedFields: skipped };
 }

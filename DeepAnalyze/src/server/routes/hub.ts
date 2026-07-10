@@ -196,14 +196,26 @@ export function createHubRoutes(): Hono {
    * Lock-aware manual sync: pull merged template via HubClient and apply
    * per-field lock semantics (T15's syncConfigFromHub).
    * Only available when DA_AUTH_MODE=hub.
+   *
+   * Body (all optional):
+   *   { dryRun?: boolean, forceFields?: string[] }
+   * - dryRun=true: pre-check only, returns what would be applied/skipped
+   *   without writing anything. Used by the confirm dialog.
+   * - forceFields: field paths the user selected to force-override in the
+   *   confirm dialog (transient; not persisted in the template's fieldLocks).
    */
   app.post("/config/sync-from-hub", async (c) => {
     if (process.env.DA_AUTH_MODE !== "hub") {
       return c.json({ error: "only available in hub mode" }, 400);
     }
     try {
+      const body = await c.req.json<{
+        dryRun?: boolean;
+        forceFields?: string[];
+      }>().catch(() => ({} as { dryRun?: boolean; forceFields?: string[] }));
       const result = await syncConfigFromHub(
         () => getHubClient().fetchMergedTemplate(),
+        { dryRun: body.dryRun ?? false, forceFields: body.forceFields ?? [] },
       );
       return c.json(result, 200);
     } catch (e) {

@@ -4,11 +4,19 @@
 //   - Inline CSSProperties + CSS variables (NOT Tailwind utility classes)
 //   - useToast() hook for success/error feedback (NOT alert)
 //   - api.get<T> / api.post<T> from the shared api client (NOT raw fetch)
+//
+// Sync flow (two-step with confirm):
+//   1. Click "立即从 Hub 同步" → POST dry-run pre-check → get applied/skipped
+//   2. If there are skipped fields, show a Modal listing them with checkboxes
+//      so the user can pick which ones to force-override (default: none).
+//   3. Confirm → POST real sync with forceFields → show result.
 
 import { useState, useEffect, useCallback } from "react";
 import { RefreshCw, CheckCircle2, XCircle } from "lucide-react";
 import { api } from "../../api/client";
 import { useToast } from "../../hooks/useToast";
+import { Modal } from "../ui/Modal";
+import { Button } from "../ui/Button";
 
 interface SyncStatus {
   mode: string;
@@ -20,12 +28,41 @@ interface SyncResult {
   skippedFields: string[];
 }
 
+/** Friendly display names for sync field paths. */
+const FIELD_LABELS: Record<string, string> = {
+  providers: "模型配置",
+  agentSettings: "Agent 参数",
+  doclingConfig: "文档解析",
+  enhancedModels: "生成模型",
+  hooks: "钩子",
+};
+
+function fieldLabel(field: string): string {
+  if (FIELD_LABELS[field]) return FIELD_LABELS[field];
+  if (field.startsWith("moduleStates.")) {
+    const mod = field.slice("moduleStates.".length);
+    const modLabels: Record<string, string> = {
+      embedding: "嵌入模块",
+      asr: "ASR 模块",
+      docling: "Docling 模块",
+      mineru: "MinerU 模块",
+    };
+    return modLabels[mod] ?? field;
+  }
+  return field;
+}
+
 export function ConfigSyncPanel() {
   const [status, setStatus] = useState<SyncStatus | null>(null);
   const [result, setResult] = useState<SyncResult | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState(true);
   const { success, error: showError } = useToast();
+
+  // Confirm-dialog state
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [preCheck, setPreCheck] = useState<SyncResult | null>(null);
+  const [forceSelection, setForceSelection] = useState<Set<string>>(new Set());
 
   const refreshStatus = useCallback(async () => {
     setLoadingStatus(true);
@@ -54,15 +91,59 @@ export function ConfigSyncPanel() {
     setSyncing(true);
     setResult(null);
     try {
-      const data = await api.post<SyncResult>("/api/hub/config/sync-from-hub", {});
+      // Step 1: dry-run pre-check
+      const pre = await api.post<SyncResult>(
+        "/api/hub/config/sync-from-hub",
+        { dryRun: true },
+      );
+      setPreCheck(pre);
+      // Step 2: if nothing would be skipped, no override decision needed —
+      // go straight to real sync (all fills, no overwrites).
+      if (pre.skippedFields.length === 0) {
+        await doSync([]);
+      } else {
+        // Show confirm modal with skip-list checkboxes
+        setForceSelection(new Set());
+        setConfirmOpen(true);
+        setSyncing(false);
+      }
+    } catch (e) {
+      showError(`同步失败: ${e instanceof Error ? e.message : String(e)}`);
+      setSyncing(false);
+    }
+  };
+
+  /** Execute the real sync with the user's force-selection. */
+  const doSync = async (forceFields: string[]) => {
+    setSyncing(true);
+    try {
+      const data = await api.post<SyncResult>(
+        "/api/hub/config/sync-from-hub",
+        { forceFields },
+      );
       setResult(data);
-      success(`同步完成: 应用 ${data.appliedFields.length} 项, 跳过 ${data.skippedFields.length} 项`);
+      const forced = forceFields.length;
+      const msg = forced > 0
+        ? `同步完成: 应用 ${data.appliedFields.length} 项（含 ${forced} 项强制覆盖）, 跳过 ${data.skippedFields.length} 项`
+        : `同步完成: 应用 ${data.appliedFields.length} 项, 跳过 ${data.skippedFields.length} 项`;
+      success(msg);
       await refreshStatus();
     } catch (e) {
       showError(`同步失败: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setSyncing(false);
+      setConfirmOpen(false);
+      setPreCheck(null);
     }
+  };
+
+  const toggleForce = (field: string) => {
+    setForceSelection((prev) => {
+      const next = new Set(prev);
+      if (next.has(field)) next.delete(field);
+      else next.add(field);
+      return next;
+    });
   };
 
   // Styles follow HubConnectionPanel.tsx inline + CSS-variable pattern.
@@ -145,7 +226,7 @@ export function ConfigSyncPanel() {
           color: "var(--text-secondary)",
           lineHeight: 1.6,
         }}>
-          拉取 Hub 管理员维护的全局/组织模板，按锁定规则合并到本地。
+          拉取 Hub 管理员维护的全局/组织模板，按锁定规则合并到本地。同步时会先预检，让你确认是否覆盖本地已有配置。
         </p>
       </div>
 
@@ -246,6 +327,136 @@ export function ConfigSyncPanel() {
           )}
         </>
       )}
+
+      {/* ─── Confirm-override modal ─── */}
+      <Modal
+        open={confirmOpen}
+        onClose={() => { if (!syncing) { setConfirmOpen(false); setPreCheck(null); } }}
+        title="确认从 Hub 同步"
+        size="md"
+        closeOnOverlay={!syncing}
+        hideClose={syncing}
+      >
+        {preCheck && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+            {/* Fields that will be applied (local empty, no override risk) */}
+            {preCheck.appliedFields.length > 0 && (
+              <div>
+                <div style={{
+                  fontSize: "var(--text-sm)",
+                  fontWeight: 500,
+                  color: "var(--success)",
+                  marginBottom: "var(--space-2)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "var(--space-1)",
+                }}>
+                  <CheckCircle2 size={14} />
+                  将应用 {preCheck.appliedFields.length} 项（本地为空，自动填充）
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-1)" }}>
+                  {preCheck.appliedFields.map((f) => (
+                    <code
+                      key={f}
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        fontSize: 12,
+                        padding: "2px 6px",
+                        background: "var(--success-light)",
+                        color: "var(--success-dark, var(--success))",
+                        borderRadius: "var(--radius-sm)",
+                      }}
+                    >
+                      {fieldLabel(f)}
+                    </code>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Skipped fields — user can select which to force-override */}
+            <div>
+              <div style={{
+                fontSize: "var(--text-sm)",
+                fontWeight: 500,
+                color: "var(--text-primary)",
+                marginBottom: "var(--space-1)",
+              }}>
+                以下本地已有配置，勾选要<strong>强制覆盖</strong>的（不勾则保留本地值）：
+              </div>
+              <div style={{
+                marginTop: "var(--space-2)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "var(--space-1)",
+              }}>
+                {preCheck.skippedFields.map((f) => (
+                  <label
+                    key={f}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "var(--space-2)",
+                      padding: "var(--space-2)",
+                      background: "var(--bg-tertiary)",
+                      borderRadius: "var(--radius-md)",
+                      cursor: "pointer",
+                      fontSize: "var(--text-sm)",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={forceSelection.has(f)}
+                      onChange={() => toggleForce(f)}
+                      style={{ cursor: "pointer" }}
+                    />
+                    <span style={{ color: "var(--text-primary)" }}>{fieldLabel(f)}</span>
+                    <code style={{
+                      fontFamily: "var(--font-mono)",
+                      fontSize: 11,
+                      color: "var(--text-tertiary)",
+                    }}>
+                      {f}
+                    </code>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div style={{
+              padding: "var(--space-2) var(--space-3)",
+              background: "var(--warning-light)",
+              borderLeft: "3px solid var(--warning)",
+              borderRadius: "var(--radius-sm)",
+              fontSize: "var(--text-sm)",
+              color: "var(--text-primary)",
+              lineHeight: 1.5,
+            }}>
+              勾选的字段会用 Hub 模板的值覆盖本地配置。<strong>不可撤销</strong>，请确认。
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-2)" }}>
+              <Button
+                variant="ghost"
+                size="md"
+                onClick={() => { setConfirmOpen(false); setPreCheck(null); }}
+              >
+                取消
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                loading={syncing}
+                onClick={() => void doSync(Array.from(forceSelection))}
+              >
+                {forceSelection.size > 0
+                  ? `确认同步（覆盖 ${forceSelection.size} 项）`
+                  : "确认同步（仅填充）"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
