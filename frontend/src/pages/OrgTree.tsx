@@ -59,8 +59,17 @@ export function OrgTree({ user }: { user: MeResponse }) {
   const [moveSubmitting, setMoveSubmitting] = useState(false);
   const [moveError, setMoveError] = useState<string | null>(null);
 
+  // 编辑节点弹窗
+  const [showEdit, setShowEdit] = useState(false);
+  const [editForm, setEditForm] = useState({ name: "", code: "" });
+  const [editSubmitting, setEditSubmitting] = useState(false);
+
+  // 删除节点
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+
   const canCreate = user.is_super_admin || user.permissions?.includes("org:create");
   const canUpdate = user.is_super_admin || user.permissions?.includes("org:update");
+  const canDelete = user.is_super_admin || user.permissions?.includes("org:delete");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -169,6 +178,51 @@ export function OrgTree({ user }: { user: MeResponse }) {
     }
   };
 
+  // ---- 编辑节点（改名/改编码）----
+  const openEdit = () => {
+    if (!selectedNode) return;
+    setEditForm({ name: selectedNode.name, code: selectedNode.code });
+    setShowEdit(true);
+  };
+
+  const handleEdit = async () => {
+    if (!selectedNode || !editForm.name) return;
+    setEditSubmitting(true);
+    try {
+      await api.updateOrg(selectedNode.id, { name: editForm.name, code: editForm.code });
+      setShowEdit(false);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
+
+  // ---- 删除节点 ----
+  const handleDelete = async () => {
+    if (!selectedNode) return;
+    if (!selectedNode.parent_id) {
+      window.alert("根组织不可删除");
+      return;
+    }
+    const confirmed = window.confirm(
+      `确定要删除组织「${selectedNode.name}」吗？\n\n注意：仅当该组织无子节点、无关联用户、无关联 Worker 时才能删除。`,
+    );
+    if (!confirmed) return;
+    setDeleteSubmitting(true);
+    try {
+      await api.deleteOrg(selectedNode.id);
+      setSelectedId(null);
+      await load();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setError(`删除失败：${msg}`);
+    } finally {
+      setDeleteSubmitting(false);
+    }
+  };
+
   // 移动目标选项：排除自身及其子孙（path 前缀匹配）
   const moveOptions = orgsFlat
     .filter((o) => {
@@ -261,9 +315,19 @@ export function OrgTree({ user }: { user: MeResponse }) {
                     添加子节点
                   </Button>
                 )}
+                {canUpdate && (
+                  <Button variant="ghost" size="sm" onClick={openEdit}>
+                    编辑
+                  </Button>
+                )}
                 {canUpdate && selectedNode.parent_id && (
                   <Button variant="ghost" size="sm" onClick={openMove}>
                     移动节点
+                  </Button>
+                )}
+                {canDelete && selectedNode.parent_id && (
+                  <Button variant="danger" size="sm" loading={deleteSubmitting} onClick={handleDelete}>
+                    删除
                   </Button>
                 )}
               </div>
@@ -334,6 +398,30 @@ export function OrgTree({ user }: { user: MeResponse }) {
             <Button variant="secondary" size="md" onClick={() => setShowMove(false)}>取消</Button>
             <Button variant="primary" size="md" loading={moveSubmitting} onClick={handleMove} disabled={!moveTarget}>
               移动
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* 编辑节点 Modal */}
+      <Modal open={showEdit} onClose={() => setShowEdit(false)} title={`编辑「${selectedNode?.name}」`} size="sm">
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)", paddingTop: "var(--space-2)" }}>
+          <Input
+            label="名称"
+            value={editForm.name}
+            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+            placeholder="组织名称"
+          />
+          <Input
+            label="编码"
+            value={editForm.code}
+            onChange={(e) => setEditForm({ ...editForm, code: e.target.value })}
+            placeholder="组织编码"
+          />
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-2)", marginTop: "var(--space-2)" }}>
+            <Button variant="secondary" size="md" onClick={() => setShowEdit(false)}>取消</Button>
+            <Button variant="primary" size="md" loading={editSubmitting} onClick={handleEdit} disabled={!editForm.name}>
+              保存
             </Button>
           </div>
         </div>
