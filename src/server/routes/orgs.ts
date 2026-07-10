@@ -125,13 +125,27 @@ export function createOrgRoutes() {
     }
   });
 
-  // PATCH /api/v1/orgs/:id
+  // PATCH /api/v1/orgs/:id（支持 reparent：传 parent_id 时事务级联重算 path/level）
   router.patch("/:id", requirePermission("org:update"), async (c) => {
     const id = c.req.param("id")!;
-    const body = await c.req.json();
-    const org = await updateOrg(id, body);
-    if (!org) return c.json({ error: "Organization not found" }, 404);
-    return c.json({ organization: org });
+    const body = await c.req.json<{
+      name?: string;
+      description?: string;
+      status?: string;
+      settings?: Record<string, unknown>;
+      manager_id?: string | null;
+      parent_id?: string | null;
+    }>();
+    try {
+      const org = await updateOrg(id, body);
+      if (!org) return c.json({ error: "Organization not found" }, 404);
+      return c.json({ organization: org });
+    } catch (err) {
+      return c.json(
+        { error: err instanceof Error ? err.message : "Update failed" },
+        400,
+      );
+    }
   });
 
   // DELETE /api/v1/orgs/:id

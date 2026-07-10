@@ -79,6 +79,7 @@ export interface OrgNode {
   code: string;
   type: string;
   parent_id: string | null;
+  path?: string;
   level: number;
   user_count?: number;
   children?: OrgNode[];
@@ -162,7 +163,7 @@ export const api = {
     type: string;
     parent_id?: string | null;
   }) => request<{ organization: OrgNode }>("POST", "/orgs", data),
-  updateOrg: (id: string, data: Partial<{ name: string; code: string }>) =>
+  updateOrg: (id: string, data: Partial<{ name: string; code: string; parent_id?: string | null }>) =>
     request<{ organization: OrgNode }>("PATCH", `/orgs/${id}`, data),
   deleteOrg: (id: string) => request<void>("DELETE", `/orgs/${id}`),
 

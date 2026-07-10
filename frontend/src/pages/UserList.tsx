@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
-import { api, type MeResponse, type UserListResponse } from "../api/client.js";
+import { api, type MeResponse, type UserListResponse, type OrgNode } from "../api/client.js";
+import { Select } from "../components/ui/Select.js";
 
 // 部署操作的 in-flight 反馈（按钮形态由持久化的 u.da_url 决定，这里只管 loading/error）
 interface DeployState {
@@ -29,6 +30,7 @@ export function UserList({ user: currentUser }: { user: MeResponse }) {
   const [data, setData] = useState<UserListResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [orgs, setOrgs] = useState<OrgNode[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [newUser, setNewUser] = useState({
     username: "",
@@ -63,7 +65,15 @@ export function UserList({ user: currentUser }: { user: MeResponse }) {
 
   useEffect(() => {
     load();
+    // 拉取组织列表用于 Select 下拉
+    api.getOrgs()
+      .then((res) => setOrgs(res.organizations))
+      .catch(() => { /* 组织下拉降级为空，不影响主流程 */ });
   }, [load]);
+
+  // 组织选项 + id→name 映射（列表表格显示用）
+  const orgOptions = orgs.map((o) => ({ value: o.id, label: `${o.name} (${o.code})` }));
+  const orgIdToName = new Map(orgs.map((o) => [o.id, `${o.name} (${o.code})`]));
 
   const handleCreate = async () => {
     if (!newUser.username || !newUser.password) return;
@@ -201,8 +211,19 @@ export function UserList({ user: currentUser }: { user: MeResponse }) {
             <input value={newUser.display_name} onChange={(e) => setNewUser({ ...newUser, display_name: e.target.value })} style={inputStyle} />
           </div>
           <div>
-            <label style={{ fontSize: 12, color: "#6b7280", display: "block" }}>组织 ID</label>
-            <input placeholder="可选" value={newUser.organization_id} onChange={(e) => setNewUser({ ...newUser, organization_id: e.target.value })} style={inputStyle} />
+            <label style={{ fontSize: 12, color: "#6b7280", display: "block" }}>所属组织</label>
+            {orgOptions.length > 0 ? (
+              <Select
+                value={newUser.organization_id}
+                onChange={(v) => setNewUser({ ...newUser, organization_id: v })}
+                options={orgOptions}
+                placeholder="选择组织..."
+                searchable
+                aria-label="所属组织"
+              />
+            ) : (
+              <input placeholder="组织 ID（UUID）" value={newUser.organization_id} onChange={(e) => setNewUser({ ...newUser, organization_id: e.target.value })} style={inputStyle} />
+            )}
           </div>
           <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13 }}>
             <input type="checkbox" checked={newUser.is_org_admin} onChange={(e) => setNewUser({ ...newUser, is_org_admin: e.target.checked })} />
@@ -232,8 +253,19 @@ export function UserList({ user: currentUser }: { user: MeResponse }) {
             <input placeholder="留空不改" value={editing.email} onChange={(e) => setEditing({ ...editing, email: e.target.value })} style={inputStyle} />
           </div>
           <div>
-            <label style={{ fontSize: 12, color: "#6b7280", display: "block" }}>组织 ID</label>
-            <input value={editing.organization_id} onChange={(e) => setEditing({ ...editing, organization_id: e.target.value })} style={inputStyle} />
+            <label style={{ fontSize: 12, color: "#6b7280", display: "block" }}>所属组织</label>
+            {orgOptions.length > 0 ? (
+              <Select
+                value={editing.organization_id}
+                onChange={(v) => setEditing({ ...editing, organization_id: v })}
+                options={[{ value: "", label: "（无组织）" }, ...orgOptions]}
+                placeholder="选择组织..."
+                searchable
+                aria-label="所属组织"
+              />
+            ) : (
+              <input value={editing.organization_id} onChange={(e) => setEditing({ ...editing, organization_id: e.target.value })} style={inputStyle} />
+            )}
           </div>
           <label style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13 }}>
             <input type="checkbox" checked={editing.is_org_admin} onChange={(e) => setEditing({ ...editing, is_org_admin: e.target.checked })} />
@@ -296,7 +328,7 @@ export function UserList({ user: currentUser }: { user: MeResponse }) {
                       <span style={{ color: "#6b7280" }}>普通用户</span>
                     )}
                   </td>
-                  <td style={tdStyle}>{u.organization_id?.slice(0, 8) ?? "-"}</td>
+                  <td style={tdStyle}>{u.organization_id ? (orgIdToName.get(u.organization_id) ?? u.organization_id.slice(0, 8)) : "-"}</td>
                   <td style={tdStyle}>{u.last_login_at ? new Date(u.last_login_at).toLocaleString("zh-CN") : "从未"}</td>
                   <td style={tdStyle}>
                     {ds?.error ? (

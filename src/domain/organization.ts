@@ -4,7 +4,7 @@
 // 树形多租户组织管理。path 字段格式 "root/uuid2/uuid3" 用于高效子树查询。
 // =============================================================================
 
-import { query } from "../store/pg.js";
+import { query, getPool } from "../store/pg.js";
 
 export interface OrgRecord {
   id: string;
@@ -157,13 +157,18 @@ export async function buildOrgTree(
   return root;
 }
 
-/** 更新组织 */
+/** 更新组织（含 reparent：parent_id 变更时事务级联重算 path/level） */
 export async function updateOrg(
   id: string,
   updates: Partial<
-    Pick<OrgRecord, "name" | "description" | "status" | "settings" | "manager_id">
+    Pick<OrgRecord, "name" | "description" | "status" | "settings" | "manager_id" | "parent_id">
   >,
 ): Promise<OrgRecord | null> {
+  // reparent 分支：parent_id 变更需要事务 + 级联更新子孙 path/level
+  if (updates.parent_id !== undefined) {
+    return reparentOrg(id, updates.parent_id, updates);
+  }
+
   const sets: string[] = [];
   const values: unknown[] = [];
   let idx = 1;
@@ -198,6 +203,106 @@ export async function updateOrg(
     values,
   );
   return result.rows[0] ?? null;
+}
+
+/**
+ * 将组织 id 重新挂到 newParentId 下（reparent）。
+ * - null 表示挂到根级（parent_id IS NULL）
+ * - 防环：新 parent 不能是自身，也不能是自身子孙
+ * - 事务内级联更新所有子孙的 path/level（前缀替换）
+ */
+async function reparentOrg(
+  id: string,
+  newParentId: string | null,
+  updates: Partial<Pick<OrgRecord, "name" | "description" | "status" | "settings" | "manager_id">>,
+): Promise<OrgRecord | null> {
+  const client = await getPool().connect();
+  try {
+    await client.query("BEGIN");
+
+    const curRes = await client.query<OrgRecord>(
+      `SELECT * FROM organizations WHERE id = $1 FOR UPDATE`,
+      [id],
+    );
+    if (curRes.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return null;
+    }
+    const current = curRes.rows[0];
+    const oldPath = current.path;
+
+    // 解析新 parent 的 path（level 由 computePathLevel 内部计算）
+    let newParentPath: string | null = null;
+    if (newParentId) {
+      if (newParentId === id) {
+        await client.query("ROLLBACK");
+        throw new Error("Cannot set parent to self");
+      }
+      const parentRes = await client.query<OrgRecord>(
+        `SELECT * FROM organizations WHERE id = $1`,
+        [newParentId],
+      );
+      if (parentRes.rows.length === 0) {
+        await client.query("ROLLBACK");
+        throw new Error(`Parent organization ${newParentId} not found`);
+      }
+      const parent = parentRes.rows[0];
+      // 防环：新 parent 的 path 若以被移动节点的 path 为前缀，说明是自身子孙
+      if (parent.path === oldPath || parent.path.startsWith(oldPath + "/")) {
+        await client.query("ROLLBACK");
+        throw new Error("Cannot move organization into its own descendant");
+      }
+      newParentPath = parent.path;
+    }
+
+    const { level: newLevel, path: newPath } = computePathLevel(newParentPath, id);
+
+    // 更新被移动节点本身
+    await client.query(
+      `UPDATE organizations SET parent_id = $1, level = $2, path = $3, updated_at = NOW() WHERE id = $4`,
+      [newParentId, newLevel, newPath, id],
+    );
+
+    // 级联更新子孙：把 path 前缀从 oldPath/ 替换为 newPath/
+    // oldPath 子孙的 path 形如 oldPath/xxx，替换前缀后为 newPath/xxx
+    await client.query(
+      `UPDATE organizations
+       SET path = $1 || SUBSTRING(path FROM LENGTH($2) + 1),
+           level = level + ($3 - $4)
+       WHERE path LIKE $2 || '/%'`,
+      [newPath, oldPath, newLevel, current.level],
+    );
+
+    // 同事务内应用其余字段更新（name/description/status/settings/manager_id）
+    const sets: string[] = [];
+    const values: unknown[] = [];
+    let idx = 1;
+    if (updates.name !== undefined) { sets.push(`name = $${idx++}`); values.push(updates.name); }
+    if (updates.description !== undefined) { sets.push(`description = $${idx++}`); values.push(updates.description); }
+    if (updates.status !== undefined) { sets.push(`status = $${idx++}`); values.push(updates.status); }
+    if (updates.manager_id !== undefined) { sets.push(`manager_id = $${idx++}`); values.push(updates.manager_id); }
+    if (updates.settings !== undefined) { sets.push(`settings = $${idx++}`); values.push(JSON.stringify(updates.settings)); }
+    if (sets.length > 0) {
+      sets.push(`updated_at = NOW()`);
+      values.push(id);
+      await client.query(
+        `UPDATE organizations SET ${sets.join(", ")} WHERE id = $${idx}`,
+        values,
+      );
+    }
+
+    const result = await client.query<OrgRecord>(
+      `SELECT * FROM organizations WHERE id = $1`,
+      [id],
+    );
+    await client.query("COMMIT");
+    return result.rows[0] ?? null;
+  } catch (err) {
+    try { await client.query("ROLLBACK"); } catch { /* ignore */ }
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 /** 删除组织（需无子节点、无关联用户、无关联 worker） */
