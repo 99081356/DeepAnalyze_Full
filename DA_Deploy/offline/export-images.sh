@@ -28,13 +28,25 @@ red()    { printf '\033[31m%s\033[0m\n' "$*"; }
 
 mkdir -p "$IMG_DIR"
 
+# docker save（BuildKit 构建的镜像输出 OCI 格式，旧版 Docker 无法 load。
+# 用 skopeo 转为传统 docker-archive 格式，兼容所有 Docker 版本。）
 save_image() {
   local tag="$1" file="$2"
   printf '  Saving %-30s ...' "$tag"
-  if docker save "$tag" -o "$IMG_DIR/$file"; then
+  rm -f "$IMG_DIR/$file"
+  if docker run --rm \
+      -v //var/run/docker.sock:/var/run/docker.sock \
+      -v "$IMG_DIR:/output" \
+      quay.io/skopeo/stable:latest \
+      copy "docker-daemon:$tag" "docker-archive:/output/$file:$tag" >/dev/null 2>&1; then
     printf ' OK (%s)\n' "$(du -h "$IMG_DIR/$file" | cut -f1)"
   else
-    printf ' FAIL\n'; red "导出失败: $tag"; exit 1
+    printf ' FAIL (skopeo), fallback docker save ...'
+    if docker save "$tag" -o "$IMG_DIR/$file"; then
+      printf ' OK (%s)\n' "$(du -h "$IMG_DIR/$file" | cut -f1)"
+    else
+      printf ' FAIL\n'; red "导出失败: $tag"; exit 1
+    fi
   fi
 }
 
