@@ -23,20 +23,36 @@ cd "$REPO_ROOT"
 
 IMG_DIR="$REPO_ROOT/DA_Deploy/images"
 
+# Windows (Git Bash / MSYS) 下 Docker Desktop 需要原生 Windows 路径做卷挂载，
+# MSYS 的 /d/... 路径 Docker 不认识。检测并转换。
+win_path() {
+  local p="$1"
+  if [[ "$p" == /* ]]; then
+    local drive="${p:1:1}"
+    local rest="${p:2}"
+    echo "${drive}:${rest}"
+  else
+    echo "$p"
+  fi
+}
+
 green()  { printf '\033[32m%s\033[0m\n' "$*"; }
 red()    { printf '\033[31m%s\033[0m\n' "$*"; }
 
 mkdir -p "$IMG_DIR"
 
-# docker save（BuildKit 构建的镜像输出 OCI 格式，旧版 Docker 无法 load。
-# 用 skopeo 转为传统 docker-archive 格式，兼容所有 Docker 版本。）
+# BuildKit 构建的镜像 docker save 输出 OCI 格式(blobs/sha256/)，
+# 旧版 Docker load 报 repositories: no such file。
+# 用 skopeo 转为传统 docker-archive 格式(manifest.json+repositories)，兼容所有 Docker 版本。
 save_image() {
   local tag="$1" file="$2"
   printf '  Saving %-30s ...' "$tag"
   rm -f "$IMG_DIR/$file"
+  local img_dir_win
+  img_dir_win="$(win_path "$IMG_DIR")"
   if docker run --rm \
       -v //var/run/docker.sock:/var/run/docker.sock \
-      -v "$IMG_DIR:/output" \
+      -v "$img_dir_win:/output" \
       quay.io/skopeo/stable:latest \
       copy "docker-daemon:$tag" "docker-archive:/output/$file:$tag" >/dev/null 2>&1; then
     printf ' OK (%s)\n' "$(du -h "$IMG_DIR/$file" | cut -f1)"

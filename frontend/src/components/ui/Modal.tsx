@@ -55,17 +55,37 @@ export const Modal: React.FC<ModalProps> = ({
   const [visible, setVisible] = useState(false);
   const [animating, setAnimating] = useState<'in' | 'out' | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Sync open prop with local visibility state
   useEffect(() => {
     if (open) {
+      // 开启时清除可能残留的关闭计时器
+      if (hideTimerRef.current) {
+        clearTimeout(hideTimerRef.current);
+        hideTimerRef.current = null;
+      }
       setVisible(true);
       setAnimating('in');
     } else if (visible) {
       setAnimating('out');
+      // 安全兜底：onAnimationEnd 可能因浏览器差异/动画被打断而不触发，
+      // 设一个略长于动画时长的 timer 保证 modal 一定能隐藏
+      hideTimerRef.current = setTimeout(() => {
+        setVisible(false);
+        setAnimating(null);
+        hideTimerRef.current = null;
+      }, 300);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  // 清理计时器
+  useEffect(() => {
+    return () => {
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    };
+  }, []);
 
   // Lock body scroll when open
   useEffect(() => {
@@ -79,6 +99,11 @@ export const Modal: React.FC<ModalProps> = ({
 
   const handleAnimationEnd = useCallback(() => {
     if (animating === 'out') {
+      // 动画正常结束，清除兜底计时器
+      if (hideTimerRef.current) {
+        clearTimeout(hideTimerRef.current);
+        hideTimerRef.current = null;
+      }
       setVisible(false);
       setAnimating(null);
     } else {
