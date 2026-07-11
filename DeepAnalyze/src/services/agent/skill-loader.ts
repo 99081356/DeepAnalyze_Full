@@ -162,7 +162,7 @@ function deriveSkillName(fileName: string): string {
  * ---
  */
 export function parseSkillMd(content: string, fileName: string): SkillManifest {
-  const frontmatterMatch = content.match(/^---\s*\n([\s\S]*?)\n---\s*\n([\s\S]*)$/);
+  const frontmatterMatch = content.match(/^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n([\s\S]*)$/);
   if (!frontmatterMatch) {
     throw new Error(`Invalid SKILL.md format: ${fileName}. Missing frontmatter.`);
   }

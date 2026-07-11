@@ -416,8 +416,53 @@ export interface AgentSkillInfo {
   modelRole: string;
   isActive: boolean;
   antiHallucinationLevel?: string;
+  /** Source of the skill: 'builtin' | 'plugin' | 'manual' | 'hub' */
+  source?: string;
+  /** Hub marketplace slug for skills installed from the market */
+  hubSlug?: string | null;
+  /** Hub URL for skills installed from the market */
+  hubUrl?: string | null;
+  /** Keywords/patterns for automatic skill matching */
+  triggers?: string[];
+  /** Tags for categorization and discovery */
+  tags?: string[];
+  /** Version string */
+  version?: string | null;
+  /** Author */
+  author?: string | null;
+  /** Emoji icon for UI display */
+  emoji?: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/** A single skill conflict surfaced during import (name collision). */
+export interface SkillImportConflict {
+  name: string;
+  existing: {
+    id: string;
+    name: string;
+    description: string;
+    prompt: string;
+    source: string;
+  };
+  parsed: {
+    name: string;
+    description: string;
+    prompt: string;
+  };
+}
+
+/** Result of POST /api/agent-skills/import. */
+export interface SkillImportResult {
+  /** True when one or more skills collided with an existing name (auto mode). */
+  conflict?: boolean;
+  /** Conflicts to resolve (present when conflict === true). */
+  conflicts?: SkillImportConflict[];
+  /** Skills created/updated before/without conflict. */
+  created?: Array<{ action: "created" | "updated"; skill: AgentSkillInfo }>;
+  results?: Array<{ action: "created" | "updated"; skill: AgentSkillInfo }>;
+  error?: string;
 }
 
 // --- WebSocket Events ---

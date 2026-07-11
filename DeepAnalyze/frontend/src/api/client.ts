@@ -19,6 +19,7 @@ import type {
   GraphEdge,
   PluginInfo,
   AgentSkillInfo,
+  SkillImportResult,
   KnowledgeBase,
   DocumentInfo,
   WikiPage,
@@ -705,6 +706,66 @@ export const api = {
     request<{ success: boolean }>(`/api/agent-skills/${id}`, {
       method: "DELETE",
     }),
+  importAgentSkill: async (
+    files: File | File[],
+    opts?: { mode?: "auto" | "overwrite" | "rename"; newName?: string },
+  ) => {
+    const fileArr = Array.isArray(files) ? files : [files];
+    const token = localStorage.getItem("da_access_token");
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    // Folder upload (multiple files): serialize to a JSON bundle so we avoid
+    // FormData multipart quirks with filenames containing "/". The bundle is
+    // { type: "folder", files: [{path, content}], mode, newName }.
+    const isFolder = fileArr.some(
+      (f) => (f as File & { webkitRelativePath?: string }).webkitRelativePath?.includes("/"),
+    );
+    if (isFolder) {
+      const bundle = {
+        type: "folder" as const,
+        files: await Promise.all(
+          fileArr.map(async (f) => ({
+            path: (f as File & { webkitRelativePath?: string }).webkitRelativePath || f.name,
+            content: await f.text(),
+          })),
+        ),
+        mode: opts?.mode ?? "auto",
+        newName: opts?.newName,
+      };
+      headers["Content-Type"] = "application/json";
+      const resp = await fetch(`${BASE_URL}/api/agent-skills/import`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(bundle),
+        credentials: "include",
+      });
+      const data = await resp.json().catch(() => null);
+      if (resp.status === 409 && data) return data as SkillImportResult;
+      if (!resp.ok) throw new Error(data?.error ?? `API error: ${resp.status}`);
+      return data as SkillImportResult;
+    }
+
+    // Single-file upload: use FormData (multipart).
+    const fd = new FormData();
+    fd.append("file", fileArr[0]!);
+    if (opts?.mode) fd.append("mode", opts.mode);
+    if (opts?.newName) fd.append("newName", opts.newName);
+    return fetch(`${BASE_URL}/api/agent-skills/import`, {
+      method: "POST",
+      headers,
+      body: fd,
+      credentials: "include",
+    }).then(async (r) => {
+      const data = await r.json().catch(() => null);
+      if (r.status === 409 && data) return data as SkillImportResult;
+      if (!r.ok) {
+        const msg = data?.error ?? `API error: ${r.status}`;
+        throw new Error(msg);
+      }
+      return data as SkillImportResult;
+    });
+  },
   runAgentSkill: (
     sessionId: string,
     skillId: string,

@@ -26,11 +26,16 @@
 
 import { Hono } from "hono";
 import { randomUUID } from "crypto";
-import { query } from "../../store/pg.js";
+import { query, getPool } from "../../store/pg.js";
 import { workerAuth } from "../middleware/worker-auth.js";
 import { jwtAuth } from "../middleware/jwt-auth.js";
 import { requirePermission } from "../middleware/require-permission.js";
 import { HUB_CONFIG } from "../../core/config.js";
+import {
+  parseSkillFile,
+  parseSkillBundle,
+  skillNameToSlug,
+} from "../../domain/skill-import.js";
 import type {
   SkillSubmitRequest,
   SkillSubmitResponse,
@@ -435,11 +440,11 @@ export function createMarketplaceRoutes(): Hono {
     const { id } = c.req.param();
     const reviewerId = c.get("userId") as string;
 
-    const { rows } = await query(
-      `UPDATE marketplace_skills
-       SET review_status = 'approved', reviewer_id = $2, published_at = now(), updated_at = now()
-       WHERE id = $1 AND review_status = 'pending'
-       RETURNING id, slug, name`,
+	    const { rows } = await query(
+	      `UPDATE marketplace_skills
+	       SET review_status = 'approved', reviewer_id = $2, published_at = now(), updated_at = now()
+	       WHERE id = $1 AND review_status IN ('pending', 'deprecated')
+	       RETURNING id, slug, name`,
       [id, reviewerId],
     );
 
@@ -494,20 +499,20 @@ export function createMarketplaceRoutes(): Hono {
     return c.json({ success: true, skill: rows[0] });
   });
 
-  // ─── Admin: hard delete skill (only pending or rejected) ───────────────
+  // ─── Admin: hard delete skill ───────────────────────────────────────────
 
   app.delete("/admin/skills/:id", async (c) => {
     const { id } = c.req.param();
 
     const { rows } = await query(
       `DELETE FROM marketplace_skills
-       WHERE id = $1 AND review_status IN ('pending', 'rejected')
+       WHERE id = $1
        RETURNING id, slug, name`,
       [id],
     );
 
     if (rows.length === 0) {
-      return c.json({ error: "Can only delete pending or rejected skills" }, 400);
+      return c.json({ error: "Skill not found" }, 404);
     }
 
     return c.json({ success: true, skill: rows[0] });
@@ -621,6 +626,179 @@ export function createMarketplaceRoutes(): Hono {
       success: true,
       skill: { id: newId, slug: pkg.slug, name: safeName, version: ver.version },
     });
+  });
+
+  // ─── Admin: import skill from file (.md / .json / .zip) ────────────────
+  // 管理员直接上传技能文件到 marketplace_skills，绕过 Worker。
+  // 默认 review_status='approved'（直接上架），可选 'pending' 走审核。
+  // slug 冲突 → 409（不写入）。整个导入在一个事务内完成，中途失败全部回滚。
+  app.post("/admin/skills/import", async (c) => {
+    try {
+      const contentType = c.req.header("content-type") || "";
+      let reviewStatus = "approved";
+      let overwriteSlug = false;
+      let parsed: Awaited<ReturnType<typeof parseSkillFile>>;
+
+      if (contentType.includes("application/json")) {
+        // Folder bundle: { type, files: [{path, content}], reviewStatus, overwrite }
+        const body = await c.req.json<{
+          type?: string;
+          files?: Array<{ path: string; content: string }>;
+          reviewStatus?: string;
+          overwrite?: boolean;
+        }>();
+        reviewStatus = body.reviewStatus || "approved";
+        overwriteSlug = body.overwrite ?? false;
+        if (!body.files || body.files.length === 0) {
+          return c.json({ error: "缺少文件内容" }, 400);
+        }
+        try {
+          parsed = await parseSkillBundle(body.files);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          return c.json({ error: message }, 400);
+        }
+      } else {
+        // Single-file FormData.
+        const formData = await c.req.formData();
+        reviewStatus = (formData.get("reviewStatus") as string | null) || "approved";
+        overwriteSlug = formData.get("overwrite") === "true";
+        const file = formData.getAll("file").find((v): v is File => v instanceof File);
+        if (!file) {
+          return c.json({ error: "缺少上传文件 (file)" }, 400);
+        }
+        try {
+          parsed = await parseSkillFile(file);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          return c.json({ error: message }, 400);
+        }
+      }
+
+      if (reviewStatus !== "approved" && reviewStatus !== "pending") {
+        return c.json({ error: `非法的 reviewStatus: ${reviewStatus}` }, 400);
+      }
+      if (parsed.length === 0) {
+        return c.json({ error: "文件中未找到可导入的技能" }, 400);
+      }
+
+      const reviewerId = c.get("userId") as string;
+      const results: Array<{
+        action: "created" | "updated";
+        slug: string;
+        name: string;
+      }> = [];
+      const conflicts: Array<{ slug: string; name: string }> = [];
+
+      // 2. Run all writes inside a single transaction so a mid-loop failure
+      //    rolls back everything (no partial imports).
+      const client = await getPool().connect();
+      try {
+        await client.query("BEGIN");
+
+        for (const skill of parsed) {
+          const slug = skillNameToSlug(skill.name);
+          const existing = await client.query<{ id: string }>(
+            "SELECT id FROM marketplace_skills WHERE slug = $1",
+            [slug],
+          );
+
+          if (existing.rows.length > 0) {
+            if (overwriteSlug) {
+              // Overwrite: update all content fields. Set published_at when
+              // approving so the skill sorts correctly in public listings
+              // (published_at IS NULL would bury it in ORDER BY ... NULLS LAST).
+              const publishedExpr =
+                reviewStatus === "approved" ? "now()" : "published_at";
+              await client.query(
+                `UPDATE marketplace_skills
+                 SET name = $2, description = $3, prompt = $4, tools = $5, model_role = $6,
+                     anti_hallucination_level = $7, tags = $8, version = $9,
+                     review_status = $10, reviewer_id = $11, updated_at = now(),
+                     published_at = ${publishedExpr}
+                 WHERE slug = $1`,
+                [
+                  slug,
+                  skill.name,
+                  skill.description,
+                  skill.prompt,
+                  skill.tools,
+                  skill.modelRole,
+                  skill.antiHallucinationLevel ?? null,
+                  skill.tags,
+                  skill.version,
+                  reviewStatus,
+                  reviewerId,
+                ],
+              );
+              results.push({ action: "updated", slug, name: skill.name });
+            } else {
+              conflicts.push({ slug, name: skill.name });
+            }
+          } else {
+            const id = randomUUID();
+            const publishedExpr =
+              reviewStatus === "approved" ? "now()" : "NULL";
+            await client.query(
+              `INSERT INTO marketplace_skills
+                (id, slug, name, description, prompt, tools, model_role,
+                 anti_hallucination_level, tags, version, submitter_id, reviewer_id,
+                 review_status, compatibility, published_at)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
+                       ${publishedExpr})`,
+              [
+                id,
+                slug,
+                skill.name,
+                skill.description,
+                skill.prompt,
+                skill.tools,
+                skill.modelRole,
+                skill.antiHallucinationLevel ?? null,
+                skill.tags,
+                skill.version,
+                reviewerId,
+                reviewerId,
+                reviewStatus,
+                JSON.stringify({ minVersion: "0.1.0" }),
+              ],
+            );
+            results.push({ action: "created", slug, name: skill.name });
+          }
+        }
+
+        // If any conflicts were surfaced (non-overwrite mode), roll back —
+        // nothing should be persisted in that case.
+        if (conflicts.length > 0) {
+          await client.query("ROLLBACK");
+        } else {
+          await client.query("COMMIT");
+        }
+      } catch (err) {
+        await client.query("ROLLBACK").catch(() => {});
+        throw err;
+      } finally {
+        client.release();
+      }
+
+      if (conflicts.length > 0) {
+        return c.json(
+          {
+            conflict: true,
+            conflicts,
+            imported: [],
+            error: `${conflicts.length} 个技能 slug 已存在，未导入。重新提交并选择「覆盖」可更新。`,
+          },
+          409,
+        );
+      }
+
+      return c.json({ conflict: false, imported: results });
+    } catch (err) {
+      console.error("[Hub] Skill import error:", err);
+      const message = err instanceof Error ? err.message : "导入失败";
+      return c.json({ error: message }, 500);
+    }
   });
 
   // ─── Admin: list all plugins (including pending) ───────────────────────

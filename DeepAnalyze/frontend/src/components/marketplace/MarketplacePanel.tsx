@@ -75,6 +75,32 @@ export function MarketplacePanel() {
     loadSkills();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // On mount, hydrate installedSlugs from agent_skills so the "已安装" badge
+  // survives page refreshes. Skills installed from the market are stored with
+  // source='hub' and a hub_slug matching the marketplace slug.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const localSkills = await api.listAgentSkills();
+        if (cancelled) return;
+        const hubSlugs = new Set<string>(
+          localSkills
+            .filter((s) => s.source === "hub" && s.hubSlug)
+            .map((s) => s.hubSlug as string),
+        );
+        if (hubSlugs.size > 0) {
+          setInstalledSlugs(hubSlugs);
+        }
+      } catch {
+        // Non-fatal: installed-state is a UI nicety, not correctness.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // IntersectionObserver: 滚动到底部自动加载下一页
   useEffect(() => {
     const sentinel = sentinelRef.current;

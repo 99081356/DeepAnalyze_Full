@@ -71,15 +71,37 @@ export function DropZone({
   }, []);
 
   const handleDrop = useCallback(
-    (e: React.DragEvent) => {
+    async (e: React.DragEvent) => {
       e.preventDefault();
       e.stopPropagation();
       setIsDragOver(false);
 
+      // Check if a directory was dropped. When dragging a folder, browsers
+      // expose it via items[].webkitGetAsEntry() as a FileSystemDirectoryEntry.
+      // dataTransfer.files would only contain an unusable directory entry.
+      const items = e.dataTransfer.items;
+      if (items && items.length > 0 && typeof items[0]!.webkitGetAsEntry === 'function') {
+        const entries: FileSystemEntry[] = [];
+        for (let i = 0; i < items.length; i++) {
+          const entry = items[i]!.webkitGetAsEntry();
+          if (entry) entries.push(entry);
+        }
+        if (entries.length > 0) {
+          const files = await readEntriesRecursive(entries);
+          if (files.length > 0) {
+            // Directory drop: always pass ALL files regardless of `multiple`,
+            // since a folder import only makes sense as a batch.
+            onFiles(files);
+            return;
+          }
+        }
+      }
+
+      // Fallback: regular file drop (no directory)
       if (e.dataTransfer.files.length > 0) {
         const files = filterFiles(e.dataTransfer.files);
         if (files.length > 0) {
-          onFiles(multiple ? files : [files[0]]);
+          onFiles(multiple ? files : [files[0]!]);
         }
       }
     },
@@ -209,4 +231,82 @@ export function DropZone({
       )}
     </div>
   );
+}
+
+// ---------------------------------------------------------------------------
+// Directory drop support: recursively read FileSystemEntry tree into File[]
+// ---------------------------------------------------------------------------
+
+/**
+ * Recursively traverse FileSystemEntry[] (files and directories) and collect
+ * all File objects. Each File's `webkitRelativePath` is set to preserve the
+ * folder structure (e.g. "my-skill/SKILL.md", "my-skill/references/foo.md").
+ */
+async function readEntriesRecursive(
+  entries: FileSystemEntry[],
+): Promise<File[]> {
+  const files: File[] = [];
+
+  async function traverse(
+    entry: FileSystemEntry,
+    pathPrefix: string,
+  ): Promise<void> {
+    if (entry.isFile) {
+      const fileEntry = entry as FileSystemFileEntry;
+      const file = await new Promise<File>((resolve, reject) =>
+        fileEntry.file(resolve, reject),
+      );
+      // Attach webkitRelativePath so the backend can reconstruct folder structure
+      const relativePath = pathPrefix
+        ? `${pathPrefix}/${file.name}`
+        : file.name;
+      Object.defineProperty(file, 'webkitRelativePath', {
+        value: relativePath,
+        writable: false,
+        configurable: true,
+      });
+      files.push(file);
+    } else if (entry.isDirectory) {
+      const dirEntry = entry as FileSystemDirectoryEntry;
+      const dirName = pathPrefix
+        ? `${pathPrefix}/${entry.name}`
+        : entry.name;
+      const reader = dirEntry.createReader();
+      const children = await readAllDirectoryEntries(reader);
+      for (const child of children) {
+        await traverse(child, dirName);
+      }
+    }
+  }
+
+  for (const entry of entries) {
+    await traverse(entry, '');
+  }
+  return files;
+}
+
+/**
+ * readEntries() returns at most ~100 entries per call; keep calling until an
+ * empty array is returned to get all directory contents.
+ */
+function readAllDirectoryEntries(
+  reader: FileSystemDirectoryReader,
+): Promise<FileSystemEntry[]> {
+  return new Promise((resolve, reject) => {
+    const all: FileSystemEntry[] = [];
+    const readBatch = () => {
+      reader.readEntries(
+        (batch) => {
+          if (batch.length === 0) {
+            resolve(all);
+          } else {
+            all.push(...batch);
+            readBatch();
+          }
+        },
+        reject,
+      );
+    };
+    readBatch();
+  });
 }

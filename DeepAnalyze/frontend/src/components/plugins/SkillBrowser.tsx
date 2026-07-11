@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { api } from "../../api/client";
 import { useChatStore } from "../../store/chat";
+import { useHubStore } from "../../store/hub";
 import { useToast } from "../../hooks/useToast";
 import { useConfirm } from "../../hooks/useConfirm";
 import { Spinner } from "../ui/Spinner";
@@ -16,6 +17,7 @@ import { Modal } from "../ui/Modal";
 import { Input } from "../ui/Input";
 import { TextArea } from "../ui/TextArea";
 import type { AgentSkillInfo } from "../../types/index";
+import { ImportSkillModal } from "./ImportSkillModal";
 import {
   Zap,
   Plus,
@@ -29,6 +31,9 @@ import {
   Shield,
   Power,
   Search,
+  Upload,
+  Share2,
+  Store,
 } from "lucide-react";
 
 // =============================================================================
@@ -56,10 +61,17 @@ export function SkillBrowser() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [creating, setCreating] = useState(false);
 
+  // Import skill state
+  const [importModalOpen, setImportModalOpen] = useState(false);
+
+  // Publish-to-hub state
+  const [publishingId, setPublishingId] = useState<string | null>(null);
+
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
 
   const currentSessionId = useChatStore((s) => s.currentSessionId);
+  const isWorkerMode = useHubStore((s) => s.isWorkerMode);
 
   const loadSkills = useCallback(async () => {
     setLoading(true);
@@ -177,6 +189,25 @@ export function SkillBrowser() {
     }
   };
 
+  // ---- Publish to Hub handler ----
+  const handlePublishToHub = async (skill: AgentSkillInfo) => {
+    const ok = await confirm({
+      title: "发布到 Hub 市场",
+      message: `确定要将技能"${skill.name}"发布到 Hub 市场吗？提交后需等待管理员审核。`,
+      variant: "default",
+    });
+    if (!ok) return;
+    setPublishingId(skill.id);
+    try {
+      await api.publishSkillToMarket(skill.id);
+      success(`技能"${skill.name}"已提交，等待 Hub 审核`);
+    } catch (err) {
+      toastError("发布失败: " + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setPublishingId(null);
+    }
+  };
+
   // ===========================================================================
   // Loading state
   // ===========================================================================
@@ -221,6 +252,14 @@ export function SkillBrowser() {
             onClick={() => setCreateModalOpen(true)}
           >
             创建技能
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            icon={<Upload size={14} />}
+            onClick={() => setImportModalOpen(true)}
+          >
+            导入技能
           </Button>
           <Button
             variant="secondary"
@@ -309,6 +348,14 @@ export function SkillBrowser() {
                     {skill.name}
                   </h4>
                   <div style={styles.cardBadges}>
+                    {skill.source === "hub" && (
+                      <span title={skill.hubSlug ? `市场 slug: ${skill.hubSlug}` : "来自市场安装"}>
+                        <Badge variant="info" size="sm">
+                          <Store size={10} style={{ marginRight: 2 }} />
+                          市场
+                        </Badge>
+                      </span>
+                    )}
                     {skill.antiHallucinationLevel && (
                       <Badge variant="info" size="sm">
                         <Shield size={10} style={{ marginRight: 2 }} />
@@ -366,6 +413,25 @@ export function SkillBrowser() {
                   >
                     {skill.isActive ? "禁用" : "启用"}
                   </Button>
+                  {isWorkerMode && skill.source !== "builtin" && skill.source !== "hub" && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      icon={
+                        publishingId === skill.id ? (
+                          <Spinner size="sm" color="currentColor" />
+                        ) : (
+                          <Share2 size={14} />
+                        )
+                      }
+                      onClick={() => handlePublishToHub(skill)}
+                      disabled={publishingId === skill.id}
+                      title="发布到 Hub 市场"
+                      style={{ color: "var(--text-tertiary)" }}
+                    >
+                      发布
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"
@@ -376,15 +442,15 @@ export function SkillBrowser() {
                         <Trash2 size={14} />
                       )
                     }
-                    onClick={() => handleDelete(skill)}
-                    disabled={deletingId === skill.id}
-                    style={
-                      deletingId === skill.id
-                        ? undefined
-                        : { color: "var(--text-tertiary)" }
-                    }
-                  >
-                    删除
+                      onClick={() => handleDelete(skill)}
+                      disabled={deletingId === skill.id}
+                      style={
+                        deletingId === skill.id
+                          ? undefined
+                          : { color: "var(--text-tertiary)" }
+                      }
+                    >
+                      删除
                   </Button>
                 </div>
               </div>
@@ -411,6 +477,14 @@ export function SkillBrowser() {
           creating={creating}
           onCreate={handleCreate}
           onClose={() => setCreateModalOpen(false)}
+        />
+      )}
+
+      {/* Import Skill Modal */}
+      {importModalOpen && (
+        <ImportSkillModal
+          onImported={loadSkills}
+          onClose={() => setImportModalOpen(false)}
         />
       )}
     </>

@@ -4,6 +4,7 @@ import { api, type AdminSkill } from "../api/client.js";
 import { useUIStore } from "../store/ui.js";
 import { Tabs } from "../components/ui/Tabs.js";
 import { SearchBar } from "../components/ui/SearchBar.js";
+import { DropZone } from "../components/ui/DropZone.js";
 import { EmptyState } from "../components/ui/EmptyState.js";
 import { Button } from "../components/ui/Button.js";
 import { StatusBadge } from "../components/hub/StatusBadge.js";
@@ -110,6 +111,11 @@ export function WorkerSkills() {
     kind: "reject" | "deprecate";
     skill: AdminSkill;
   } | null>(null);
+  const [importDialog, setImportDialog] = useState<{
+    importing: boolean;
+    error: string | null;
+    conflict: Array<{ slug: string; name: string }> | null;
+  } | null>(null);
 
   /* -- debounce search 300ms -- */
   useEffect(() => {
@@ -192,6 +198,60 @@ export function WorkerSkills() {
     }
   };
 
+  const handleImportFiles = async (files: File[], overwrite = false) => {
+    if (files.length === 0) return;
+
+    // Detect folder upload (any file has webkitRelativePath with "/").
+    const isFolder = files.some(
+      (f) => (f as File & { webkitRelativePath?: string }).webkitRelativePath?.includes("/"),
+    );
+
+    setImportDialog({ importing: true, error: null, conflict: null });
+    try {
+      let result;
+      if (isFolder) {
+        // Folder: serialize to JSON bundle.
+        const bundle = {
+          type: "folder" as const,
+          files: await Promise.all(
+            files.map(async (f) => ({
+              path: (f as File & { webkitRelativePath?: string }).webkitRelativePath || f.name,
+              content: await f.text(),
+            })),
+          ),
+          reviewStatus: "approved",
+          overwrite,
+        };
+        result = await api.importMarketplaceSkills(bundle);
+      } else {
+        // Single file: FormData.
+        const fd = new FormData();
+        fd.append("file", files[0]!);
+        fd.append("reviewStatus", "approved");
+        if (overwrite) fd.append("overwrite", "true");
+        result = await api.importMarketplaceSkills(fd);
+      }
+      if (result.conflict && result.conflicts?.length) {
+        setImportDialog({
+          importing: false,
+          error: null,
+          conflict: result.conflicts,
+        });
+        return;
+      }
+      const count = result.imported?.length ?? 0;
+      addToast("success", `成功导入 ${count} 个技能`);
+      setImportDialog({ importing: false, error: null, conflict: null });
+      await load();
+    } catch (e) {
+      setImportDialog({
+        importing: false,
+        error: e instanceof Error ? e.message : "导入失败",
+        conflict: null,
+      });
+    }
+  };
+
   /* -- render -- */
   return (
     <div style={pageStyle}>
@@ -214,12 +274,18 @@ export function WorkerSkills() {
         onChange={(k) => setTab(k as ReviewStatus)}
       />
 
-      <div style={{ margin: "var(--space-4) 0" }}>
+      <div style={{ margin: "var(--space-4) 0", display: "flex", gap: "var(--space-3)", alignItems: "center" }}>
         <SearchBar
           value={search}
           onChange={setSearch}
           placeholder="搜索 name / slug / description"
         />
+        <Button
+          variant="secondary"
+          onClick={() => setImportDialog({ importing: false, error: null, conflict: null })}
+        >
+          导入技能
+        </Button>
       </div>
 
       {error && <div style={errorStyle}>{error}</div>}
@@ -258,6 +324,16 @@ export function WorkerSkills() {
           skillName={reasonDialog.skill.name}
           onSubmit={handleSubmitReason}
           onCancel={() => setReasonDialog(null)}
+        />
+      )}
+
+      {importDialog && (
+        <ImportSkillDialog
+          importing={importDialog.importing}
+          error={importDialog.error}
+          conflict={importDialog.conflict}
+          onFiles={(files) => handleImportFiles(files, !!importDialog.conflict)}
+          onClose={() => setImportDialog(null)}
         />
       )}
     </div>
@@ -337,9 +413,14 @@ function SkillAdminCard({ skill, onApprove, onReject, onDeprecate, onRemove }: S
           </>
         )}
         {skill.review_status === "approved" && (
-          <Button size="sm" variant="danger" onClick={() => onDeprecate(skill)}>
-            下架
-          </Button>
+          <>
+            <Button size="sm" variant="danger" onClick={() => onDeprecate(skill)}>
+              下架
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => onRemove(skill)}>
+              删除
+            </Button>
+          </>
         )}
         {skill.review_status === "rejected" && (
           <Button size="sm" variant="ghost" onClick={() => onRemove(skill)}>
@@ -347,9 +428,14 @@ function SkillAdminCard({ skill, onApprove, onReject, onDeprecate, onRemove }: S
           </Button>
         )}
         {skill.review_status === "deprecated" && (
-          <span style={{ fontSize: "var(--text-xs)", color: "var(--text-tertiary)" }}>
-            （历史记录，不可操作）
-          </span>
+          <>
+            <Button size="sm" variant="primary" onClick={() => onApprove(skill)}>
+              上架
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => onRemove(skill)}>
+              删除
+            </Button>
+          </>
         )}
       </div>
     </div>
@@ -428,6 +514,116 @@ function ReasonDialog({ kind, skillName, onSubmit, onCancel }: ReasonDialogProps
             onClick={() => onSubmit(reason)}
           >
             确认{verb}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  ImportSkillDialog (上传 .md/.json/.zip 直接导入到 Worker 市场)            */
+/* -------------------------------------------------------------------------- */
+
+interface ImportSkillDialogProps {
+  importing: boolean;
+  error: string | null;
+  conflict: Array<{ slug: string; name: string }> | null;
+  onFiles: (files: File[]) => void;
+  onClose: () => void;
+}
+
+function ImportSkillDialog({
+  importing,
+  error,
+  conflict,
+  onFiles,
+  onClose,
+}: ImportSkillDialogProps) {
+  return (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.4)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+      }}
+      onClick={onClose}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "var(--bg-card)",
+          padding: "var(--space-6)",
+          borderRadius: "var(--radius-lg)",
+          minWidth: 400,
+          maxWidth: 600,
+          display: "flex",
+          flexDirection: "column",
+          gap: "var(--space-3)",
+        }}
+      >
+        <h3 style={{ margin: 0 }}>导入技能到 Worker 市场</h3>
+        <p style={{ fontSize: "var(--text-sm)", color: "var(--text-secondary)", margin: 0 }}>
+          上传技能文件直接导入到市场（默认审核通过即上架）。支持 <code>.md</code> / <code>.json</code> / <code>.zip</code>。
+        </p>
+
+        {conflict && conflict.length > 0 && (
+          <div style={{ fontSize: "var(--text-sm)", color: "var(--warning-dark, #b8860b)", background: "var(--warning-light, #fff8e1)", padding: "var(--space-3)", borderRadius: "var(--radius-sm)" }}>
+            以下技能 slug 已存在：{conflict.map((c) => c.name).join("、")}。
+            重新选择文件将<strong>覆盖</strong>同名技能。
+          </div>
+        )}
+
+        {error && (
+          <div style={errorStyle}>{error}</div>
+        )}
+
+        <div style={{ opacity: importing ? 0.5 : 1, pointerEvents: importing ? "none" : "auto" }}>
+          <DropZone
+            onFiles={onFiles}
+            accept=".md,.json,.zip"
+            multiple={false}
+            label="拖拽技能文件到此处"
+            hint={conflict ? "重新上传将覆盖同名技能" : "或点击选择文件"}
+          />
+        </div>
+
+        {/* Folder upload */}
+        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              const input = document.createElement("input");
+              input.type = "file";
+              input.multiple = true;
+              input.style.display = "none";
+              (input as HTMLInputElement & { webkitdirectory: boolean }).webkitdirectory = true;
+              input.onchange = () => {
+                if (input.files && input.files.length > 0) {
+                  onFiles(Array.from(input.files));
+                }
+                input.remove();
+              };
+              document.body.appendChild(input);
+              input.click();
+            }}
+            disabled={importing}
+          >
+            选择文件夹
+          </Button>
+          <span style={{ fontSize: "var(--text-xs)", color: "var(--text-tertiary)" }}>
+            上传整个技能文件夹（含 SKILL.md）
+          </span>
+        </div>
+
+        <div style={{ display: "flex", gap: "var(--space-2)", justifyContent: "flex-end" }}>
+          <Button size="sm" variant="ghost" onClick={onClose} disabled={importing}>
+            关闭
           </Button>
         </div>
       </div>

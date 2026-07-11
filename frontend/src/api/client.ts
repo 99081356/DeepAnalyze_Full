@@ -477,6 +477,41 @@ export const api = {
       { packageId },
     ),
 
+  /** Import skills from an uploaded file (.md / .json / .zip) or a folder
+   *  bundle directly into the worker marketplace. */
+  importMarketplaceSkills: async (
+    body: FormData | { type: "folder"; files: Array<{ path: string; content: string }>; reviewStatus?: string; overwrite?: boolean },
+  ): Promise<{
+    conflict?: boolean;
+    conflicts?: Array<{ slug: string; name: string }>;
+    imported?: Array<{ action: "created" | "updated"; slug: string; name: string }>;
+    error?: string;
+  }> => {
+    const token = getToken();
+    const isJson = !(body instanceof FormData);
+    const resp = await fetch(`${API_BASE}/marketplace/admin/skills/import`, {
+      method: "POST",
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(isJson ? { "Content-Type": "application/json" } : {}),
+      },
+      body: isJson ? JSON.stringify(body) : (body as FormData),
+      credentials: "include",
+    });
+    if (resp.status === 401) {
+      setToken(null);
+      window.location.href = "/login";
+      throw new Error("Session expired");
+    }
+    const data = await resp.json().catch(() => null);
+    if (resp.status === 409 && data) return data;
+    if (!resp.ok) {
+      const msg = data?.error ?? `HTTP ${resp.status}`;
+      throw new Error(msg);
+    }
+    return data;
+  },
+
   // ─── Phase 1 Marketplace: submission queries & withdraw ───────────────
   getSubmission: (id: string) =>
     request<{

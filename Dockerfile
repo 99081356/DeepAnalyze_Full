@@ -36,7 +36,7 @@ RUN curl -fsSL https://mirrors.aliyun.com/docker-ce/linux/static/stable/x86_64/d
 WORKDIR /app
 
 # Install backend dependencies
-COPY package.json bun.lock* ./
+COPY package.json ./
 RUN bun install --production
 
 # Copy backend source
