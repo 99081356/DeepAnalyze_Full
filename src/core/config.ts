@@ -2,12 +2,31 @@
 // DeepAnalyze Hub - Central Configuration
 // =============================================================================
 
+import { readFileSync } from "node:fs";
+
+/**
+ * Read the semver from package.json at startup. Falls back to a sentinel if
+ * the file is missing or malformed — this keeps Hub booting in stripped-down
+ * runtime images instead of hard-crashing. Mirrors upstream 4e245da.
+ */
+function readPackageVersion(): string {
+  try {
+    const pkg = JSON.parse(readFileSync("./package.json", "utf-8"));
+    if (typeof pkg?.version === "string" && pkg.version.length > 0) {
+      return pkg.version;
+    }
+  } catch {
+    // fall through to sentinel
+  }
+  return "0.0.0-unknown";
+}
+
 export const HUB_CONFIG = {
   /** Application name */
   appName: "DeepAnalyze Hub",
 
-  /** Semantic version */
-  version: "0.7.7",
+  /** Semantic version (read from package.json, no more hardcoded drift) */
+  version: readPackageVersion(),
 
   /** HTTP server port */
   port: parseInt(process.env.PORT || "22000", 10),
