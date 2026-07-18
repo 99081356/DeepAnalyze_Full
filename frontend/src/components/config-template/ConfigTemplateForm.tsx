@@ -2,17 +2,21 @@
 // ConfigTemplateForm — 配置模板的可视化表单视图
 // =============================================================================
 // 接收完整的 TemplateContent（与 JSON 视图共享同一份状态），渲染为分区表单。
-// MVP 只实现 3 个简单区块：agentSettings / doclingConfig / moduleStates。
-// providers / enhancedModels / hooks 暂未实现表单，显示「请切换 JSON 视图编辑」提示。
+// 覆盖全部 6 个区块：
+//   providers / agentSettings / doclingConfig / moduleStates /
+//   enhancedModels / hooks
 //
 // 锁定机制：从 content.fieldLocks.lockedPaths 派生当前锁定状态，
 // 修改时回写 lockedPaths。
 // =============================================================================
 
+import { ProvidersSection } from "./ProvidersSection.js";
 import { AgentSettingsSection } from "./AgentSettingsSection.js";
 import { DoclingSection } from "./DoclingSection.js";
 import { ModuleStatesSection } from "./ModuleStatesSection.js";
-import { SYNC_KEYS, type TemplateContent } from "../../types/config-template.js";
+import { EnhancedModelsSection } from "./EnhancedModelsSection.js";
+import { HooksSection } from "./HooksSection.js";
+import { type TemplateContent } from "../../types/config-template.js";
 
 export interface ConfigTemplateFormProps {
   value: TemplateContent;
@@ -42,20 +46,15 @@ export function ConfigTemplateForm({ value, onChange }: ConfigTemplateFormProps)
     });
   };
 
-  const notImplementedStyle: React.CSSProperties = {
-    padding: "var(--space-4)",
-    background: "var(--bg-secondary)",
-    border: "1px dashed var(--border-primary)",
-    borderRadius: "var(--radius-md)",
-    color: "var(--text-secondary)",
-    fontSize: "var(--text-sm)",
-    display: "flex",
-    flexDirection: "column",
-    gap: "var(--space-2)",
-  };
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-3)" }}>
+      <ProvidersSection
+        value={value.providers}
+        locked={isLocked("providers")}
+        onChange={(next) => setSection("providers", next)}
+        onLockChange={(locked) => setLock("providers", locked)}
+      />
+
       <AgentSettingsSection
         value={value.agentSettings}
         locked={isLocked("agentSettings")}
@@ -84,14 +83,19 @@ export function ConfigTemplateForm({ value, onChange }: ConfigTemplateFormProps)
         }
       />
 
-      {/* providers / enhancedModels / hooks 暂未实现表单 */}
-      <div style={notImplementedStyle}>
-        <b>.providers / enhancedModels / hooks</b>
-        <span>
-          这三个区块的可视化表单正在开发中。请切换到顶部的「JSON」视图编辑它们。
-          已有的内容会保留，不会被表单覆盖。
-        </span>
-      </div>
+      <EnhancedModelsSection
+        value={value.enhancedModels}
+        locked={isLocked("enhancedModels")}
+        onChange={(next) => setSection("enhancedModels", next)}
+        onLockChange={(locked) => setLock("enhancedModels", locked)}
+      />
+
+      <HooksSection
+        value={value.hooks}
+        locked={isLocked("hooks")}
+        onChange={(next) => setSection("hooks", next)}
+        onLockChange={(locked) => setLock("hooks", locked)}
+      />
 
       {/* 锁定状态汇总 */}
       {lockedPaths.length > 0 && (
@@ -126,6 +130,3 @@ export function ConfigTemplateForm({ value, onChange }: ConfigTemplateFormProps)
 }
 
 export default ConfigTemplateForm;
-
-// 保留 SYNC_KEYS 引用避免未使用警告（未来 providers/enhancedModels/hooks 区块会用到）
-void SYNC_KEYS;

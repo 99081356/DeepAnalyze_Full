@@ -38,6 +38,28 @@ export interface TemplateProvider {
 }
 
 /**
+ * 常见 provider 快速预设（轻量，不复制完整 registry）。
+ * 长期方案是 Hub 后端暴露 registry API；首批用这份静态列表降低手填负担。
+ * 新增 provider 时此处补充即可（DA 端 provider-registry.ts 是权威源）。
+ */
+export const PROVIDER_PRESETS: Array<{
+  registryId: string;
+  name: string;
+  endpoint: string;
+  defaultModel: string;
+  isLocal?: boolean;
+}> = [
+  { registryId: "zhipu", name: "智谱 GLM", endpoint: "https://open.bigmodel.cn/api/paas/v4", defaultModel: "glm-4.6" },
+  { registryId: "deepseek", name: "DeepSeek", endpoint: "https://api.deepseek.com/v1", defaultModel: "deepseek-chat" },
+  { registryId: "qwen", name: "通义千问", endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1", defaultModel: "qwen3.5-plus" },
+  { registryId: "openai", name: "OpenAI", endpoint: "https://api.openai.com/v1", defaultModel: "gpt-4o" },
+  { registryId: "anthropic", name: "Anthropic", endpoint: "https://api.anthropic.com", defaultModel: "claude-sonnet-4-20250514" },
+  { registryId: "moonshot", name: "Moonshot (Kimi)", endpoint: "https://api.moonshot.cn/v1", defaultModel: "moonshot-v1-32k" },
+  { registryId: "openrouter", name: "OpenRouter", endpoint: "https://openrouter.ai/api/v1", defaultModel: "anthropic/claude-4.5-sonnet" },
+  { registryId: "ollama", name: "Ollama (本地)", endpoint: "http://localhost:11434/v1", defaultModel: "llama3.1", isLocal: true },
+];
+
+/**
  * 10 个模型角色。key 是角色 ID（契约，不能改名），value 是 provider.id。
  * 空字符串表示该角色未绑定。
  */
@@ -121,23 +143,73 @@ export const TEMPLATE_MODULES: Array<{
   { id: "mineru", label: "MinerU 解析" },
 ];
 
-// ─── enhancedModels / hooks（复杂区块，MVP 不实现表单，但保留类型） ─────────
+// ─── enhancedModels / hooks（列表型区块） ─────────────────────────────────────
+
+export type EnhancedModelType =
+  | "image_gen"
+  | "video_gen"
+  | "music_gen"
+  | "tts"
+  | "audio_gen";
 
 export interface TemplateEnhancedModel {
   id: string;
-  modelType: "image_gen" | "video_gen" | "music_gen" | "tts" | "audio_gen";
+  modelType: EnhancedModelType;
   name: string;
+  description?: string;
   providerId: string;
   model: string;
   enabled: boolean;
+  capabilities?: string[];
   priority?: number;
+  maxTokens?: number;
 }
+
+/** hook 的 27 个事件枚举（对齐 DA hook-types.ts HookType） */
+export const HOOK_EVENTS = [
+  "PreToolUse",
+  "PostToolUse",
+  "PostToolUseFailure",
+  "PreCompact",
+  "PostCompact",
+  "SessionStart",
+  "SessionEnd",
+  "AgentStart",
+  "AgentComplete",
+  "UserPromptSubmit",
+  "SubagentStart",
+  "SubagentStop",
+  "TaskCreated",
+  "TaskCompleted",
+  "Stop",
+  "StopFailure",
+  "PermissionRequest",
+  "PermissionDenied",
+  "Elicitation",
+  "ElicitationResult",
+  "Notification",
+  "ConfigChange",
+  "FileChanged",
+  "CwdChanged",
+  "TeammateIdle",
+  "Setup",
+  "InstructionsLoaded",
+] as const;
+
+export type HookEvent = (typeof HOOK_EVENTS)[number];
+
+export type HookKind = "command" | "http" | "callback";
 
 export interface TemplateHook {
   id: string;
-  event: string;
-  type: "command" | "http" | "callback";
+  event: HookEvent;
+  type: HookKind;
   matcher?: string;
+  config?: {
+    command?: string;
+    url?: string;
+    headers?: Record<string, string>;
+  };
   enabled: boolean;
 }
 
