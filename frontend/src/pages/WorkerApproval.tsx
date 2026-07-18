@@ -6,6 +6,7 @@ import {
   type PendingWorker,
   type MeResponse,
   type JoinToken,
+  type CreateJoinTokenResponse,
   type OrgNode,
 } from "../api/client.js";
 import { Badge } from "../components/ui/Badge.js";
@@ -48,8 +49,9 @@ export function WorkerApproval({ user }: WorkerApprovalProps) {
     notes: "",
   });
   const [jtCreating, setJtCreating] = useState(false);
-  // 最近生成的 token（高亮 + 一键复制）
-  const [newlyCreated, setNewlyCreated] = useState<JoinToken[] | null>(null);
+  // 最近生成的 token（高亮 + 一键复制）。POST 返回的是精简响应（id/token/
+  // expires_at），不含 use_count 等字段，所以用 CreateJoinTokenResponse 类型。
+  const [newlyCreated, setNewlyCreated] = useState<CreateJoinTokenResponse[] | null>(null);
   const [orgs, setOrgs] = useState<OrgNode[]>([]);
 
   // org_admin 默认锁定本组织；super_admin 留空需选择
@@ -525,7 +527,7 @@ interface JoinTokenSectionProps {
   onDelete: (id: string) => void;
   onCopy: (text: string) => void;
   creating: boolean;
-  newlyCreated: JoinToken[] | null;
+  newlyCreated: CreateJoinTokenResponse[] | null;
   onDismissNewlyCreated: () => void;
   /** Org list for super_admin to pick the target org. */
   orgs: OrgNode[];
@@ -602,18 +604,22 @@ function JoinTokenSection({
       >
         <div style={formRowStyle}>
           {isSuperAdmin ? (
-            <Select
-              label="目标组织 *"
-              value={form.organization_id}
-              onChange={(v) => onFormChange({ organization_id: v })}
-              options={orgs.map((o) => ({
-                value: o.id,
-                label: `${o.name} (${o.code})`,
-              }))}
-              placeholder="选择组织..."
-              searchable
-              aria-label="目标组织"
-            />
+            <div>
+              <div style={{ fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--text-primary)", marginBottom: "var(--space-1)" }}>
+                目标组织 *
+              </div>
+              <Select
+                value={form.organization_id}
+                onChange={(v) => onFormChange({ organization_id: v })}
+                options={orgs.map((o) => ({
+                  value: o.id,
+                  label: `${o.name} (${o.code})`,
+                }))}
+                placeholder="选择组织..."
+                searchable
+                aria-label="目标组织"
+              />
+            </div>
           ) : (
             <Input
               label="目标组织"
