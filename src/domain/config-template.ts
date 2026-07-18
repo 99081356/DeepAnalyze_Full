@@ -5,7 +5,8 @@ import type { Pool } from "pg";
  *
  * Stored as JSONB; DA's `sync-from-hub.ts` consumes the merged result by
  * matching these top-level keys against its `SYNC_KEYS` (providers /
- * agentSettings / doclingConfig / enhancedModels / hooks) plus `moduleStates`.
+ * agentSettings / doclingConfig / enhancedModels / hooks / mineruConfig)
+ * plus `moduleStates`.
  *
  * IMPORTANT: the top-level key names must stay aligned with the Worker's
  * `SYNC_KEYS` (see DeepAnalyze/src/services/hub/sync-from-hub.ts) — the
@@ -24,6 +25,8 @@ export interface RecommendedConfig {
   doclingConfig?: Record<string, unknown>;
   enhancedModels?: unknown[];
   hooks?: unknown[];
+  /** MinerU 远端解析配置（对齐 settings.mineru_config）。 */
+  mineruConfig?: Record<string, unknown>;
   moduleStates?: Record<string, ModuleStateTemplate>;
   fieldLocks?: { lockedPaths: string[] };
 }
