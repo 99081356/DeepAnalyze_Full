@@ -83,18 +83,20 @@ export async function recordHeartbeat(
     `UPDATE workers SET
       last_heartbeat_at = now(),
       last_heartbeat_ok = $2,
-      da_version = $3,
-      uptime_seconds = $4,
+      last_heartbeat_status = $3,
+      da_version = $4,
+      uptime_seconds = $5,
       last_heartbeat = now(),
-      status = $5,
-      active_sessions = $6,
-      active_tasks = $7,
-      resource_usage = $8,
-      current_task = $9
+      status = $6,
+      active_sessions = $7,
+      active_tasks = $8,
+      resource_usage = $9,
+      current_task = $10
     WHERE id = $1`,
     [
       payload.workerId,
       status === "healthy",
+      status, // healthy | degraded | down — persisted for down-vs-degraded distinction
       payload.daVersion ?? null,
       payload.uptime ?? 0,
       dbStatus,
@@ -152,6 +154,8 @@ export interface MonitoringOverview {
   online: number;
   offline: number;
   degraded: number;
+  /** Workers whose modules explicitly reported "down" (critical modules offline). */
+  down: number;
   unknown: number;
   workers: Array<{
     id: string;
@@ -162,21 +166,24 @@ export interface MonitoringOverview {
     assigned_user_id: string | null;
     user_name: string | null;
     ssh_target_host: string | null;
-    health_status: "online" | "offline" | "degraded" | "unknown";
+    health_status: "online" | "offline" | "degraded" | "down" | "unknown";
   }>;
 }
 
 /**
- * Build overview of all approved workers. Health status is derived from
- * last_heartbeat_at age + last_heartbeat_ok flag:
- *  - no heartbeat ever → unknown
- *  - heartbeat older than 15 min → offline
- *  - heartbeat fresh but last_heartbeat_ok=false → degraded
- *  - otherwise → online
+ * Build overview of all approved workers. Health status precedence:
+ *  1. no heartbeat ever → unknown
+ *  2. heartbeat older than 15 min → offline (regardless of last reported status)
+ *  3. last_heartbeat_status === "down" → down (critical modules offline)
+ *  4. last_heartbeat_status === "degraded" → degraded
+ *  5. last_heartbeat_ok === false → degraded (legacy fallback for workers
+ *     that reported before migration 042 backfilled the status column)
+ *  6. otherwise → online
  */
 export async function getOverview(pool: () => Pool): Promise<MonitoringOverview> {
   const { rows } = await pool().query(`
-    SELECT w.id, w.hostname, w.last_heartbeat_at, w.last_heartbeat_ok, w.da_version,
+    SELECT w.id, w.hostname, w.last_heartbeat_at, w.last_heartbeat_ok,
+           w.last_heartbeat_status, w.da_version,
            w.assigned_user_id, u.display_name AS user_name,
            h.ssh_target_host
     FROM workers w
@@ -188,6 +195,7 @@ export async function getOverview(pool: () => Pool): Promise<MonitoringOverview>
   let online = 0,
     offline = 0,
     degraded = 0,
+    down = 0,
     unknown = 0;
   for (const w of rows) {
     if (!w.last_heartbeat_at) {
@@ -199,7 +207,10 @@ export async function getOverview(pool: () => Pool): Promise<MonitoringOverview>
     if (ageMs > 15 * 60 * 1000) {
       offline++;
       w.health_status = "offline";
-    } else if (w.last_heartbeat_ok === false) {
+    } else if (w.last_heartbeat_status === "down") {
+      down++;
+      w.health_status = "down";
+    } else if (w.last_heartbeat_status === "degraded" || w.last_heartbeat_ok === false) {
       degraded++;
       w.health_status = "degraded";
     } else {
@@ -207,5 +218,5 @@ export async function getOverview(pool: () => Pool): Promise<MonitoringOverview>
       w.health_status = "online";
     }
   }
-  return { online, offline, degraded, unknown, workers: rows };
+  return { online, offline, degraded, down, unknown, workers: rows };
 }

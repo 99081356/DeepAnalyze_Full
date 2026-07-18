@@ -70,7 +70,7 @@ export function Monitoring({ user }: MonitoringProps) {
 
   const cardsRowStyle: CSSProperties = {
     display: "grid",
-    gridTemplateColumns: "repeat(4, 1fr)",
+    gridTemplateColumns: "repeat(5, 1fr)",
     gap: "var(--space-4)",
   };
 
@@ -111,6 +111,7 @@ export function Monitoring({ user }: MonitoringProps) {
       <div style={cardsRowStyle}>
         <StatCard label="在线" value={overview.online} color="var(--success)" />
         <StatCard label="降级" value={overview.degraded} color="var(--warning)" />
+        <StatCard label="故障" value={overview.down} color="var(--error-dark, var(--error))" />
         <StatCard label="离线" value={overview.offline} color="var(--error)" />
         <StatCard label="未知" value={overview.unknown} color="var(--text-tertiary)" />
       </div>
@@ -200,12 +201,14 @@ function HealthBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
     online: "var(--success)",
     degraded: "var(--warning)",
+    down: "var(--error-dark, var(--error))",
     offline: "var(--error)",
     unknown: "var(--text-tertiary)",
   };
   const labels: Record<string, string> = {
     online: "在线",
     degraded: "降级",
+    down: "故障",
     offline: "离线",
     unknown: "未知",
   };
