@@ -130,18 +130,36 @@ export interface ModuleStateTemplate {
   status?: "not_installed" | "installing" | "installed" | "running" | "error";
   mode?: "local" | "remote" | "disabled";
   endpoint?: string;
+  /** 远端 API Key（Worker 映射到 module_states.remote_api_key） */
+  apiKey?: string;
 }
 
 /** 4 个固定模块的元数据（用于表单渲染） */
 export const TEMPLATE_MODULES: Array<{
   id: string;
   label: string;
+  /** 远端模式下，实际参数走 providers 体系而非 module_states 的模块。
+   *  表单在这些模块的 remote 模式会显示引导提示。 */
+  usesProviderSystem?: boolean;
 }> = [
-  { id: "embedding", label: "嵌入模型 (BGE-M3)" },
-  { id: "asr", label: "语音识别 (Whisper)" },
+  { id: "embedding", label: "嵌入模型 (BGE-M3)", usesProviderSystem: true },
+  { id: "asr", label: "语音识别 (Whisper)", usesProviderSystem: true },
   { id: "docling", label: "文档解析 (Docling)" },
   { id: "mineru", label: "MinerU 解析" },
 ];
+
+// ─── mineruConfig（MinerU 远端解析配置，对齐 settings.mineru_config） ─────────
+
+export interface TemplateMinerUConfig {
+  apiUrl?: string;
+  defaultBackend?: string;
+  defaultLang?: string;
+  formulaEnable?: boolean;
+  tableEnable?: boolean;
+  imageAnalysis?: boolean;
+  timeout?: number;
+  enabled?: boolean;
+}
 
 // ─── enhancedModels / hooks（列表型区块） ─────────────────────────────────────
 
@@ -222,16 +240,18 @@ export interface TemplateContent {
   moduleStates?: Record<string, ModuleStateTemplate> | null;
   enhancedModels?: TemplateEnhancedModel[] | null;
   hooks?: TemplateHook[] | null;
+  mineruConfig?: TemplateMinerUConfig | null;
   fieldLocks?: { lockedPaths: string[] };
 }
 
-/** 5 个 SYNC_KEYS（锁定用精确匹配顶层 key） */
+/** SYNC_KEYS（锁定用精确匹配顶层 key）。mineruConfig 已加入，与 Worker 对齐。 */
 export const SYNC_KEYS = [
   "providers",
   "agentSettings",
   "doclingConfig",
   "enhancedModels",
   "hooks",
+  "mineruConfig",
 ] as const;
 
 export type SyncKey = (typeof SYNC_KEYS)[number];

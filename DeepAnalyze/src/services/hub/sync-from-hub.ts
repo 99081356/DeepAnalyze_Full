@@ -22,6 +22,7 @@ const SYNC_KEYS = [
   "doclingConfig",
   "enhancedModels",
   "hooks",
+  "mineruConfig",
 ] as const;
 type SyncKey = (typeof SYNC_KEYS)[number];
 
@@ -32,6 +33,7 @@ const SETTINGS_KEY_MAP: Record<SyncKey, string> = {
   doclingConfig: "docling_config",
   enhancedModels: "enhanced_models",
   hooks: "agent_hooks",
+  mineruConfig: "mineru_config",
 };
 
 /**
@@ -137,6 +139,7 @@ export async function syncConfigFromHub(
             status: hubState.status,
             mode: hubState.mode,
             remoteEndpoint: hubState.endpoint ?? null,
+            remoteApiKey: hubState.apiKey ?? null,
           });
         }
         applied.push(fieldPath);

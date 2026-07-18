@@ -32,12 +32,15 @@ export interface RecommendedConfig {
  * ModuleStateTemplate — per-module state authored by a Hub admin.
  * The Hub stores arbitrary JSON; this is the shape the Worker coerces into.
  * `endpoint` matches the admin perspective; the Worker maps it to
- * `remoteEndpoint` when upserting (sync-from-hub.ts).
+ * `remoteEndpoint` when upserting (sync-from-hub.ts). `apiKey` maps to
+ * `remoteApiKey`.
  */
 export interface ModuleStateTemplate {
   status?: "not_installed" | "installing" | "installed" | "running" | "error";
   mode?: "local" | "remote" | "disabled";
   endpoint?: string;
+  /** Remote API key. Worker maps to module_states.remote_api_key. */
+  apiKey?: string;
 }
 
 /**

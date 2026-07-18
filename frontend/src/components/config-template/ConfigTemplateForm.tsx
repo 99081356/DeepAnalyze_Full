@@ -16,6 +16,7 @@ import { DoclingSection } from "./DoclingSection.js";
 import { ModuleStatesSection } from "./ModuleStatesSection.js";
 import { EnhancedModelsSection } from "./EnhancedModelsSection.js";
 import { HooksSection } from "./HooksSection.js";
+import { MinerUSection } from "./MinerUSection.js";
 import { type TemplateContent } from "../../types/config-template.js";
 
 export interface ConfigTemplateFormProps {
@@ -95,6 +96,13 @@ export function ConfigTemplateForm({ value, onChange }: ConfigTemplateFormProps)
         locked={isLocked("hooks")}
         onChange={(next) => setSection("hooks", next)}
         onLockChange={(locked) => setLock("hooks", locked)}
+      />
+
+      <MinerUSection
+        value={value.mineruConfig}
+        locked={isLocked("mineruConfig")}
+        onChange={(next) => setSection("mineruConfig", next)}
+        onLockChange={(locked) => setLock("mineruConfig", locked)}
       />
 
       {/* 锁定状态汇总 */}

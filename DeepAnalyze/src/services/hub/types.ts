@@ -101,6 +101,8 @@ export interface RecommendedConfig {
   doclingConfig?: Record<string, unknown>;
   enhancedModels?: unknown[];
   hooks?: unknown[];
+  /** MinerU 远端解析配置（对齐 settings.mineru_config）。 */
+  mineruConfig?: Record<string, unknown>;
 
   // ─── NEW (T15) ───
   /** Per-module state template authored by Hub admin (moduleId → state). */
@@ -114,11 +116,16 @@ export interface RecommendedConfig {
  * The Hub's RecommendedConfig.content field is arbitrary JSON; this is the
  * DA-side shape we coerce it into. Field name `endpoint` matches the Hub admin
  * perspective; map to `remoteEndpoint` when upserting via DA's repos.
+ *
+ * `apiKey` (Hub admin perspective) maps to `remoteApiKey` in the local
+ * module_states table.
  */
 export interface ModuleStateTemplate {
   status?: "not_installed" | "installing" | "installed" | "running" | "error";
   mode?: "local" | "remote" | "disabled";
   endpoint?: string;
+  /** Remote API key. Maps to module_states.remote_api_key on apply. */
+  apiKey?: string;
 }
 
 export interface ConfigVersionInfo {

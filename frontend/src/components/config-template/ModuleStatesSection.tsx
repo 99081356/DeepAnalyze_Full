@@ -141,12 +141,38 @@ export function ModuleStatesSection({
                 ))}
               </div>
               {mode === "remote" && (
-                <Input
-                  label="远端 Endpoint"
-                  value={st.endpoint ?? ""}
-                  onChange={(e) => updateModule(m.id, { endpoint: e.target.value })}
-                  placeholder="http://host:port"
-                />
+                <>
+                  <Input
+                    label="远端 Endpoint"
+                    value={st.endpoint ?? ""}
+                    onChange={(e) => updateModule(m.id, { endpoint: e.target.value })}
+                    placeholder="http://host:port"
+                  />
+                  <Input
+                    label="远端 API Key（可选）"
+                    type="password"
+                    value={st.apiKey ?? ""}
+                    onChange={(e) => updateModule(m.id, { apiKey: e.target.value || undefined })}
+                    placeholder="sk-…"
+                  />
+                  {m.usesProviderSystem && (
+                    <div
+                      style={{
+                        padding: "var(--space-2) var(--space-3)",
+                        background: "var(--bg-tertiary)",
+                        borderRadius: "var(--radius-sm)",
+                        fontSize: 12,
+                        color: "var(--text-secondary)",
+                        borderLeft: "3px solid var(--brand-primary)",
+                      }}
+                    >
+                      💡 此模块的实际调用参数（模型、维度等）走{" "}
+                      <b>Providers 区块</b>：到上方「LLM 提供商」绑定对应角色
+                      （{m.id === "embedding" ? "embedding" : "audio_transcribe"}）。
+                      这里的 endpoint/key 仅用于健康检查探测。
+                    </div>
+                  )}
+                </>
               )}
             </div>
           );
