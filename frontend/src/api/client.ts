@@ -229,6 +229,27 @@ export const api = {
       { reason },
     ),
 
+  // ─── Join Token (自助加入) ─────────────────────────────────────────
+  // 对应后端 POST/GET/DELETE /workers/join-tokens（权限点 worker:approve）
+  // POST 支持 count 批量生成，返回 { tokens: [...] }（即使 count=1 也是数组）
+  // GET 通过 query string 过滤 organization_id（request() 的第 3 参会变 body，
+  // 对 GET 无效，所以这里手动拼到 path）
+  createJoinToken: (input: CreateJoinTokenInput) =>
+    request<{ tokens: CreateJoinTokenResponse[] }>(
+      "POST",
+      "/workers/join-tokens",
+      input,
+    ),
+  listJoinTokens: (organizationId?: string) =>
+    request<{ tokens: JoinToken[] }>(
+      "GET",
+      organizationId
+        ? `/workers/join-tokens?organization_id=${encodeURIComponent(organizationId)}`
+        : "/workers/join-tokens",
+    ),
+  deleteJoinToken: (id: string) =>
+    request<{ ok: boolean }>("DELETE", `/workers/join-tokens/${id}`),
+
   // ─── Phase 5: Worker remote deployment (F4 endpoints) ──────────────
   deploy: {
     /** Create a new deploy job. If dry_run=true the backend will validate
@@ -881,12 +902,44 @@ export interface ConfigTemplateHistoryEntry {
   updated_by: string;
 }
 
+// ─── Join Token (自助加入)：Admin 生成 token，员工在 DA 端填入即可加入 ──────
+
+export interface JoinToken {
+  id: string;
+  token: string;
+  organization_id: string;
+  assigned_user_id: string | null;
+  expires_at: string;
+  consumed_at: string | null;
+  use_count: number;
+  max_uses: number;
+  created_at: string;
+}
+
+export interface CreateJoinTokenInput {
+  organization_id: string;
+  assigned_user_id?: string;
+  /** Batch size (backend caps at 50, default 1). */
+  count?: number;
+  expires_in_hours?: number;
+  max_uses?: number;
+  notes?: string;
+}
+
+export interface CreateJoinTokenResponse {
+  id: string;
+  token: string;
+  expires_at: string;
+}
+
 // ─── Phase 5 T18: Worker monitoring (overview + per-worker history) ─────────
 
 export interface MonitoringOverview {
   online: number;
   offline: number;
   degraded: number;
+  /** Workers whose modules explicitly reported "down" (separate from degraded). */
+  down: number;
   unknown: number;
   workers: Array<{
     id: string;
@@ -897,7 +950,7 @@ export interface MonitoringOverview {
     assigned_user_id: string | null;
     user_name: string | null;
     ssh_target_host: string | null;
-    health_status: "online" | "offline" | "degraded" | "unknown";
+    health_status: "online" | "offline" | "degraded" | "down" | "unknown";
   }>;
 }
 
