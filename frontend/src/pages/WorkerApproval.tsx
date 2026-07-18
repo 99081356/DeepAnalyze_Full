@@ -6,10 +6,12 @@ import {
   type PendingWorker,
   type MeResponse,
   type JoinToken,
+  type OrgNode,
 } from "../api/client.js";
 import { Badge } from "../components/ui/Badge.js";
 import { Button } from "../components/ui/Button.js";
 import { Input } from "../components/ui/Input.js";
+import { Select } from "../components/ui/Select.js";
 import { StatusBadge } from "../components/hub/StatusBadge.js";
 import { DeployWorkerModal } from "../components/hub/DeployWorkerModal.js";
 import { useUIStore } from "../store/ui.js";
@@ -38,6 +40,8 @@ export function WorkerApproval({ user }: WorkerApprovalProps) {
   const [joinTokens, setJoinTokens] = useState<JoinToken[]>([]);
   const [joinTokensLoading, setJoinTokensLoading] = useState(false);
   const [jtForm, setJtForm] = useState({
+    // super_admin 必须显式选组织；org_admin 会被锁定为本组织（见下方默认值逻辑）
+    organization_id: "",
     expires_in_hours: 24,
     max_uses: 1,
     count: 1,
@@ -46,6 +50,31 @@ export function WorkerApproval({ user }: WorkerApprovalProps) {
   const [jtCreating, setJtCreating] = useState(false);
   // 最近生成的 token（高亮 + 一键复制）
   const [newlyCreated, setNewlyCreated] = useState<JoinToken[] | null>(null);
+  const [orgs, setOrgs] = useState<OrgNode[]>([]);
+
+  // org_admin 默认锁定本组织；super_admin 留空需选择
+  useEffect(() => {
+    if (!user.is_super_admin && user.organization_id && !jtForm.organization_id) {
+      setJtForm((prev) => ({ ...prev, organization_id: user.organization_id! }));
+    }
+  }, [user.is_super_admin, user.organization_id, jtForm.organization_id]);
+
+  // 加载组织列表（供 super_admin 选择目标组织）
+  useEffect(() => {
+    if (!canManageJoinTokens || !user.is_super_admin) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const resp = await api.getOrgs();
+        if (!cancelled) setOrgs(resp.organizations);
+      } catch {
+        // 静默忽略，选择器降级为空
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [canManageJoinTokens, user.is_super_admin]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -128,14 +157,17 @@ export function WorkerApproval({ user }: WorkerApprovalProps) {
   }, [loadJoinTokens]);
 
   const handleCreateJoinToken = async () => {
-    if (!user.organization_id) {
-      addToast("error", "当前用户无所属组织，无法生成 Join Token");
+    const targetOrg = user.is_super_admin
+      ? jtForm.organization_id
+      : user.organization_id;
+    if (!targetOrg) {
+      addToast("error", "请先选择目标组织");
       return;
     }
     setJtCreating(true);
     try {
       const resp = await api.createJoinToken({
-        organization_id: user.organization_id,
+        organization_id: targetOrg,
         expires_in_hours: jtForm.expires_in_hours || 24,
         max_uses: jtForm.max_uses || 1,
         count: jtForm.count || 1,
@@ -460,6 +492,9 @@ export function WorkerApproval({ user }: WorkerApprovalProps) {
           creating={jtCreating}
           newlyCreated={newlyCreated}
           onDismissNewlyCreated={() => setNewlyCreated(null)}
+          orgs={orgs}
+          isSuperAdmin={user.is_super_admin}
+          lockedOrgId={user.organization_id}
           sectionTitleStyle={sectionTitleStyle}
           sectionHeaderStyle={sectionHeaderStyle}
           tableCardStyle={tableCardStyle}
@@ -478,7 +513,13 @@ export function WorkerApproval({ user }: WorkerApprovalProps) {
 interface JoinTokenSectionProps {
   tokens: JoinToken[];
   loading: boolean;
-  form: { expires_in_hours: number; max_uses: number; count: number; notes: string };
+  form: {
+    organization_id: string;
+    expires_in_hours: number;
+    max_uses: number;
+    count: number;
+    notes: string;
+  };
   onFormChange: (patch: Partial<JoinTokenSectionProps["form"]>) => void;
   onCreate: () => void;
   onDelete: (id: string) => void;
@@ -486,6 +527,12 @@ interface JoinTokenSectionProps {
   creating: boolean;
   newlyCreated: JoinToken[] | null;
   onDismissNewlyCreated: () => void;
+  /** Org list for super_admin to pick the target org. */
+  orgs: OrgNode[];
+  /** If true, show an org picker (super_admin has no home org). */
+  isSuperAdmin: boolean;
+  /** org_admin's home org (locked target). */
+  lockedOrgId: string | null;
   sectionTitleStyle: CSSProperties;
   sectionHeaderStyle: CSSProperties;
   tableCardStyle: CSSProperties;
@@ -504,6 +551,9 @@ function JoinTokenSection({
   creating,
   newlyCreated,
   onDismissNewlyCreated,
+  orgs,
+  isSuperAdmin,
+  lockedOrgId,
   sectionTitleStyle,
   sectionHeaderStyle,
   tableCardStyle,
@@ -512,7 +562,9 @@ function JoinTokenSection({
 }: JoinTokenSectionProps) {
   const formRowStyle: CSSProperties = {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr 1fr 2fr auto",
+    gridTemplateColumns: isSuperAdmin
+      ? "1.5fr 1fr 1fr 1fr 1.5fr auto"
+      : "1fr 1fr 1fr 2fr auto",
     gap: "var(--space-2)",
     alignItems: "end",
   };
@@ -549,6 +601,29 @@ function JoinTokenSection({
         }}
       >
         <div style={formRowStyle}>
+          {isSuperAdmin ? (
+            <Select
+              label="目标组织 *"
+              value={form.organization_id}
+              onChange={(v) => onFormChange({ organization_id: v })}
+              options={orgs.map((o) => ({
+                value: o.id,
+                label: `${o.name} (${o.code})`,
+              }))}
+              placeholder="选择组织..."
+              searchable
+              aria-label="目标组织"
+            />
+          ) : (
+            <Input
+              label="目标组织"
+              value={lockedOrgId ?? ""}
+              onChange={() => {
+                /* org_admin 锁定本组织，不可改 */
+              }}
+              disabled
+            />
+          )}
           <Input
             label="有效期(小时)"
             type="number"
