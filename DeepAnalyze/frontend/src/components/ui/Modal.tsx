@@ -56,14 +56,24 @@ export const Modal: React.FC<ModalProps> = ({
   const [animating, setAnimating] = useState<'in' | 'out' | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Sync open prop with local visibility state
+  // Sync open prop with local visibility state. Uses a self-cleaning timeout
+  // inside the effect so React's own cleanup runs clearTimeout on unmount or
+  // when `open` flips again — onAnimationEnd can be missed by some browsers
+  // (animation interrupted, prefers-reduced-motion, etc.), so a fallback timer
+  // slightly longer than --transition-base guarantees the modal always hides.
   useEffect(() => {
     if (open) {
       setVisible(true);
       setAnimating('in');
-    } else if (visible) {
-      setAnimating('out');
+      return;
     }
+    if (!visible) return;
+    setAnimating('out');
+    const timer = setTimeout(() => {
+      setVisible(false);
+      setAnimating(null);
+    }, 500);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
@@ -103,7 +113,7 @@ export const Modal: React.FC<ModalProps> = ({
   const overlayStyle: React.CSSProperties = {
     position: 'fixed',
     inset: 0,
-    zIndex: 'var(--z-overlay)' as unknown as number,
+    zIndex: 'var(--z-overlay)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -143,9 +153,9 @@ export const Modal: React.FC<ModalProps> = ({
 
   const titleStyle: React.CSSProperties = {
     fontSize: 'var(--text-lg)',
-    fontWeight: 'var(--font-semibold)' as unknown as number,
+    fontWeight: 'var(--font-semibold)',
     color: 'var(--text-primary)',
-    lineHeight: 'var(--leading-tight)' as unknown as number,
+    lineHeight: 'var(--leading-tight)',
   };
 
   const bodyStyle: React.CSSProperties = {

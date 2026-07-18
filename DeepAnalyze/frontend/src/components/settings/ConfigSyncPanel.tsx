@@ -35,6 +35,7 @@ const FIELD_LABELS: Record<string, string> = {
   doclingConfig: "文档解析",
   enhancedModels: "生成模型",
   hooks: "钩子",
+  mineruConfig: "MinerU 解析",
 };
 
 function fieldLabel(field: string): string {
