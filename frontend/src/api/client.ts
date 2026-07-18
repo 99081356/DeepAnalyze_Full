@@ -680,6 +680,23 @@ export const api = {
         `/monitoring/workers/${encodeURIComponent(workerId)}/history?hours=${hours}`,
       ),
   },
+
+  // ─── Provider Registry（DA provider 目录） ───────────────────────────
+  // 供配置模板表单的 provider 下拉、模型建议、能力提示
+  providers: {
+    /** GET /providers/registry — 全部 provider 列表（精简，供下拉） */
+    getRegistry: () =>
+      request<{ providers: RegistryProviderSummary[]; total: number }>(
+        "GET",
+        "/providers/registry",
+      ),
+    /** GET /providers/registry/:id — 单个 provider 完整元数据 */
+    getRegistryEntry: (id: string) =>
+      request<RegistryProviderSummary>(
+        "GET",
+        `/providers/registry/${encodeURIComponent(id)}`,
+      ),
+  },
 };
 
 export interface ModelArtifact {
@@ -962,6 +979,23 @@ export interface HealthHistoryEntry {
   module_health: unknown;
   resource_usage: unknown;
   da_version: string | null;
+}
+
+// ─── Provider Registry（DA provider 目录，供配置模板表单下拉） ──────────────
+
+/** 列表端点返回的单个 provider（精简，models 只含 id+name） */
+export interface RegistryProviderSummary {
+  id: string;
+  name: string;
+  apiBase: string;
+  apiBaseCN?: string;
+  defaultModel: string;
+  isLocal: boolean;
+  apiKeyEnvVar?: string;
+  recommendedMaxTokens: number;
+  contextWindow: number;
+  features: Record<string, boolean>;
+  models: Array<{ id: string; name: string }>;
 }
 
 // ─── Phase 6 T20: Worker detail + backup management ─────────────────────────

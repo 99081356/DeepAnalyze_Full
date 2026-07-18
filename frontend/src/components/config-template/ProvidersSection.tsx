@@ -12,18 +12,31 @@
 // 多个 worker，锁定时强制覆盖）。
 // =============================================================================
 
+import { useEffect, useState } from "react";
 import { SectionCard } from "./SectionCard.js";
 import { Input } from "../ui/Input.js";
 import { Select } from "../ui/Select.js";
 import { Toggle } from "../ui/Toggle.js";
 import { Button } from "../ui/Button.js";
 import { Plus, Trash2 } from "lucide-react";
+import { api, type RegistryProviderSummary } from "../../api/client.js";
 import {
   PROVIDER_PRESETS,
   PROVIDER_ROLES,
   type TemplateProviders,
   type TemplateProvider,
 } from "../../types/config-template.js";
+
+/** Registry 预设项（统一结构，可来自 API 或静态兜底） */
+interface PresetEntry {
+  registryId: string;
+  name: string;
+  endpoint: string;
+  defaultModel: string;
+  isLocal?: boolean;
+  /** 该 provider 支持的模型 id 列表（供 model 字段 datalist 建议） */
+  models?: string[];
+}
 
 export interface ProvidersSectionProps {
   value: TemplateProviders | null | undefined;
@@ -50,6 +63,44 @@ export function ProvidersSection({
     music_gen: "",
     audio_transcribe: "",
     video_understand: "",
+  };
+
+  // ── 从 Hub 后端拉取 provider registry（GET /api/v1/providers/registry）──
+  // 成功 → 用 API 返回的完整 registry（~20 provider + 模型清单）；
+  // 失败 → 降级到静态 PROVIDER_PRESETS（8 个，无模型清单）。
+  const [presets, setPresets] = useState<PresetEntry[]>(
+    PROVIDER_PRESETS.map((p) => ({ ...p })),
+  );
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const resp = await api.providers.getRegistry();
+        if (cancelled) return;
+        setPresets(
+          resp.providers.map((p: RegistryProviderSummary) => ({
+            registryId: p.id,
+            name: p.name,
+            endpoint: p.apiBase,
+            defaultModel: p.defaultModel,
+            isLocal: p.isLocal,
+            models: p.models.map((m) => m.id),
+          })),
+        );
+      } catch {
+        // 降级：保留初始的静态 PROVIDER_PRESETS
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /** 根据当前 provider 选中的 registryId，查 registry 的模型建议列表 */
+  const getModelSuggestions = (registryId?: string): string[] => {
+    if (!registryId) return [];
+    const preset = presets.find((p) => p.registryId === registryId);
+    return preset?.models ?? [];
   };
 
   /** 统一的更新入口：重组 providers + defaults 后回调 */
@@ -92,7 +143,7 @@ export function ProvidersSection({
   /** 应用快速预设：填 name/endpoint/model/registryId，不动 id/apiKey */
   const applyPreset = (idx: number, registryId: string) => {
     if (!registryId) return;
-    const preset = PROVIDER_PRESETS.find((p) => p.registryId === registryId);
+    const preset = presets.find((p) => p.registryId === registryId);
     if (!preset) return;
     updateProvider(idx, {
       registryId: preset.registryId,
@@ -191,7 +242,7 @@ export function ProvidersSection({
                   onChange={(v) => applyPreset(idx, v)}
                   options={[
                     { value: "", label: "（自定义，手填）" },
-                    ...PROVIDER_PRESETS.map((pr) => ({
+                    ...presets.map((pr) => ({
                       value: pr.registryId,
                       label: pr.name + (pr.isLocal ? " (本地)" : ""),
                     })),
@@ -207,12 +258,34 @@ export function ProvidersSection({
                   onChange={(e) => updateProvider(idx, { name: e.target.value })}
                   placeholder="例如 智谱GLM"
                 />
-                <Input
-                  label="模型 *"
-                  value={p.model}
-                  onChange={(e) => updateProvider(idx, { model: e.target.value })}
-                  placeholder="例如 glm-4.6"
-                />
+                <div style={roleFieldStyle}>
+                  <label style={{ fontSize: "var(--text-sm)", fontWeight: 500, color: "var(--text-primary)" }}>
+                    模型 *
+                  </label>
+                  {/* model 输入 + datalist 建议（来自 registry 的模型清单） */}
+                  <input
+                    list={`model-suggestions-${idx}`}
+                    value={p.model}
+                    onChange={(e) => updateProvider(idx, { model: e.target.value })}
+                    placeholder="例如 glm-4.6"
+                    style={{
+                      width: "100%",
+                      padding: "var(--space-2) var(--space-3)",
+                      background: "var(--bg-primary)",
+                      color: "var(--text-primary)",
+                      border: "1px solid var(--border-primary)",
+                      borderRadius: "var(--radius-md)",
+                      fontSize: "var(--text-sm)",
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                  <datalist id={`model-suggestions-${idx}`}>
+                    {getModelSuggestions(p.registryId).map((m) => (
+                      <option key={m} value={m} />
+                    ))}
+                  </datalist>
+                </div>
                 <Input
                   label="API Endpoint *"
                   value={p.endpoint}

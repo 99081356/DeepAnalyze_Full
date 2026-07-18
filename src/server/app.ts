@@ -114,6 +114,10 @@ export async function createApp(): Promise<Hono> {
   const { createMonitoringRoutes } = await import("./routes/monitoring.js");
   app.route("/api/v1/monitoring", createMonitoringRoutes());
 
+  // Provider registry (DA provider 目录，供配置模板表单下拉/模型建议)
+  const { createProviderRoutes } = await import("./routes/providers.js");
+  app.route("/api/v1/providers", createProviderRoutes());
+
   // ─── Static frontend (admin panel) ───────────────────────────────────
   // Serves built React app from frontend/dist/. Falls back to index.html
   // for client-side routing (SPA).
