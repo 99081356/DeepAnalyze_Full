@@ -47,7 +47,6 @@ export function SectionCard({
     border: `1px solid ${locked ? "var(--warning)" : "var(--border-primary)"}`,
     borderLeft: locked ? "4px solid var(--warning)" : undefined,
     borderRadius: "var(--radius-lg)",
-    overflow: "hidden",
   };
 
   const headerStyle: CSSProperties = {
