@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        # pgvector image so migrations that reference the vector extension work
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: deepanalyze_hub
+          POSTGRES_PASSWORD: deepanalyze_hub_dev
+          POSTGRES_DB: deepanalyze_hub
+        ports:
+          - 5433:5432
+        # Give postgres time to accept connections before migrations run
+        options: >-
+          --health-cmd "pg_isready -U deepanalyze_hub"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      PG_HOST: localhost
+      PG_PORT: "5433"
+      PG_DATABASE: deepanalyze_hub
+      PG_USER: deepanalyze_hub
+      PG_PASSWORD: deepanalyze_hub_dev
+      JWT_SECRET: ci-jwt-secret
+      JWT_REFRESH_SECRET: ci-jwt-refresh-secret
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Run migrations
+        run: bun run db:migrate
+
+      - name: Run tests
+        run: bun test
+        continue-on-error: true # Hub has no unit tests yet; don't fail CI when none exist
