@@ -77,7 +77,7 @@ export function ModuleStatesSection({
 
   const gridStyle: React.CSSProperties = {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
     gap: "var(--space-3)",
   };
 
@@ -144,8 +144,8 @@ export function ModuleStatesSection({
   };
 
   const fieldRowStyle: React.CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
+    display: "flex",
+    flexDirection: "column",
     gap: "var(--space-2)",
     marginTop: "var(--space-2)",
   };
@@ -265,7 +265,7 @@ export function ModuleStatesSection({
     );
   };
 
-  const renderMineruAdvanced = () => {
+  const renderMineruAdvanced = (mode: string) => {
     const cfg = mineruCfg ?? {};
     const update = (p: Partial<TemplateMinerUConfig>) => {
       const next: TemplateMinerUConfig = { ...cfg, ...p };
@@ -286,7 +286,10 @@ export function ModuleStatesSection({
 
     return (
       <>
-        <Input label="API 地址 (apiUrl)" value={cfg.apiUrl ?? ""} onChange={(e) => update({ apiUrl: e.target.value || undefined })} placeholder="http://127.0.0.1:8001" />
+        {/* apiUrl 即远端 API 地址——仅远端模式需要配置；本地部署用默认 localhost:8001 */}
+        {mode === "remote" && (
+          <Input label="解析服务地址 (apiUrl)" value={cfg.apiUrl ?? ""} onChange={(e) => update({ apiUrl: e.target.value || undefined })} placeholder="http://127.0.0.1:8001" />
+        )}
         <div style={fieldRowStyle}>
           <div style={fieldStyle}>
             <label style={labelStyle}>默认后端</label>
@@ -298,7 +301,7 @@ export function ModuleStatesSection({
           </div>
           <Input label="超时秒数" type="number" value={String(cfg.timeout ?? 0)} onChange={(e) => { const n = parseInt(e.target.value, 10); update({ timeout: n > 0 ? n : undefined }); }} />
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-1)", marginTop: "var(--space-1)" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-2)", marginTop: "var(--space-1)" }}>
           <Toggle checked={cfg.enabled === true} onChange={(c) => update({ enabled: c || undefined })} size="sm" label="启用" />
           <Toggle checked={cfg.formulaEnable === true} onChange={(c) => update({ formulaEnable: c || undefined })} size="sm" label="公式识别" />
           <Toggle checked={cfg.tableEnable === true} onChange={(c) => update({ tableEnable: c || undefined })} size="sm" label="表格识别" />
@@ -372,12 +375,15 @@ export function ModuleStatesSection({
               </div>
               {mode === "remote" && (
                 <>
-                  <Input
-                    label="远端 Endpoint"
-                    value={st.endpoint ?? ""}
-                    onChange={(e) => updateModule(m.id, { endpoint: e.target.value })}
-                    placeholder="http://host:port"
-                  />
+                  {/* mineru 的 endpoint 就是高级选项里的 apiUrl，不重复 */}
+                  {!isMineru && (
+                    <Input
+                      label={isDocling ? "健康探测 Endpoint" : "远端 Endpoint"}
+                      value={st.endpoint ?? ""}
+                      onChange={(e) => updateModule(m.id, { endpoint: e.target.value })}
+                      placeholder="http://host:port"
+                    />
+                  )}
                   <Input
                     label="远端 API Key（可选）"
                     type="password"
@@ -385,6 +391,18 @@ export function ModuleStatesSection({
                     onChange={(e) => updateModule(m.id, { apiKey: e.target.value || undefined })}
                     placeholder="sk-…"
                   />
+                  {/* mineru: endpoint 不在模块卡片，在高级选项的 apiUrl；docling: 提示 endpoint 仅用于健康探测 */}
+                  {isMineru && (
+                    <div style={{ fontSize: 11, color: "var(--text-tertiary)", lineHeight: 1.5 }}>
+                      💡 实际解析地址在下方「📐 MinerU 解析选项」中配置（apiUrl）。
+                      API Key 为所有远端调用统一使用。
+                    </div>
+                  )}
+                  {isDocling && (
+                    <div style={{ fontSize: 11, color: "var(--text-tertiary)", lineHeight: 1.5 }}>
+                      💡 Endpoint 用于健康探测。解析选项（OCR/表格/VLM）在下方「📐 高级选项」中配置。
+                    </div>
+                  )}
                   {m.usesProviderSystem && (
                     <div
                       style={{
@@ -421,7 +439,7 @@ export function ModuleStatesSection({
                     <span>📐 MinerU 解析选项</span>
                     {renderConfigLock(mineruConfigLocked, "mineruConfig", onMineruConfigLockChange)}
                   </summary>
-                  {renderMineruAdvanced()}
+                  {renderMineruAdvanced(mode)}
                 </details>
               )}
             </div>
