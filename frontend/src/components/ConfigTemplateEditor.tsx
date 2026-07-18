@@ -3,10 +3,14 @@ import { Button } from "./ui/Button.js";
 import { api } from "../api/client.js";
 import { useUIStore } from "../store/ui.js";
 import { ConfigTemplateGuide } from "./ConfigTemplateGuide.js";
+import { ConfigTemplateForm } from "./config-template/ConfigTemplateForm.js";
 import type {
   ConfigTemplate,
   ConfigTemplateHistoryEntry,
 } from "../api/client.js";
+import type { TemplateContent } from "../types/config-template.js";
+
+type EditMode = "form" | "json";
 
 /* -------------------------------------------------------------------------- */
 /*  ConfigTemplateEditor                                                       */
@@ -34,6 +38,9 @@ export function ConfigTemplateEditor({ scope, orgId }: ConfigTemplateEditorProps
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [history, setHistory] = useState<ConfigTemplateHistoryEntry[]>([]);
+  const [mode, setMode] = useState<EditMode>("form"); // 表单为默认视图
+  /** 表单视图操作的结构化内容。与 jsonText 是同一份数据的两个视图。 */
+  const [content, setContent] = useState<TemplateContent>({});
   const addToast = useUIStore((s) => s.addToast);
 
   const load = async () => {
@@ -47,6 +54,7 @@ export function ConfigTemplateEditor({ scope, orgId }: ConfigTemplateEditorProps
       const text = JSON.stringify(tpl.content ?? {}, null, 2);
       setJsonText(text);
       setOriginalText(text);
+      setContent((tpl.content as TemplateContent) ?? {});
 
       // Load history (non-blocking — don't fail the editor if history fails)
       try {
@@ -72,7 +80,33 @@ export function ConfigTemplateEditor({ scope, orgId }: ConfigTemplateEditorProps
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scope, orgId]);
 
+  // 表单视图修改 content 时，同步更新 jsonText（保持两个视图一致）
+  const handleContentChange = (next: TemplateContent) => {
+    setContent(next);
+    setJsonText(JSON.stringify(next, null, 2));
+  };
+
+  // 切换到 form 视图：从 jsonText 重新 parse（用户可能手动改过 JSON）
+  const switchToForm = () => {
+    try {
+      const parsed = JSON.parse(jsonText);
+      setContent(parsed as TemplateContent);
+      setMode("form");
+    } catch (e) {
+      addToast(
+        "error",
+        `JSON 解析失败，无法切换到表单视图: ${e instanceof Error ? e.message : ""}`,
+      );
+    }
+  };
+
+  const switchToJson = () => {
+    // form → json：content 已经是结构化的，确保 jsonText 同步（handleContentChange 已同步）
+    setMode("json");
+  };
+
   const handleSave = async () => {
+    // 保存时统一从 jsonText 取（两个视图始终同步）
     let parsed: unknown;
     try {
       parsed = JSON.parse(jsonText);
@@ -150,44 +184,86 @@ export function ConfigTemplateEditor({ scope, orgId }: ConfigTemplateEditorProps
         {updatedLabel && <span>更新于: {updatedLabel}</span>}
       </div>
 
-      {/* Guidance UI: preset templates + collapsible field reference */}
-      <ConfigTemplateGuide onApply={setJsonText} />
+      {/* 视图切换 Tab */}
+      <div style={{ display: "flex", gap: "var(--space-1)", borderBottom: "1px solid var(--border-primary)" }}>
+        {(["form", "json"] as const).map((m) => {
+          const active = mode === m;
+          return (
+            <button
+              key={m}
+              type="button"
+              onClick={() => (m === "form" ? switchToForm() : switchToJson())}
+              style={{
+                padding: "var(--space-2) var(--space-4)",
+                background: active ? "var(--bg-card)" : "transparent",
+                color: active ? "var(--brand-primary)" : "var(--text-secondary)",
+                border: "none",
+                borderBottom: active ? "2px solid var(--brand-primary)" : "2px solid transparent",
+                cursor: "pointer",
+                fontSize: "var(--text-sm)",
+                fontWeight: active ? 600 : 400,
+                marginBottom: "-1px",
+              }}
+            >
+              {m === "form" ? "可视化表单" : "JSON"}
+            </button>
+          );
+        })}
+      </div>
 
-      {/* JSON editor — raw textarea with inline style (NOT Tailwind className) */}
-      <textarea
-        value={jsonText}
-        onChange={(e) => setJsonText(e.target.value)}
-        style={{
-          width: "100%",
-          minHeight: 400,
-          padding: "var(--space-3)",
-          background: "var(--bg-secondary)",
-          color: "var(--text-primary)",
-          border: "1px solid var(--border-primary)",
-          borderRadius: "var(--radius-md)",
-          fontFamily: "var(--font-mono)",
-          fontSize: 13,
-          lineHeight: 1.5,
-          resize: "vertical",
-          outline: "none",
-        }}
-        spellCheck={false}
-      />
+      {mode === "form" ? (
+        /* ─── 表单视图 ─── */
+        <ConfigTemplateForm value={content} onChange={handleContentChange} />
+      ) : (
+        <>
+          {/* Guidance UI: preset templates + collapsible field reference（仅 JSON 视图） */}
+          <ConfigTemplateGuide
+            onApply={(text) => {
+              setJsonText(text);
+              // preset 应用后同步 content（让切回表单时数据一致）
+              try {
+                setContent(JSON.parse(text) as TemplateContent);
+              } catch {
+                /* preset 是预定义的合法 JSON，不会失败 */
+              }
+            }}
+          />
 
-      {/* Locked paths visualization (red code badges) */}
-      {lockedPaths.length > 0 && (
-        <div
-          style={{
-            padding: "var(--space-2) var(--space-3)",
-            background: "var(--warning-light)",
-            borderLeft: "3px solid var(--warning)",
-            borderRadius: "var(--radius-sm)",
-            fontSize: 13,
-          }}
-        >
-          <b>锁定字段（强制覆盖 DA 本地值）：</b>
-          <div
+          {/* JSON editor — raw textarea */}
+          <textarea
+            value={jsonText}
+            onChange={(e) => setJsonText(e.target.value)}
             style={{
+              width: "100%",
+              minHeight: 400,
+              padding: "var(--space-3)",
+              background: "var(--bg-secondary)",
+              color: "var(--text-primary)",
+              border: "1px solid var(--border-primary)",
+              borderRadius: "var(--radius-md)",
+              fontFamily: "var(--font-mono)",
+              fontSize: 13,
+              lineHeight: 1.5,
+              resize: "vertical",
+              outline: "none",
+            }}
+            spellCheck={false}
+          />
+
+          {/* Locked paths visualization (red code badges) */}
+          {lockedPaths.length > 0 && (
+            <div
+              style={{
+                padding: "var(--space-2) var(--space-3)",
+                background: "var(--warning-light)",
+                borderLeft: "3px solid var(--warning)",
+                borderRadius: "var(--radius-sm)",
+                fontSize: 13,
+              }}
+            >
+              <b>锁定字段（强制覆盖 DA 本地值）：</b>
+              <div
+                style={{
               display: "flex",
               flexWrap: "wrap",
               gap: "var(--space-1)",
@@ -211,6 +287,8 @@ export function ConfigTemplateEditor({ scope, orgId }: ConfigTemplateEditorProps
             ))}
           </div>
         </div>
+      )}
+        </>
       )}
 
       {/* Action row */}
