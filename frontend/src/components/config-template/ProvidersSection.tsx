@@ -7,9 +7,9 @@
 //   2. 角色绑定：10 个角色 select（main/summarizer/...），选项 = 已添加且
 //      enabled 的 providers 的 id。
 //
-// 注意：Hub 端无法「测试连接」（没有 Worker 的 provider 实例），故不提供
-// Worker ModelConfigCard 里的 test 按钮。apiKey 在模板里是明文（模板下发到
-// 多个 worker，锁定时强制覆盖）。
+// 注意：Hub 端非 Worker 运行时，无法做完整的 LLM 调用测试。测试按钮
+// 通过 Hub 后端 POST /api/v1/providers/test 发 /models 请求验证连通性和
+// API key 有效性，但不实际执行推理。
 // =============================================================================
 
 import { useEffect, useState } from "react";
@@ -18,8 +18,9 @@ import { Input } from "../ui/Input.js";
 import { Select } from "../ui/Select.js";
 import { Toggle } from "../ui/Toggle.js";
 import { Button } from "../ui/Button.js";
-import { Plus, Trash2 } from "lucide-react";
-import { api, type RegistryProviderSummary } from "../../api/client.js";
+import { Plus, Trash2, Wifi } from "lucide-react";
+import { api, type RegistryProviderSummary, type ProviderTestResult } from "../../api/client.js";
+import { useUIStore } from "../../store/ui.js";
 import {
   PROVIDER_PRESETS,
   PROVIDER_ROLES,
@@ -101,6 +102,34 @@ export function ProvidersSection({
     if (!registryId) return [];
     const preset = presets.find((p) => p.registryId === registryId);
     return preset?.models ?? [];
+  };
+
+  // ── 测试连接（参照 Worker POST /api/settings/providers/:id/test）──
+  const addToast = useUIStore((s) => s.addToast);
+  const [testState, setTestState] = useState<
+    Record<number, { loading: boolean; result?: ProviderTestResult }>
+  >({});
+
+  const handleTest = async (idx: number) => {
+    const p = providers[idx];
+    if (!p?.endpoint) return;
+    setTestState((prev) => ({ ...prev, [idx]: { loading: true } }));
+    try {
+      const result = await api.providers.testConnection({
+        endpoint: p.endpoint,
+        apiKey: p.apiKey || undefined,
+        model: p.model || undefined,
+      });
+      setTestState((prev) => ({ ...prev, [idx]: { loading: false, result } }));
+      addToast(result.ok ? "success" : "error", result.message ?? result.error ?? "");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "请求失败";
+      setTestState((prev) => ({
+        ...prev,
+        [idx]: { loading: false, result: { ok: false, error: msg } },
+      }));
+      addToast("error", msg);
+    }
   };
 
   /** 统一的更新入口：重组 providers + defaults 后回调 */
@@ -224,6 +253,15 @@ export function ProvidersSection({
                     aria-label="启用"
                   />
                   <Button
+                    variant="secondary"
+                    size="sm"
+                    icon={<Wifi size={12} />}
+                    loading={testState[idx]?.loading}
+                    disabled={!p.endpoint}
+                    onClick={() => handleTest(idx)}
+                    title="测试连接"
+                  />
+                  <Button
                     variant="danger"
                     size="sm"
                     icon={<Trash2 size={12} />}
@@ -231,6 +269,24 @@ export function ProvidersSection({
                   />
                 </div>
               </div>
+
+              {/* 测试结果 */}
+              {testState[idx]?.result && (
+                <div
+                  style={{
+                    padding: "var(--space-2) var(--space-3)",
+                    background: testState[idx].result!.ok ? "var(--success-light)" : "var(--error-light)",
+                    border: `1px solid ${testState[idx].result!.ok ? "var(--success)" : "var(--error)"}`,
+                    borderRadius: "var(--radius-sm)",
+                    fontSize: 12,
+                    color: testState[idx].result!.ok ? "var(--success-dark)" : "var(--error-dark)",
+                  }}
+                >
+                  {testState[idx].result!.ok
+                    ? `✅ ${testState[idx].result!.message ?? "连接成功"}（${testState[idx].result!.latency_ms}ms${testState[idx].result!.model_count ? `, ${testState[idx].result!.model_count} 个模型` : ""}）`
+                    : `❌ ${testState[idx].result!.error ?? testState[idx].result!.message ?? "连接失败"}`}
+                </div>
+              )}
 
               {/* 快速预设 */}
               <div style={roleFieldStyle}>

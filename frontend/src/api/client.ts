@@ -696,6 +696,9 @@ export const api = {
         "GET",
         `/providers/registry/${encodeURIComponent(id)}`,
       ),
+    /** POST /providers/test — 测试 provider 连通性 */
+    testConnection: (params: { endpoint: string; apiKey?: string; model?: string }) =>
+      request<ProviderTestResult>("POST", "/providers/test", params),
   },
 };
 
@@ -996,6 +999,15 @@ export interface RegistryProviderSummary {
   contextWindow: number;
   features: Record<string, boolean>;
   models: Array<{ id: string; name: string }>;
+}
+
+export interface ProviderTestResult {
+  ok: boolean;
+  protocol?: string;
+  latency_ms?: number;
+  model_count?: number;
+  message?: string;
+  error?: string;
 }
 
 // ─── Phase 6 T20: Worker detail + backup management ─────────────────────────
