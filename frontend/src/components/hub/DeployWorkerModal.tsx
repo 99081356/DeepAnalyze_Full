@@ -289,7 +289,20 @@ export function DeployWorkerModal({
                 color: "var(--text-primary)",
               }}
             >
-              暂无可用物理机。请先到 <b>/host-servers</b> 注册一台 active 状态的物理机（含 SSH key）。
+              <div style={{ marginBottom: "var(--space-1)" }}>
+                暂无可用物理机。你有两条路径部署 Worker：
+              </div>
+              <div style={{ paddingLeft: "var(--space-2)" }}>
+                <div style={{ marginBottom: "var(--space-1)" }}>
+                  ① <b>Hub 远程部署</b>：先到 <b>/host-servers</b> 注册一台
+                  active 状态的物理机（含 SSH key），再回到此处选择。
+                </div>
+                <div>
+                  ② <b>Join Token 自助加入</b>：在「Worker 审批」页生成一个
+                  Join Token，员工在自己 DA 的「设置 → Hub 连接」填入即可自动
+                  加入（无需物理机管理）。适合零散接入场景。
+                </div>
+              </div>
             </div>
           )}
         </div>
