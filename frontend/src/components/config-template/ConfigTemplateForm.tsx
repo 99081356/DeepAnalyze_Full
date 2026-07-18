@@ -2,21 +2,16 @@
 // ConfigTemplateForm — 配置模板的可视化表单视图
 // =============================================================================
 // 接收完整的 TemplateContent（与 JSON 视图共享同一份状态），渲染为分区表单。
-// 覆盖全部 6 个区块：
-//   providers / agentSettings / doclingConfig / moduleStates /
+// 覆盖全部区块：
+//   providers / agentSettings / moduleStates（含 docling/mineru 高级选项） /
 //   enhancedModels / hooks
-//
-// 锁定机制：从 content.fieldLocks.lockedPaths 派生当前锁定状态，
-// 修改时回写 lockedPaths。
 // =============================================================================
 
 import { ProvidersSection } from "./ProvidersSection.js";
 import { AgentSettingsSection } from "./AgentSettingsSection.js";
-import { DoclingSection } from "./DoclingSection.js";
 import { ModuleStatesSection } from "./ModuleStatesSection.js";
 import { EnhancedModelsSection } from "./EnhancedModelsSection.js";
 import { HooksSection } from "./HooksSection.js";
-import { MinerUSection } from "./MinerUSection.js";
 import { type TemplateContent } from "../../types/config-template.js";
 
 export interface ConfigTemplateFormProps {
@@ -63,13 +58,6 @@ export function ConfigTemplateForm({ value, onChange }: ConfigTemplateFormProps)
         onLockChange={(locked) => setLock("agentSettings", locked)}
       />
 
-      <DoclingSection
-        value={value.doclingConfig}
-        locked={isLocked("doclingConfig")}
-        onChange={(next) => setSection("doclingConfig", next)}
-        onLockChange={(locked) => setLock("doclingConfig", locked)}
-      />
-
       <ModuleStatesSection
         value={value.moduleStates}
         lockedMap={{
@@ -82,6 +70,15 @@ export function ConfigTemplateForm({ value, onChange }: ConfigTemplateFormProps)
         onLockChange={(moduleId, locked) =>
           setLock(`moduleStates.${moduleId}`, locked)
         }
+        // docling/mineru 配置合并到模块卡片内的「高级选项」折叠区
+        doclingConfig={value.doclingConfig}
+        doclingConfigLocked={isLocked("doclingConfig")}
+        onDoclingConfigChange={(next) => setSection("doclingConfig", next)}
+        onDoclingConfigLockChange={(locked) => setLock("doclingConfig", locked)}
+        mineruConfig={value.mineruConfig}
+        mineruConfigLocked={isLocked("mineruConfig")}
+        onMineruConfigChange={(next) => setSection("mineruConfig", next)}
+        onMineruConfigLockChange={(locked) => setLock("mineruConfig", locked)}
       />
 
       <EnhancedModelsSection
@@ -96,13 +93,6 @@ export function ConfigTemplateForm({ value, onChange }: ConfigTemplateFormProps)
         locked={isLocked("hooks")}
         onChange={(next) => setSection("hooks", next)}
         onLockChange={(locked) => setLock("hooks", locked)}
-      />
-
-      <MinerUSection
-        value={value.mineruConfig}
-        locked={isLocked("mineruConfig")}
-        onChange={(next) => setSection("mineruConfig", next)}
-        onLockChange={(locked) => setLock("mineruConfig", locked)}
       />
 
       {/* 锁定状态汇总 */}
