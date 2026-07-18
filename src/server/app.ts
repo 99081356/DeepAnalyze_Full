@@ -122,11 +122,31 @@ export async function createApp(): Promise<Hono> {
 
   // ─── 404 fallback ────────────────────────────────────────────────────
   app.notFound((c) => {
-    // For non-API GET requests, serve SPA index.html so client-side routing works
+    // For non-API GET requests, serve SPA index.html so client-side routing works.
+    // Guard against frontend/dist not having been built yet: Bun.file() of a
+    // missing path would otherwise throw and turn into a 500 on every route,
+    // masking the real problem (frontend not built). Fall back to a helpful
+    // placeholder page instead.
     if (c.req.method === "GET" && !c.req.path.startsWith("/api/") && !c.req.path.includes(".")) {
       const file = Bun.file("./frontend/dist/index.html");
-      return new Response(file, {
-        headers: { "Content-Type": "text/html; charset=utf-8" },
+      return file.exists().then((exists) => {
+        if (!exists) {
+          return new Response(
+            `<!doctype html><meta charset="utf-8"><title>DeepAnalyze Hub</title>` +
+              `<body style="font-family:system-ui;padding:2rem;color:#333">` +
+              `<h2>前端尚未构建</h2>` +
+              `<p>Hub 后端已运行，但 <code>frontend/dist/index.html</code> 不存在。</p>` +
+              `<p>请在 <code>frontend/</code> 目录下执行构建（如 <code>bun run build</code>）后刷新。</p>` +
+              `</body>`,
+            {
+              status: 200,
+              headers: { "Content-Type": "text/html; charset=utf-8" },
+            },
+          );
+        }
+        return new Response(file, {
+          headers: { "Content-Type": "text/html; charset=utf-8" },
+        });
       });
     }
     return c.json({ error: "Not found", path: c.req.path }, 404);
